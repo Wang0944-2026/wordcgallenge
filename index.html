@@ -39,6 +39,9 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    /* 隱藏滾動條（用於圓筒滾動特效） */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 
   <!-- React & ReactDOM (UMD) -->
@@ -53,12 +56,12 @@
   <!-- 應用程式掛載點 -->
   <div id="root"></div>
 
-  <!-- 主程式碼 (Type 設為 text/babel 讓 Babel 在瀏覽器內轉譯 JSX) -->
+  <!-- 主程式碼 -->
   <script type="text/babel">
     // --- 1. 從全域變數中解構出需要的 React Hooks ---
     const { useState, useEffect, useRef, useCallback } = React;
     
-    // --- 修正：使用內聯 SVG 元件取代 lucide-react CDN，徹底解決 undefined is not an object 錯誤 ---
+    // --- 內聯 SVG 元件 ---
     const IconWrapper = ({ size = 24, className = "", children, ...props }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
         {children}
@@ -79,10 +82,10 @@
     const Settings = (p) => <IconWrapper {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconWrapper>;
     const PenTool = (p) => <IconWrapper {...p}><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></IconWrapper>;
     const Award = (p) => <IconWrapper {...p}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></IconWrapper>;
-    const Send = (p) => <IconWrapper {...p}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></IconWrapper>;
     const Link = (p) => <IconWrapper {...p}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></IconWrapper>;
     const Library = (p) => <IconWrapper {...p}><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></IconWrapper>;
     const Archive = (p) => <IconWrapper {...p}><rect width="20" height="5" x="2" y="4" rx="2"/><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></IconWrapper>;
+    const AlertTriangle = (p) => <IconWrapper {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconWrapper>;
 
     // --- 2. 預設示範題庫 ---
     const MOCK_QUESTIONS = [
@@ -102,10 +105,9 @@
       return 'text-amber-600 bg-amber-50 border border-amber-100';
     };
 
-    // 取得裝置名稱、系統版本與瀏覽器的輔助函式
+    // 取得裝置名稱
     const getDeviceName = () => {
       const ua = navigator.userAgent;
-      
       let browser = "未知瀏覽器";
       if (ua.includes("Firefox")) browser = "Firefox";
       else if (ua.includes("Edg")) browser = "Edge";
@@ -133,22 +135,32 @@
         device = ua.match(/iPhone|iPad|iPod/)[0];
         os = "iOS " + (ua.match(/OS (\d+[._]\d+[._]?\d*)/)?.[1] || "").replace(/_/g, '.');
       }
-
       return `${device} (${os}) - ${browser}`;
     };
+
+    // 產生格式化時間
+    const getNowString = () => {
+        const now = new Date();
+        return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    }
 
     // --- 3. 主應用程式組件 ---
     function App() {
       const [gameState, setGameState] = useState('menu'); 
       const [questionBank, setQuestionBank] = useState([]);
       const [isDbLoading, setIsDbLoading] = useState(false);
+      // 獨立狀態：專門處理背景更新指示，不會鎖死按鈕
+      const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
       const [dbStatus, setDbStatus] = useState({ type: 'info', msg: '系統準備中' });
+
+      // 用於深度比對資料庫差異，避免無效重新渲染
+      const dataHashRef = useRef('');
 
       const [apiUrl, setApiUrl] = useState(() => localStorage.getItem('CUSTOM_API_URL') || GOOGLE_SCRIPT_API_URL);
       const [showApiModal, setShowApiModal] = useState(false);
       const [inputApiUrl, setInputApiUrl] = useState('');
 
-      const [settings, setSettings] = useState({ mode: 'timeChallenge', scope: [], type: 'all' });
+      const [settings, setSettings] = useState({ mode: '', scope: [], type: 'all' });
       const [questions, setQuestions] = useState([]);
       const [currentIndex, setCurrentIndex] = useState(0);
       const [timeLeft, setTimeLeft] = useState(600); 
@@ -162,6 +174,8 @@
       const [feedback, setFeedback] = useState(null);
 
       const [localMistakes, setLocalMistakes] = useState(() => JSON.parse(localStorage.getItem('MISTAKES_DB')) || {});
+      const [reportedList, setReportedList] = useState(() => JSON.parse(localStorage.getItem('REPORTED_DB')) || []);
+      
       const [studyScope, setStudyScope] = useState('');
       const [studyType, setStudyType] = useState('all');
 
@@ -173,12 +187,13 @@
 
       const [userName, setUserName] = useState(() => localStorage.getItem('USER_NAME') || '');
       const [showNameModal, setShowNameModal] = useState(false);
-
+      const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', data: null });
       const [alertMsg, setAlertMsg] = useState('');
 
       const containerRef = useRef(null);
       const textRef = useRef(null);
 
+      // 上傳測驗錯誤題目的邏輯
       useEffect(() => {
         if (gameState === 'result' && !score.synced) {
           if (score.wrongList.length > 0) {
@@ -196,11 +211,6 @@
               return newMistakes;
             });
 
-            const now = new Date();
-            const recordTime = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-            
-            const deviceName = getDeviceName();
-
             const uploadMistakes = score.wrongList.map(q => ({
               scope: q.scope,
               type: q.type,
@@ -211,119 +221,191 @@
             fetch(apiUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({ action: 'logMistakes', userName: userName, deviceName: deviceName, mistakes: uploadMistakes, recordTime })
+              body: JSON.stringify({ action: 'logMistakes', userName: userName, deviceName: getDeviceName(), mistakes: uploadMistakes, recordTime: getNowString() })
             }).catch(e => console.warn('雲端錯題同步失敗', e));
           }
           setScore(prev => ({ ...prev, synced: true }));
         }
       }, [gameState, score.synced, score.wrongList, apiUrl, userName]);
 
-      useEffect(() => {
-        const fetchQuestions = async () => {
+      // --- 即時且支援背景輪詢的 API 同步機制 ---
+      const fetchQuestions = useCallback(async (isBackground = false) => {
+        // 初始載入時才鎖定畫面，背景載入不干擾操作
+        if (!isBackground) {
           setIsDbLoading(true);
           setDbStatus({ type: 'info', msg: '同步雲端 API 資料中...' });
+        }
+        
+        try {
+          if (!apiUrl) throw new Error("無網址");
+          
+          // 利用時間戳記與 cache 屬性強制繞過快取，避免 CORS 預檢錯誤
+          const fetchUrl = apiUrl.includes('?') ? `${apiUrl}&t=${Date.now()}` : `${apiUrl}?t=${Date.now()}`;
+          const response = await fetch(fetchUrl, { 
+            method: 'GET', 
+            redirect: 'follow',
+            cache: 'no-store'
+          });
+          
+          if (!response.ok) throw new Error(`請求失敗，狀態碼：${response.status}`);
+          
+          const textData = await response.text();
+          let jsonData;
           try {
-            if (!apiUrl) throw new Error("無網址");
-            
-            const response = await fetch(apiUrl, {
-              method: 'GET',
-              redirect: 'follow'
-            });
-            
-            if (!response.ok) throw new Error(`請求失敗，狀態碼：${response.status}`);
-            
-            const textData = await response.text();
-            
-            let jsonData;
-            try {
-              jsonData = JSON.parse(textData);
-            } catch (parseError) {
-              console.error("❌ 錯誤：API 回傳的不是 JSON 資料。回傳內容開頭：", textData.substring(0, 100));
-              throw new Error("資料格式錯誤 (非 JSON)");
-            }
-            
-            const parsedQuestions = [];
-            const cloudMistakes = {};
+            jsonData = JSON.parse(textData);
+          } catch (parseError) {
+            throw new Error("資料格式錯誤 (非 JSON)");
+          }
+          
+          const newParsedQuestions = [];
+          const cloudMistakes = {};
+          const cloudReportedSet = new Set();
+          const scopeCounters = {}; // 用於各年度獨立計算題號
 
-            jsonData.forEach((q, i) => {
-              if (q['紀錄時間'] !== undefined || String(q.scope || '').trim() === '錯題集') {
+          jsonData.forEach((q) => {
+            // 判斷是否為記錄表單 (帶有紀錄時間或特殊 scope)
+            if (q['紀錄時間'] !== undefined || String(q.scope || '').trim() === '錯題集' || String(q.scope || '').trim() === '題目錯誤回報') {
+              
+              // 記錄表單若含有「有問題的題目」，代表是從回報系統寫入的
+              if (q['有問題的題目']) {
+                cloudReportedSet.add(String(q['有問題的題目']).trim());
+              } 
+              // 否則為學生一般錯題紀錄
+              else {
                 const mQuestion = String(q.question || q['錯題內容'] || '').trim();
                 const mAnswer = String(q.answer || q['正確答案'] || '').trim();
-                
-                const rawScope = q['年度範圍'] || q.year || (String(q.scope).trim() === '錯題集' ? '' : q.scope);
-                const mScope = String(rawScope || '未分類').trim();
-                
+                const mScope = String(q['年度範圍'] || q.year || q.scope || '未分類').trim();
                 const mType = String(q.type || q['題型'] || '未分類').trim();
 
                 if (mQuestion && mAnswer) {
-                  const key = mQuestion;
-                  if (cloudMistakes[key]) {
-                    cloudMistakes[key].count += 1;
+                  if (cloudMistakes[mQuestion]) {
+                    cloudMistakes[mQuestion].count += 1;
                   } else {
-                    cloudMistakes[key] = { scope: mScope, type: mType, question: mQuestion, answer: mAnswer, count: 1 };
+                    cloudMistakes[mQuestion] = { scope: mScope, type: mType, question: mQuestion, answer: mAnswer, count: 1 };
                   }
                 }
-              } else {
-                const qQuestion = String(q.question || '').trim();
-                const qAnswer = String(q.answer || '').trim();
-                if (qQuestion && qAnswer) {
-                  parsedQuestions.push({
-                    scope: String(q.scope || '未分類').trim(), 
-                    type: String(q.type || '未分類').trim(), 
-                    answer: qAnswer, 
-                    question: qQuestion,
-                    wrongOptions: [q.wrong1, q.wrong2, q.wrong3].filter(Boolean)
-                  });
-                }
               }
-            });
-            
-            if (parsedQuestions.length > 0) {
-              setQuestionBank(parsedQuestions);
-              setDbStatus({ type: 'success', msg: `已載入 ${parsedQuestions.length} 題` });
+            } 
+            // 正常年度工作表題庫解析
+            else {
+              const qQuestion = String(q.question || '').trim();
+              const qAnswer = String(q.answer || '').trim();
               
-              setLocalMistakes(prev => {
-                const merged = { ...prev };
-                Object.values(cloudMistakes).forEach(cm => {
-                  const key = cm.question; 
-                  if (!merged[key]) {
-                    merged[key] = cm;
-                  } else {
-                    merged[key].count = Math.max(merged[key].count || 1, cm.count);
-                  }
-                });
-                localStorage.setItem('MISTAKES_DB', JSON.stringify(merged));
-                return merged;
-              });
+              if (qQuestion && qAnswer) {
+                const qScope = String(q.scope || '未分類').trim();
 
-              const availableScopes = [...new Set(parsedQuestions.map(q => q.scope))];
-              if (availableScopes.length > 0) {
-                setStudyScope(availableScopes[0]);
+                // 獨立題號計數器：即使 C 欄沒資料，各年度題號也會從 1 獨立起算
+                if (!scopeCounters[qScope]) scopeCounters[qScope] = 0;
+                scopeCounters[qScope]++;
+
+                // 優先讀取工作表的 C 欄或題號作為 ID
+                const strictId = String(q['題號'] || q['C'] || q.id || q.questionNumber || '').trim();
+                const finalId = strictId || String(scopeCounters[qScope]);
+                
+                // 強悍防禦機制：不論欄位標題是否遭改動，只要該列任一格子包含「疑似有誤」或「錯誤回報」即判定為回報題
+                let isCloudReported = false;
+                for (const key in q) {
+                    if (q[key] && typeof q[key] === 'string' && (q[key].includes('疑似有誤') || q[key].includes('錯誤回報'))) {
+                        isCloudReported = true;
+                        break;
+                    }
+                }
+                
+                if (isCloudReported) {
+                  cloudReportedSet.add(qQuestion);
+                }
+
+                newParsedQuestions.push({
+                  id: finalId, 
+                  scope: qScope, 
+                  type: String(q.type || '未分類').trim(), 
+                  answer: qAnswer, 
+                  question: qQuestion,
+                  wrongOptions: [q.wrong1, q.wrong2, q.wrong3].filter(Boolean),
+                  isCloudReported: isCloudReported
+                });
               }
-            } else {
-              throw new Error("無資料");
             }
-          } catch (error) {
-            console.warn("API 讀取失敗：", error);
-            setQuestionBank(MOCK_QUESTIONS);
-            setDbStatus({ type: 'warning', msg: '使用本機題庫' });
-          } finally {
-            setIsDbLoading(false);
+          });
+          
+          if (newParsedQuestions.length > 0) {
+            // 將欲儲存的狀態轉為字串，與前一次快取比對
+            const cloudReportedArray = Array.from(cloudReportedSet).sort();
+            const newDataHash = JSON.stringify({ 
+                questions: newParsedQuestions, 
+                reports: cloudReportedArray, 
+                mistakes: cloudMistakes 
+            });
+
+            // 如果資料真正發生了變更，才執行更新與觸發轉動特效
+            if (dataHashRef.current !== newDataHash) {
+                dataHashRef.current = newDataHash;
+
+                // 若是背景更新且發生變更，顯示圖示轉動 2 秒鐘提示使用者
+                if (isBackground) {
+                    setIsBackgroundSyncing(true);
+                    setTimeout(() => setIsBackgroundSyncing(false), 2000);
+                }
+
+                setQuestionBank(newParsedQuestions);
+                if (!isBackground) setDbStatus({ type: 'success', msg: `已載入 ${newParsedQuestions.length} 題` });
+                
+                // 強制覆蓋本地回報清單，確保刪除標記能被正確同步解除
+                setReportedList(cloudReportedArray);
+                localStorage.setItem('REPORTED_DB', JSON.stringify(cloudReportedArray));
+
+                setLocalMistakes(prev => {
+                  const merged = { ...prev };
+                  Object.values(cloudMistakes).forEach(cm => {
+                    const key = cm.question; 
+                    if (!merged[key] || merged[key].count < cm.count) { 
+                      merged[key] = cm; 
+                    } 
+                  });
+                  localStorage.setItem('MISTAKES_DB', JSON.stringify(merged));
+                  return merged;
+                });
+
+                setStudyScope(prev => {
+                  const scopes = [...new Set(newParsedQuestions.map(q => q.scope))];
+                  if (!prev && scopes.length > 0) return scopes[0];
+                  return prev;
+                });
+            }
+          } else {
+            throw new Error("無資料");
           }
-        };
-        fetchQuestions();
+        } catch (error) {
+          setQuestionBank(prev => prev.length > 0 ? prev : MOCK_QUESTIONS);
+          if (!isBackground) setDbStatus({ type: 'warning', msg: '題庫同步異常' });
+        } finally {
+          if (!isBackground) setIsDbLoading(false);
+        }
       }, [apiUrl]);
+
+      // 每 10 秒執行一次背景靜默同步
+      useEffect(() => {
+        fetchQuestions(false);
+        const intervalId = setInterval(() => {
+          fetchQuestions(true);
+        }, 10000);
+        return () => clearInterval(intervalId);
+      }, [fetchQuestions]);
 
       const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
       const startGame = () => {
+        if (!settings.mode) {
+          setAlertMsg("請先選擇一種測驗模式！");
+          return;
+        }
+
         let filtered = [];
-        
         if (settings.mode === 'mistakePractice') {
-          filtered = Object.values(localMistakes);
+          filtered = Object.values(localMistakes).filter(q => !reportedList.includes(q.question));
           if (settings.type !== 'all') filtered = filtered.filter(q => q.type === settings.type);
         } else {
-          filtered = questionBank;
+          filtered = questionBank.filter(q => !reportedList.includes(q.question)); 
           filtered = filtered.filter(q => settings.scope.includes(q.scope));
           if (settings.type !== 'all') {
             filtered = filtered.filter(q => q.type === settings.type);
@@ -336,7 +418,7 @@
         }
         
         if (filtered.length === 0) {
-          setAlertMsg("此設定組合下沒有題目，請重新確認題目範圍是否已選取！");
+          setAlertMsg("此設定組合下沒有題目，或題目皆已被回報為有問題！");
           return;
         }
         
@@ -344,17 +426,46 @@
         setCurrentIndex(0);
         setScore({ correct: 0, incorrect: 0, wrongList: [], synced: false });
         
-        if (settings.mode === 'timeChallenge') {
-          setTimeLeft(customTime * 60);
-        } else if (settings.mode === 'normalTest') {
-          setTimeLeft(600);
-        } else {
-          setTimeLeft(0); 
-        }
+        if (settings.mode === 'timeChallenge') setTimeLeft(customTime * 60);
+        else if (settings.mode === 'normalTest') setTimeLeft(600);
+        else setTimeLeft(0); 
         
         setTimeSpent(0);
         setGameState('playing');
         setIsSidebarCollapsed(true); 
+      };
+
+      const executeReportError = () => {
+         const currentQ = confirmModal.data;
+         
+         const newReported = [...new Set([...reportedList, currentQ.question])];
+         setReportedList(newReported);
+         localStorage.setItem('REPORTED_DB', JSON.stringify(newReported));
+
+         fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: 'reportError',
+                userName: userName,
+                deviceName: getDeviceName(),
+                recordTime: getNowString(),
+                question: currentQ.question,
+                scope: currentQ.scope,
+                type: currentQ.type,
+                questionNumber: currentQ.id
+            })
+         }).catch(e => console.warn('回報錯誤失敗', e));
+
+         setConfirmModal({isOpen: false, type: '', data: null});
+
+         if (currentIndex + 1 < questions.length) {
+            setCurrentIndex(prev => prev + 1);
+            setSelectedOption(null);
+            setFeedback(null);
+         } else {
+            endGame();
+         }
       };
 
       useEffect(() => {
@@ -373,7 +484,6 @@
                 .map(q => q.answer)
             ));
             const shuffledAnswers = sameTypeAnswers.sort(() => 0.5 - Math.random());
-            
             let addIdx = 0;
             while (distractors.length < 3 && addIdx < shuffledAnswers.length) {
               distractors.push(shuffledAnswers[addIdx]);
@@ -402,12 +512,9 @@
         if (gameState === 'playing' && textRef.current && containerRef.current) {
           const container = containerRef.current;
           const text = textRef.current;
-          
           text.style.transform = 'scale(1)';
-          
           const containerWidth = container.clientWidth - 64; 
           const textWidth = text.scrollWidth;
-          
           if (textWidth > containerWidth && containerWidth > 0) {
             const scale = containerWidth / textWidth;
             text.style.transform = `scale(${scale})`;
@@ -415,9 +522,29 @@
         }
       }, [currentIndex, questions, gameState]);
 
+      const formatTime = (seconds) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+      
+      const acc = (score.correct + score.incorrect) === 0 ? 0 : Math.round((score.correct / (score.correct + score.incorrect)) * 100);
+
+      const getEncouragement = (accuracy) => {
+        if (accuracy === 100) return "太神啦！完美全對，你就是字音字形大師！ 🎉";
+        if (accuracy >= 95) return "差一點點就完美了！實力非常堅強喔！ 🔥";
+        if (accuracy >= 90) return "表現極佳！基礎很扎實，繼續保持！ ⭐";
+        if (accuracy >= 85) return "很棒的成績！再稍微留意一下細節就無敵了！ 👍";
+        if (accuracy >= 80) return "表現不錯喔！已經超越大部分的人了！ 👏";
+        if (accuracy >= 70) return "再接再厲！把錯題看熟，下次一定會更好！ 💪";
+        if (accuracy >= 60) return "及格了！還有很大的進步空間，繼續加油！ 🌱";
+        return "別氣餒！失敗是成功的養分，多練習幾次一定行！ 💡";
+      };
+
+      const endGame = useCallback(() => {
+        setGameState('result');
+        setIsSidebarCollapsed(false); 
+      }, []);
+
       useEffect(() => {
         let timer;
-        if (gameState === 'playing') {
+        if (gameState === 'playing' && !confirmModal.isOpen) {
           timer = setInterval(() => {
             if (settings.mode === 'timeChallenge' || settings.mode === 'normalTest') {
               setTimeLeft(prev => {
@@ -429,29 +556,10 @@
           }, 1000);
         }
         return () => clearInterval(timer);
-      }, [gameState, settings.mode]);
-
-      const formatTime = (seconds) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-      
-      const getEncouragement = (acc) => {
-        if (acc === 100) return "太神啦！完美全對，你就是字音字形大師！ 🎉";
-        if (acc >= 95) return "差一點點就完美了！實力非常堅強喔！ 🔥";
-        if (acc >= 90) return "表現極佳！基礎很扎實，繼續保持！ ⭐";
-        if (acc >= 85) return "很棒的成績！再稍微留意一下細節就無敵了！ 👍";
-        if (acc >= 80) return "表現不錯喔！已經超越大部分的人了！ 👏";
-        if (acc >= 70) return "再接再厲！把錯題看熟，下次一定會更好！ 💪";
-        if (acc >= 60) return "及格了！還有很大的進步空間，繼續加油！ 🌱";
-        return "別氣餒！失敗是成功的養分，多練習幾次一定行！ 💡";
-      };
-      
-      const endGame = useCallback(() => {
-        setGameState('result');
-        setIsSidebarCollapsed(false); 
-      }, []);
+      }, [gameState, settings.mode, confirmModal.isOpen, endGame]);
 
       const handleOptionClick = (selectedAnswer) => {
         if (selectedOption) return; 
-
         const currentQ = questions[currentIndex];
         const isCorrect = selectedAnswer === currentQ.answer;
 
@@ -514,7 +622,8 @@
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2 text-rose-600 font-bold">
-                    {isDbLoading ? <RefreshCw className="animate-spin w-4 h-4" /> : <CloudDownload className="w-4 h-4" />} 題庫狀態
+                    {/* 左下角圖示：背景實際更新時才會旋轉 */}
+                    {(isDbLoading || isBackgroundSyncing) ? <RefreshCw className="animate-spin w-4 h-4" /> : <CloudDownload className="w-4 h-4" />} 題庫狀態
                   </div>
                   <button 
                     onClick={() => { setInputApiUrl(apiUrl); setShowApiModal(true); }} 
@@ -552,10 +661,9 @@
         </div>
       );
 
-      const acc = (score.correct + score.incorrect) === 0 ? 0 : Math.round((score.correct / (score.correct + score.incorrect)) * 100);
-
       return (
-        <div className="flex h-screen w-full font-sans relative">
+        <div className="flex h-screen w-full font-sans relative bg-slate-50/50">
+          
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
             <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-pink-200/40 rounded-full blur-[120px]"></div>
             <div className="absolute top-[10%] -right-[10%] w-[40%] h-[60%] bg-indigo-200/40 rounded-full blur-[100px]"></div>
@@ -616,11 +724,8 @@
                       return (
                         <button 
                           onClick={() => {
-                            if (isAllSelected) {
-                              setSettings(s => ({ ...s, scope: [] }));
-                            } else {
-                              setSettings(s => ({ ...s, scope: availableScopes }));
-                            }
+                            if (isAllSelected) setSettings(s => ({ ...s, scope: [] }));
+                            else setSettings(s => ({ ...s, scope: availableScopes }));
                           }} 
                           className={`absolute top-5 right-5 text-xs py-1.5 px-3 rounded-xl font-bold transition-all z-20 ${isAllSelected ? 'bg-emerald-100 text-emerald-600 shadow-sm border border-emerald-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border border-transparent'}`}
                         >
@@ -648,9 +753,7 @@
                               key={idx} 
                               onClick={() => {
                                 setSettings(s => {
-                                  const newScope = s.scope.includes(scopeName) 
-                                    ? s.scope.filter(sn => sn !== scopeName) 
-                                    : [...s.scope, scopeName];
+                                  const newScope = s.scope.includes(scopeName) ? s.scope.filter(sn => sn !== scopeName) : [...s.scope, scopeName];
                                   return { ...s, scope: newScope };
                                 });
                               }} 
@@ -692,15 +795,14 @@
                           }
                           setShowNameModal(true);
                         }} 
-                        disabled={isDbLoading} 
-                        className="w-full md:w-auto flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-10 py-5 rounded-[2rem] text-xl font-extrabold shadow-xl shadow-purple-200 hover:shadow-2xl hover:shadow-purple-300 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isDbLoading} // 僅在初始載入時鎖定，背景靜默更新完全不干擾
+                        className={`w-full md:w-auto flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-10 py-5 rounded-[2rem] text-xl font-extrabold shadow-xl shadow-purple-200 hover:shadow-2xl hover:shadow-purple-300 hover:-translate-y-1 active:scale-95 transition-all ${isDbLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {isDbLoading ? <RefreshCw className="animate-spin" size={28} /> : <Play size={28} className="fill-white" />}
                         {isDbLoading ? '準備中...' : '開始測驗 GO!'}
                       </button>
                     </div>
                   </div>
-
                 </div>
               </div>
             )}
@@ -723,6 +825,14 @@
                   </div>
 
                   <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setConfirmModal({isOpen: true, type: 'report', data: questions[currentIndex]})} 
+                      className="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-500 px-3 py-2.5 rounded-2xl font-bold transition-colors text-sm border border-rose-100"
+                      title="若發現此題答案或敘述有誤，請點此回報"
+                    >
+                      <AlertTriangle size={16} /> <span className="hidden sm:inline">回報問題</span>
+                    </button>
+
                     {settings.mode === 'timeChallenge' || settings.mode === 'normalTest' ? (
                       <div className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-mono text-xl font-bold transition-colors shadow-sm ${timeLeft < 60 ? 'bg-rose-100 text-rose-600 border border-rose-200 animate-pulse' : 'bg-white text-slate-600 border border-slate-100'}`}>
                         <Clock size={22} className={timeLeft < 60 ? 'text-rose-500' : 'text-slate-400'} /> {formatTime(timeLeft)}
@@ -885,20 +995,29 @@
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => (
-                    <div key={idx} className="bg-white rounded-2xl p-5 border border-slate-100 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow group relative">
-                      <div className="mb-4">
-                        <div className="flex gap-2 mb-3">
-                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">{q.scope}</span>
-                          <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${getTypeColor(q.type)}`}>{q.type}</span>
+                  {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
+                    const isReported = reportedList.includes(q.question);
+                    return (
+                      <div key={idx} className={`bg-white rounded-2xl p-5 border ${isReported ? 'border-amber-300 shadow-md opacity-75' : 'border-slate-100 shadow-sm'} flex flex-col justify-between hover:shadow-md transition-all group relative`}>
+                        {isReported && (
+                          <div className="absolute -top-3 -right-2 bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-10 border-2 border-white">
+                            <AlertTriangle size={14} /> 疑似有誤
+                          </div>
+                        )}
+                        <div className="mb-4">
+                          <div className="flex gap-2 mb-3">
+                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">{q.scope}</span>
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${getTypeColor(q.type)}`}>{q.type}</span>
+                            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">第 {q.id} 題</span>
+                          </div>
+                          <span className={`text-xl font-bold block mb-2 ${isReported ? 'text-slate-400 line-through decoration-rose-300' : 'text-slate-700'}`}>{q.question}</span>
                         </div>
-                        <span className="text-xl font-bold text-slate-700 block mb-2">{q.question}</span>
+                        <div className={`w-full h-12 rounded-xl flex items-center justify-center font-black text-xl ${isReported ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                          {q.answer}
+                        </div>
                       </div>
-                      <div className="w-full h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-black text-xl">
-                        {q.answer}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).length === 0 && (
                     <div className="col-span-full text-center py-10 text-slate-400 font-bold">尚無題目資料</div>
                   )}
@@ -911,6 +1030,7 @@
               const mistakesArray = Object.values(localMistakes || {}).filter(q => q && q.question);
               const availableScopes = [...new Set(questionBank.map(q => String(q.scope || '未分類').trim()))].filter(s => s !== '錯題集' && s !== '未分類');
               const filteredMistakes = mistakesArray
+                .filter(q => !reportedList.includes(q.question))
                 .filter(q => mistakeFilterScope === 'all' || String(q.scope || '未分類').trim() === mistakeFilterScope)
                 .filter(q => mistakeFilterType === 'all' || String(q.type || '未分類').trim() === mistakeFilterType)
                 .sort((a, b) => b.count - a.count);
@@ -950,11 +1070,10 @@
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
                   {filteredMistakes.map((q, idx) => (
                     <div key={idx} className="bg-white rounded-2xl p-2 md:p-3 border border-slate-100 flex items-center justify-between shadow-sm relative overflow-hidden group">
                       <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-rose-50 to-transparent z-0"></div>
-                      
                       <div className="relative z-10 flex-1 pl-2 md:pl-4">
                         <div className="flex gap-1 mb-1 items-center flex-wrap">
                           {q.scope && q.scope !== '錯題集' && q.scope !== '未分類' && (
@@ -975,12 +1094,10 @@
                       </div>
                     </div>
                   ))}
-                  
                   {filteredMistakes.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
                       <Archive size={48} className="mb-4 opacity-20" />
                       <p className="font-bold text-lg">目前沒有符合條件的錯題</p>
-                      <p className="text-sm mt-1">太厲害了！繼續保持滿分狀態 🎉</p>
                     </div>
                   )}
                 </div>
@@ -992,6 +1109,84 @@
 
           <MobileNav />
 
+          {/* 1. 回報問題確認彈窗 */}
+          {confirmModal.isOpen && confirmModal.type === 'report' && (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-fade-in-up text-center border-t-8 border-rose-500">
+                <div className="mx-auto w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-5">
+                  <AlertTriangle size={32} />
+                </div>
+                <h3 className="text-2xl font-black text-slate-800 mb-2">確認回報問題</h3>
+                <p className="text-slate-500 font-bold mb-8 text-sm leading-relaxed">
+                  您確定這題的敘述或答案有誤嗎？<br/>
+                  <span className="text-rose-500">回報後系統將自動跳過此題，且不計入您的最終成績與錯題集內。</span>
+                </p>
+                <div className="flex gap-3">
+                  <button onClick={() => setConfirmModal({isOpen: false, type: '', data: null})} className="flex-1 py-3.5 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">取消</button>
+                  <button onClick={executeReportError} className="flex-1 py-3.5 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 shadow-md shadow-rose-200 transition-colors">確認回報</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 2. 計時挑戰設定 Modal */}
+          {showTimeModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up flex flex-col">
+                <h3 className="text-2xl font-extrabold text-slate-800 mb-2">選擇測驗時間 ⏱️</h3>
+                <p className="text-slate-500 font-medium mb-2">請上下滑動以選擇您的計時長度：</p>
+                
+                <div 
+                  className="relative h-48 my-4 bg-slate-50 rounded-[1.5rem] border border-slate-200" 
+                  style={{ maskImage: 'linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)', WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)' }}
+                >
+                  <div className="absolute top-1/2 left-0 w-full h-12 -mt-6 border-y-2 border-sky-400 bg-sky-100/30 pointer-events-none z-10"></div>
+                  <ul 
+                    className="h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar pt-[72px] pb-[72px]"
+                    onScroll={(e) => {
+                        const itemHeight = 48; 
+                        const index = Math.round(e.target.scrollTop / itemHeight);
+                        if(index >= 0 && index < 10) setCustomTime(index + 1);
+                    }}
+                  >
+                    {[...Array(10)].map((_, i) => (
+                      <li key={i} className={`h-12 flex items-center justify-center snap-center text-3xl font-black cursor-pointer transition-all duration-200 ${customTime === i + 1 ? 'text-sky-600 scale-110' : 'text-slate-300'}`} onClick={() => setCustomTime(i + 1)}>
+                        {i + 1}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="text-center font-bold text-sky-600 mb-6 bg-sky-50 py-2 rounded-xl">
+                  已選擇：{customTime} 分鐘
+                </div>
+                
+                <button onClick={() => setShowTimeModal(false)} className="w-full py-4 rounded-xl font-bold text-white bg-sky-500 hover:bg-sky-600 transition-colors shadow-md shadow-sky-200">
+                  確定
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 3. 一般測驗提示 Modal */}
+          {showNormalModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up text-center">
+                <div className="mx-auto w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
+                  <BookOpen size={32} />
+                </div>
+                <h3 className="text-2xl font-extrabold text-slate-800 mb-4">一般測驗模式</h3>
+                <p className="text-slate-600 font-medium mb-8 leading-relaxed">
+                  此模式會依題目範圍選擇 100 題字音、100 題字形的題目進行測驗，一律計時 10 分鐘。
+                </p>
+                <button onClick={() => setShowNormalModal(false)} className="w-full py-4 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-200">
+                  我知道了
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 4. API 設定 Modal */}
           {showApiModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full shadow-2xl border border-white/50 animate-fade-in-up">
@@ -1045,46 +1240,7 @@
             </div>
           )}
 
-          {showTimeModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up flex flex-col">
-                <h3 className="text-2xl font-extrabold text-slate-800 mb-2">選擇測驗時間 ⏱️</h3>
-                <p className="text-slate-500 font-medium mb-6">請點選下方選項設定您的計時長度：</p>
-                <div className="max-h-60 overflow-y-auto flex flex-col gap-2 pr-2 mb-6">
-                  {[...Array(10)].map((_, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => { setCustomTime(i + 1); setShowTimeModal(false); }} 
-                      className={`p-4 rounded-xl font-bold transition-all text-left ${customTime === i + 1 ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-sky-50 hover:text-sky-600'}`}
-                    >
-                      {i + 1} 分鐘
-                    </button>
-                  ))}
-                </div>
-                <button onClick={() => setShowTimeModal(false)} className="w-full py-4 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">
-                  確定
-                </button>
-              </div>
-            </div>
-          )}
-
-          {showNormalModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up text-center">
-                <div className="mx-auto w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
-                  <BookOpen size={32} />
-                </div>
-                <h3 className="text-2xl font-extrabold text-slate-800 mb-4">一般測驗模式</h3>
-                <p className="text-slate-600 font-medium mb-8 leading-relaxed">
-                  此模式會依題目範圍選擇 100 題字音、100 題字形的題目進行測驗，一律計時 10 分鐘。
-                </p>
-                <button onClick={() => setShowNormalModal(false)} className="w-full py-4 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-200">
-                  我知道了
-                </button>
-              </div>
-            </div>
-          )}
-
+          {/* 5. 建立名稱 Modal */}
           {showNameModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up flex flex-col">
@@ -1124,8 +1280,9 @@
             </div>
           )}
 
+          {/* 6. 全局提示訊息 Alert */}
           {alertMsg && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+            <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up text-center flex flex-col items-center">
                 <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
                   <XCircle size={32} />
@@ -1143,1109 +1300,8 @@
       );
     }
 
-    // --- 4. 渲染應用程式 ---
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
 </body>
-</html>  // 2. 判斷系統版本與設備名稱
-  let os = "未知系統";
-  let device = "未知設備";
-
-  if (/Windows NT 10.0/.test(ua)) { os = "Windows 10/11"; device = "PC電腦"; }
-  else if (/Windows NT/.test(ua)) { os = "Windows"; device = "PC電腦"; }
-  else if (/Mac OS X/.test(ua)) {
-    os = "macOS " + (ua.match(/Mac OS X (\d+[._]\d+[._]?\d*)/)?.[1] || "").replace(/_/g, '.');
-    device = "Mac電腦";
-    // 辨識新型 iPad
-    if (navigator.maxTouchPoints > 1 && navigator.platform === 'MacIntel') {
-        device = "iPad";
-        os = "iPadOS";
-    }
-  }
-  else if (/Android/.test(ua)) {
-    os = "Android " + (ua.match(/Android (\d+(\.\d+)*)/)?.[1] || "");
-    device = "Android裝置";
-  }
-  else if (/iPhone|iPad|iPod/.test(ua)) {
-    device = ua.match(/iPhone|iPad|iPod/)[0];
-    os = "iOS " + (ua.match(/OS (\d+[._]\d+[._]?\d*)/)?.[1] || "").replace(/_/g, '.');
-  }
-
-  return `${device} (${os}) - ${browser}`;
-};
-
-// --- 主應用程式 ---
-export default function App() {
-  const [gameState, setGameState] = useState('menu'); 
-  const [questionBank, setQuestionBank] = useState([]);
-  const [isDbLoading, setIsDbLoading] = useState(false);
-  const [dbStatus, setDbStatus] = useState({ type: 'info', msg: '系統準備中' });
-
-  // API 網址狀態管理
-  const [apiUrl, setApiUrl] = useState(() => localStorage.getItem('CUSTOM_API_URL') || GOOGLE_SCRIPT_API_URL);
-  const [showApiModal, setShowApiModal] = useState(false);
-  const [inputApiUrl, setInputApiUrl] = useState('');
-
-  // 修正3：將初始 mode 正確對應為 timeChallenge
-  const [settings, setSettings] = useState({ mode: 'timeChallenge', scope: [], type: 'all' });
-  const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(600); 
-  const [timeSpent, setTimeSpent] = useState(0); 
-  const [score, setScore] = useState({ correct: 0, incorrect: 0, wrongList: [], synced: false });
-  
-  const [currentOptions, setCurrentOptions] = useState([]); 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); 
-
-  // 新增：用於記錄當前作答與反饋
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [feedback, setFeedback] = useState(null);
-
-  // 新增：自學區與錯題集狀態
-  const [localMistakes, setLocalMistakes] = useState(() => JSON.parse(localStorage.getItem('MISTAKES_DB')) || {});
-  const [studyScope, setStudyScope] = useState('');
-  const [studyType, setStudyType] = useState('all');
-
-  // 新增：模式專屬 Modal 與設定狀態
-  const [showTimeModal, setShowTimeModal] = useState(false);
-  const [showNormalModal, setShowNormalModal] = useState(false);
-  const [customTime, setCustomTime] = useState(5); // 預設 5 分鐘
-  const [mistakeFilterScope, setMistakeFilterScope] = useState('all');
-  const [mistakeFilterType, setMistakeFilterType] = useState('all');
-
-  // 新增：使用者名稱與視窗狀態
-  const [userName, setUserName] = useState(() => localStorage.getItem('USER_NAME') || '');
-  const [showNameModal, setShowNameModal] = useState(false);
-
-  // 修正2：建立專屬的系統提示狀態 (取代被瀏覽器阻擋的原生 alert)
-  const [alertMsg, setAlertMsg] = useState('');
-
-  // 新增：處理題目字體自動縮放的 Ref
-  const containerRef = useRef(null);
-  const textRef = useRef(null);
-
-  // 新增：測驗結束後，自動將錯題紀錄更新到本地與雲端 API
-  useEffect(() => {
-    if (gameState === 'result' && !score.synced) {
-      if (score.wrongList.length > 0) {
-        // 1. 更新本地錯題統計 (次數累積)
-        setLocalMistakes(prev => {
-          const newMistakes = { ...prev };
-          score.wrongList.forEach(q => {
-            const key = q.question; // 移除對 ID 的依賴，直接使用題目作為唯一識別
-            if (newMistakes[key]) {
-              newMistakes[key].count += 1;
-            } else {
-              newMistakes[key] = { ...q, count: 1 };
-            }
-          });
-          localStorage.setItem('MISTAKES_DB', JSON.stringify(newMistakes));
-          return newMistakes;
-        });
-
-        // 產生包含日期的 24 小時制測驗時間 (YYYY/MM/DD HH:mm:ss)
-        const now = new Date();
-        const recordTime = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-        
-        // 取得使用者裝置名稱
-        const deviceName = getDeviceName();
-
-        // 精簡上傳的 payload，只保留正確答案與必備資訊，剔除不必要的 ID
-        const uploadMistakes = score.wrongList.map(q => ({
-          scope: q.scope,
-          type: q.type,
-          question: q.question,
-          answer: q.answer
-        }));
-
-        // 2. 非同步發送 POST 請求至 Google Apps Script CSV (加入 userName 與 deviceName)
-        fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 使用 text/plain 避免 CORS 預檢錯誤
-          body: JSON.stringify({ action: 'logMistakes', userName: userName, deviceName: deviceName, mistakes: uploadMistakes, recordTime })
-        }).catch(e => console.warn('雲端錯題同步失敗', e));
-      }
-      // 標記為已同步，避免重複發送
-      setScore(prev => ({ ...prev, synced: true }));
-    }
-  }, [gameState, score.synced, score.wrongList, apiUrl, userName]);
-
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      setIsDbLoading(true);
-      setDbStatus({ type: 'info', msg: '同步雲端 API 資料中...' });
-      try {
-        if (!apiUrl) throw new Error("無網址");
-        
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          redirect: 'follow'
-        });
-        
-        if (!response.ok) throw new Error(`請求失敗，狀態碼：${response.status}`);
-        
-        const textData = await response.text();
-        
-        let jsonData;
-        try {
-          jsonData = JSON.parse(textData);
-        } catch (parseError) {
-          console.error("❌ 錯誤：API 回傳的不是 JSON 資料。回傳內容開頭：", textData.substring(0, 100));
-          throw new Error("資料格式錯誤 (非 JSON)");
-        }
-        
-        // 升級解析邏輯：同時解析正常題目與雲端錯題集 (支援統一欄位格式與中英雙重防呆)
-        const parsedQuestions = [];
-        const cloudMistakes = {};
-
-        jsonData.forEach((q, i) => {
-          // 透過「紀錄時間」欄位來精準判斷是否為雲端錯題集寫入的紀錄
-          if (q['紀錄時間'] !== undefined || String(q.scope || '').trim() === '錯題集') {
-            // 加入中英表頭雙重識別，並強制轉為字串去空白，防止試算表標題修改或夾帶空白導致資料讀取失敗
-            const mQuestion = String(q.question || q['錯題內容'] || '').trim();
-            const mAnswer = String(q.answer || q['正確答案'] || '').trim();
-            
-            // 修正1：優先讀取「年度範圍」或「year」，若無才使用 scope (但需排除被設為"錯題集"的干擾)
-            const rawScope = q['年度範圍'] || q.year || (String(q.scope).trim() === '錯題集' ? '' : q.scope);
-            const mScope = String(rawScope || '未分類').trim();
-            
-            const mType = String(q.type || q['題型'] || '未分類').trim();
-
-            if (mQuestion && mAnswer) {
-              const key = mQuestion; // 移除 ID，直接使用題目作為 Key
-              if (cloudMistakes[key]) {
-                cloudMistakes[key].count += 1;
-              } else {
-                cloudMistakes[key] = { scope: mScope, type: mType, question: mQuestion, answer: mAnswer, count: 1 };
-              }
-            }
-          } else {
-            // 正常題目
-            const qQuestion = String(q.question || '').trim();
-            const qAnswer = String(q.answer || '').trim();
-            if (qQuestion && qAnswer) {
-              parsedQuestions.push({
-                scope: String(q.scope || '未分類').trim(), 
-                type: String(q.type || '未分類').trim(), 
-                answer: qAnswer, 
-                question: qQuestion,
-                wrongOptions: [q.wrong1, q.wrong2, q.wrong3].filter(Boolean)
-              });
-            }
-          }
-        });
-        
-        if (parsedQuestions.length > 0) {
-          setQuestionBank(parsedQuestions);
-          
-          // 修正1：只計算非錯題集的題目數量顯示於左下角 (此時 parsedQuestions 已完全排除錯題資料)
-          setDbStatus({ type: 'success', msg: `已載入 ${parsedQuestions.length} 題` });
-          
-          // 同步雲端錯題到本地狀態
-          setLocalMistakes(prev => {
-            const merged = { ...prev };
-            Object.values(cloudMistakes).forEach(cm => {
-              const key = cm.question; // 移除對 ID 的依賴
-              if (!merged[key]) {
-                merged[key] = cm;
-              } else {
-                merged[key].count = Math.max(merged[key].count || 1, cm.count);
-              }
-            });
-            localStorage.setItem('MISTAKES_DB', JSON.stringify(merged));
-            return merged;
-          });
-
-          // 自動將自學區預設範圍設為第一個非錯題集的範圍
-          const availableScopes = [...new Set(parsedQuestions.map(q => q.scope))];
-          if (availableScopes.length > 0) {
-            setStudyScope(availableScopes[0]);
-          }
-        } else {
-          throw new Error("無資料");
-        }
-      } catch (error) {
-        console.warn("API 讀取失敗：", error);
-        setQuestionBank(MOCK_QUESTIONS);
-        setDbStatus({ type: 'warning', msg: '使用本機題庫' });
-      } finally {
-        setIsDbLoading(false);
-      }
-    };
-    fetchQuestions();
-  }, [apiUrl]);
-
-  const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
-
-  const startGame = () => {
-    let filtered = [];
-    
-    // 根據模式決定題庫來源
-    if (settings.mode === 'mistakePractice') {
-      filtered = Object.values(localMistakes);
-      if (settings.type !== 'all') filtered = filtered.filter(q => q.type === settings.type);
-    } else {
-      filtered = questionBank;
-      
-      // 1. 範圍過濾 (排除錯題集，強制要求選擇範圍)
-      filtered = filtered.filter(q => settings.scope.includes(q.scope));
-      
-      // 2. 題型過濾
-      if (settings.type !== 'all') {
-        filtered = filtered.filter(q => q.type === settings.type);
-      }
-      
-      // 3. 一般測驗邏輯：字音、字形各隨機取最多100題
-      if (settings.mode === 'normalTest') {
-        const ziyin = shuffleArray(filtered.filter(q => q.type === '字音')).slice(0, 100);
-        const zixing = shuffleArray(filtered.filter(q => q.type === '字形')).slice(0, 100);
-        filtered = [...ziyin, ...zixing];
-      }
-    }
-    
-    if (filtered.length === 0) {
-      // 修正2：改用系統專屬的提示視窗
-      setAlertMsg("此設定組合下沒有題目，請重新確認題目範圍是否已選取！");
-      return;
-    }
-    
-    setQuestions(shuffleArray(filtered));
-    setCurrentIndex(0);
-    setScore({ correct: 0, incorrect: 0, wrongList: [], synced: false });
-    
-    // 根據模式設定時間
-    if (settings.mode === 'timeChallenge') {
-      setTimeLeft(customTime * 60);
-    } else if (settings.mode === 'normalTest') {
-      setTimeLeft(600); // 10分鐘
-    } else {
-      setTimeLeft(0); // 錯題加強不限時 (正數計時)
-    }
-    
-    setTimeSpent(0);
-    setGameState('playing');
-    setIsSidebarCollapsed(true); 
-  };
-
-  // 升級：動態產生四個選項（優先使用題庫內建的錯誤答案）
-  useEffect(() => {
-    if (gameState === 'playing' && questions[currentIndex]) {
-      const currentQ = questions[currentIndex];
-      
-      let distractors = [];
-
-      // 1. 優先放入真實題庫設定的錯誤答案
-      if (currentQ.wrongOptions && currentQ.wrongOptions.length > 0) {
-        distractors = [...currentQ.wrongOptions];
-      }
-      
-      // 2. 如果沒有設定錯誤答案，或是不滿 3 個，才從題庫其他題目隨機抓取
-      if (distractors.length < 3) {
-        const sameTypeAnswers = Array.from(new Set(
-          questionBank
-            .filter(q => q.type === currentQ.type && q.answer !== currentQ.answer && !distractors.includes(q.answer))
-            .map(q => q.answer)
-        ));
-        const shuffledAnswers = sameTypeAnswers.sort(() => 0.5 - Math.random());
-        
-        let addIdx = 0;
-        while (distractors.length < 3 && addIdx < shuffledAnswers.length) {
-          distractors.push(shuffledAnswers[addIdx]);
-          addIdx++;
-        }
-      }
-      
-      // 3. 終極安全網：若題庫同類型題目極少，補上預設字元
-      const fallbackZhuyin = ['ㄓ', 'ㄔ', 'ㄕ', 'ㄖ', 'ㄗ', 'ㄘ', 'ㄙ', 'ㄧ', 'ㄨ', 'ㄩ'];
-      const fallbackWords = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-      let fallbacks = currentQ.type === '字音' ? fallbackZhuyin : fallbackWords;
-      let fIdx = 0;
-      
-      while (distractors.length < 3 && fIdx < fallbacks.length) {
-        if (!distractors.includes(fallbacks[fIdx]) && fallbacks[fIdx] !== currentQ.answer) {
-          distractors.push(fallbacks[fIdx]);
-        }
-        fIdx++;
-      }
-
-      // 將正確答案與最終的 3 個誘答合併後打亂順序
-      const combinedOptions = [currentQ.answer, ...distractors.slice(0, 3)].sort(() => 0.5 - Math.random());
-      setCurrentOptions(combinedOptions);
-    }
-  }, [currentIndex, questions, gameState, questionBank]);
-
-  // 新增：處理測驗題目自動縮放，確保單行顯示
-  useEffect(() => {
-    if (gameState === 'playing' && textRef.current && containerRef.current) {
-      const container = containerRef.current;
-      const text = textRef.current;
-      
-      // 重置縮放以測量真實寬度
-      text.style.transform = 'scale(1)';
-      
-      const containerWidth = container.clientWidth - 64; // 扣除 padding 空間
-      const textWidth = text.scrollWidth;
-      
-      if (textWidth > containerWidth && containerWidth > 0) {
-        const scale = containerWidth / textWidth;
-        text.style.transform = `scale(${scale})`;
-      }
-    }
-  }, [currentIndex, questions, gameState]);
-
-  useEffect(() => {
-    let timer;
-    if (gameState === 'playing') {
-      timer = setInterval(() => {
-        if (settings.mode === 'timeChallenge' || settings.mode === 'normalTest') {
-          setTimeLeft(prev => {
-            if (prev <= 1) { clearInterval(timer); endGame(); return 0; }
-            return prev - 1;
-          });
-        }
-        setTimeSpent(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [gameState, settings.mode]);
-
-  const formatTime = (seconds) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-  
-  const getEncouragement = (acc) => {
-    if (acc === 100) return "太神啦！完美全對，你就是字音字形大師！ 🎉";
-    if (acc >= 95) return "差一點點就完美了！實力非常堅強喔！ 🔥";
-    if (acc >= 90) return "表現極佳！基礎很扎實，繼續保持！ ⭐";
-    if (acc >= 85) return "很棒的成績！再稍微留意一下細節就無敵了！ 👍";
-    if (acc >= 80) return "表現不錯喔！已經超越大部分的人了！ 👏";
-    if (acc >= 70) return "再接再厲！把錯題看熟，下次一定會更好！ 💪";
-    if (acc >= 60) return "及格了！還有很大的進步空間，繼續加油！ 🌱";
-    return "別氣餒！失敗是成功的養分，多練習幾次一定行！ 💡";
-  };
-  
-  const endGame = useCallback(() => {
-    setGameState('result');
-    setIsSidebarCollapsed(false); 
-  }, []);
-
-  const handleOptionClick = (selectedAnswer) => {
-    if (selectedOption) return; // 防止在延遲期間重複點擊
-
-    const currentQ = questions[currentIndex];
-    const isCorrect = selectedAnswer === currentQ.answer;
-
-    setSelectedOption(selectedAnswer);
-    setFeedback(isCorrect ? 'correct' : 'incorrect');
-
-    setTimeout(() => {
-      if (isCorrect) {
-        setScore(prev => ({ ...prev, correct: prev.correct + 1 }));
-      } else {
-        setScore(prev => ({ ...prev, incorrect: prev.incorrect + 1, wrongList: [...prev.wrongList, currentQ] }));
-      }
-
-      if (currentIndex + 1 < questions.length) {
-        setCurrentIndex(prev => prev + 1);
-      } else {
-        endGame();
-      }
-      setSelectedOption(null);
-      setFeedback(null);
-    }, 400); // 將換題視覺延遲從 1000 縮短至 400 毫秒
-  };
-
-  const handleReturnToMenu = () => {
-    setGameState('menu');
-    setIsSidebarCollapsed(false);
-  };
-
-  const Sidebar = () => (
-    <aside className={`hidden md:flex flex-col bg-white/60 backdrop-blur-2xl border-r border-white/40 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.05)] z-20 transition-all duration-500 ease-in-out ${isSidebarCollapsed ? 'w-24 items-center px-4 py-6' : 'w-72 p-6'}`}>
-      <div className={`flex items-center gap-3 mb-12 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-        <div className="bg-gradient-to-tr from-indigo-400 to-purple-400 p-2.5 rounded-2xl text-white shadow-lg shadow-indigo-200 shrink-0">
-          <PenTool size={28} />
-        </div>
-        {!isSidebarCollapsed && (
-          <div className="overflow-hidden whitespace-nowrap opacity-100 transition-opacity duration-300">
-            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">字音字形特訓系統</h1>
-            <p className="text-xs font-bold text-slate-400">國小專項練習平台</p>
-          </div>
-        )}
-      </div>
-
-      <nav className="flex flex-col gap-2 w-full flex-1">
-        <button onClick={handleReturnToMenu} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-4 py-3.5'} rounded-2xl font-bold transition-all ${gameState === 'menu' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:bg-white/50 hover:text-slate-700'}`} title="練功區">
-          <LayoutDashboard size={20} className={gameState === 'menu' ? 'text-indigo-500 shrink-0' : 'shrink-0'} /> 
-          {!isSidebarCollapsed && <span className="whitespace-nowrap">練功區</span>}
-        </button>
-        <button onClick={() => setGameState('study')} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-4 py-3.5'} rounded-2xl font-bold transition-all ${gameState === 'study' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:bg-white/50 hover:text-slate-700'}`} title="自學區">
-          <Library size={20} className={gameState === 'study' ? 'text-indigo-500 shrink-0' : 'shrink-0'} /> 
-          {!isSidebarCollapsed && <span className="whitespace-nowrap">自學區</span>}
-        </button>
-        <button onClick={() => setGameState('mistakes')} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-4 py-3.5'} rounded-2xl font-bold transition-all ${gameState === 'mistakes' ? 'bg-white shadow-sm text-rose-600' : 'text-slate-500 hover:bg-white/50 hover:text-slate-700'}`} title="錯題集">
-          <Archive size={20} className={gameState === 'mistakes' ? 'text-rose-500 shrink-0' : 'shrink-0'} /> 
-          {!isSidebarCollapsed && <span className="whitespace-nowrap">錯題集</span>}
-        </button>
-      </nav>
-
-      {!isSidebarCollapsed && (
-        <div className="mt-auto bg-gradient-to-br from-pink-100 to-rose-50 p-5 rounded-3xl border border-white relative overflow-hidden shrink-0">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2 text-rose-600 font-bold">
-                {isDbLoading ? <RefreshCw className="animate-spin w-4 h-4" /> : <CloudDownload className="w-4 h-4" />} 題庫狀態
-              </div>
-              <button 
-                onClick={() => { setInputApiUrl(apiUrl); setShowApiModal(true); }} 
-                className="text-rose-400 hover:text-rose-600 hover:bg-white/50 p-1.5 rounded-xl transition-all" 
-                title="更改 API 網址"
-              >
-                <Link size={16} />
-              </button>
-            </div>
-            <p className="text-sm font-bold text-slate-600 mb-3">{dbStatus.msg}</p>
-            <div className="w-full bg-white/60 h-2 rounded-full overflow-hidden">
-              <div className="bg-rose-400 h-full rounded-full w-full"></div>
-            </div>
-          </div>
-          <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-200 rounded-full blur-2xl opacity-50"></div>
-        </div>
-      )}
-    </aside>
-  );
-
-  const MobileNav = () => (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-100 pb-safe z-50 px-6 py-3 flex justify-between items-center shadow-[0_-4px_24px_rgba(0,0,0,0.02)]">
-      <button onClick={handleReturnToMenu} className={`flex flex-col items-center gap-1 ${gameState === 'menu' ? 'text-indigo-600' : 'text-slate-400'}`}>
-        <LayoutDashboard size={24} />
-        <span className="text-[10px] font-bold">練功區</span>
-      </button>
-      <button onClick={() => setGameState('study')} className={`flex flex-col items-center gap-1 ${gameState === 'study' ? 'text-indigo-600' : 'text-slate-400'}`}>
-        <Library size={24} />
-        <span className="text-[10px] font-bold">自學</span>
-      </button>
-      <button onClick={() => setGameState('mistakes')} className={`flex flex-col items-center gap-1 ${gameState === 'mistakes' ? 'text-rose-600' : 'text-slate-400'}`}>
-        <Archive size={24} />
-        <span className="text-[10px] font-bold">錯題</span>
-      </button>
-    </div>
-  );
-
-  const acc = (score.correct + score.incorrect) === 0 ? 0 : Math.round((score.correct / (score.correct + score.incorrect)) * 100);
-
-  return (
-    <div className="flex h-screen w-full bg-slate-50/50 font-sans text-slate-800 overflow-hidden relative selection:bg-indigo-100 selection:text-indigo-900">
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-pink-200/40 rounded-full blur-[120px]"></div>
-        <div className="absolute top-[10%] -right-[10%] w-[40%] h-[60%] bg-indigo-200/40 rounded-full blur-[100px]"></div>
-        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] bg-teal-100/40 rounded-full blur-[120px]"></div>
-      </div>
-
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col h-full overflow-y-auto pb-20 md:pb-0 relative scroll-smooth">
-        
-        {/* --- 練功區 --- */}
-        {gameState === 'menu' && (
-          <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in">
-            <header className="mb-8 md:mb-12">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight mb-2">準備好今天的特訓了嗎？ ✨</h2>
-              <p className="text-slate-500 font-medium">請在下方設定想要練習的模式。</p>
-            </header>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-10">
-              
-              <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2rem] shadow-sm border border-white flex flex-col relative overflow-hidden group">
-                <div className="absolute -right-6 -top-6 w-24 h-24 bg-sky-100 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                <h3 className="text-lg font-bold text-slate-700 mb-5 flex items-center gap-2 relative z-10">
-                  <div className="bg-sky-100 text-sky-600 p-2 rounded-xl"><Timer size={20} /></div> 選擇模式
-                </h3>
-                <div className="flex flex-col gap-3 relative z-10 flex-1">
-                  {[
-                    { id: 'timeChallenge', label: '計時挑戰' },
-                    { id: 'normalTest', label: '一般測驗' },
-                    { id: 'mistakePractice', label: '錯題加強' }
-                  ].map(modeOpt => (
-                    <button 
-                      key={modeOpt.id} 
-                      onClick={() => {
-                        setSettings(s => ({ ...s, mode: modeOpt.id, type: modeOpt.id === 'normalTest' ? 'all' : s.type }));
-                        if (modeOpt.id === 'timeChallenge') setShowTimeModal(true);
-                        if (modeOpt.id === 'normalTest') setShowNormalModal(true);
-                      }} 
-                      // 修正3：加入 gap-3 sm:gap-4 與合適的 padding 防止擠壓
-                      className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl transition-all ${settings.mode === modeOpt.id ? 'bg-sky-50 border-2 border-sky-400 shadow-md shadow-sky-100' : 'bg-slate-50 border-2 border-transparent hover:bg-slate-100'}`}
-                    >
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${settings.mode === modeOpt.id ? 'border-sky-500' : 'border-slate-300'}`}>
-                        {settings.mode === modeOpt.id && <div className="w-2.5 h-2.5 bg-sky-500 rounded-full" />}
-                      </div>
-                      {/* 修正3：加入 whitespace-nowrap 確保文字不換行 */}
-                      <span className="font-bold text-slate-700 whitespace-nowrap">{modeOpt.label}</span>
-                      {settings.mode === modeOpt.id && modeOpt.id === 'timeChallenge' && (
-                        /* 修正3：加入 shrink-0 whitespace-nowrap 防止時間標籤換行 */
-                        <span className="ml-auto text-xs font-bold text-sky-600 bg-sky-100 px-2 py-1 rounded-lg shrink-0 whitespace-nowrap">{customTime} 分鐘</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2rem] shadow-sm border border-white lg:col-span-2 relative overflow-hidden group">
-                <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-100 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                
-                {/* 常駐右上角：「全部範圍」按鈕實作全選/全不選 (錯題加強時隱藏) */}
-                {settings.mode !== 'mistakePractice' && (() => {
-                  const availableScopes = [...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集');
-                  const isAllSelected = availableScopes.length > 0 && settings.scope.length === availableScopes.length;
-                  return (
-                    <button 
-                      onClick={() => {
-                        if (isAllSelected) {
-                          setSettings(s => ({ ...s, scope: [] }));
-                        } else {
-                          setSettings(s => ({ ...s, scope: availableScopes }));
-                        }
-                      }} 
-                      className={`absolute top-5 right-5 text-xs py-1.5 px-3 rounded-xl font-bold transition-all z-20 ${isAllSelected ? 'bg-emerald-100 text-emerald-600 shadow-sm border border-emerald-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border border-transparent'}`}
-                    >
-                      {isAllSelected ? '取消全選' : '全部範圍'}
-                    </button>
-                  );
-                })()}
-
-                <h3 className="text-lg font-bold text-slate-700 mb-5 flex items-center gap-2 relative z-10">
-                  <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl"><BookOpen size={20} /></div> 題目範圍
-                </h3>
-                
-                {/* 根據模式判斷題目範圍顯示內容 */}
-                {settings.mode === 'mistakePractice' ? (
-                  <div className="flex flex-col items-center justify-center h-48 bg-slate-50 rounded-[1.5rem] border-2 border-dashed border-slate-200 relative z-10">
-                    <Archive size={36} className="text-slate-300 mb-3" />
-                    <p className="font-bold text-slate-500 text-lg">已鎖定為「錯題集」</p>
-                    <p className="text-xs font-bold text-slate-400 mt-1">系統將為您安排專屬的弱點強化特訓</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 max-h-48 overflow-y-auto pr-2">
-                    {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => {
-                      const isSelected = settings.scope.includes(scopeName);
-                      return (
-                        <button 
-                          key={idx} 
-                          onClick={() => {
-                            setSettings(s => {
-                              const newScope = s.scope.includes(scopeName) 
-                                ? s.scope.filter(sn => sn !== scopeName) 
-                                : [...s.scope, scopeName];
-                              return { ...s, scope: newScope };
-                            });
-                          }} 
-                          className={`py-4 px-2 rounded-2xl font-bold transition-all text-sm ${isSelected ? 'bg-gradient-to-br from-emerald-400 to-teal-400 text-white shadow-lg shadow-emerald-200 border-none' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border-2 border-transparent'}`}
-                        >
-                          {scopeName}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2rem] shadow-sm border border-white lg:col-span-3 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-                <div className="w-full md:w-auto">
-                  <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <div className="bg-amber-100 text-amber-600 p-2 rounded-xl"><Settings size={20} /></div> 題型
-                  </h3>
-                  <div className="flex gap-3">
-                    {[{id: '字音', label: '字音'}, {id: '字形', label: '字形'}, {id: 'all', label: '字音+字形'}].map(type => (
-                      <button 
-                        key={type.id} 
-                        onClick={() => settings.mode !== 'normalTest' && setSettings(s => ({ ...s, type: type.id }))} 
-                        disabled={settings.mode === 'normalTest'}
-                        className={`py-3 px-6 rounded-2xl font-bold transition-all ${settings.type === type.id ? 'bg-amber-100 text-amber-700 border-2 border-amber-400 shadow-md shadow-amber-50' : 'bg-slate-50 text-slate-500 border-2 border-transparent hover:bg-slate-100'} ${settings.mode === 'normalTest' && settings.type !== type.id ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      >
-                        {type.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="w-full md:w-auto mt-4 md:mt-0">
-                  <button 
-                    onClick={() => {
-                      // 修正2：在彈出輸入姓名視窗前檢查，改用自訂的提示視窗
-                      if (settings.mode !== 'mistakePractice' && settings.scope.length === 0) {
-                        setAlertMsg("請先選擇至少一個「題目範圍」才能開始測驗喔！");
-                        return;
-                      }
-                      setShowNameModal(true);
-                    }} 
-                    disabled={isDbLoading} 
-                    className="w-full md:w-auto flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-10 py-5 rounded-[2rem] text-xl font-extrabold shadow-xl shadow-purple-200 hover:shadow-2xl hover:shadow-purple-300 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isDbLoading ? <RefreshCw className="animate-spin" size={28} /> : <Play size={28} className="fill-white" />}
-                    {isDbLoading ? '準備中...' : '開始測驗 GO!'}
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* --- 測驗進行畫面 --- */}
-        {gameState === 'playing' && questions[currentIndex] && (
-          <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full flex flex-col">
-            <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-4 shadow-sm border border-white flex flex-wrap justify-between items-center gap-4 mb-6 shrink-0 z-20 relative transition-all">
-              <div className="flex items-center gap-4 pl-2">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 font-extrabold text-xl shadow-inner border border-white">
-                  {currentIndex + 1}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-1">Question {currentIndex + 1} of {questions.length}</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{questions[currentIndex].scope}</span>
-                    {/* 修正2：套用題型專屬色彩 */}
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${getTypeColor(questions[currentIndex].type)}`}>{questions[currentIndex].type}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                {settings.mode === 'timeChallenge' || settings.mode === 'normalTest' ? (
-                  <div className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-mono text-xl font-bold transition-colors shadow-sm ${timeLeft < 60 ? 'bg-rose-100 text-rose-600 border border-rose-200 animate-pulse' : 'bg-white text-slate-600 border border-slate-100'}`}>
-                    <Clock size={22} className={timeLeft < 60 ? 'text-rose-500' : 'text-slate-400'} /> {formatTime(timeLeft)}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold bg-white text-slate-500 border border-slate-100 shadow-sm">
-                    <Timer size={20} className="text-slate-400" /> 錯題加強中
-                  </div>
-                )}
-                <button onClick={endGame} className="hidden md:flex items-center gap-1 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 px-4 py-2.5 rounded-2xl font-bold transition-colors text-sm">
-                  提早結束
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col gap-4 md:gap-6 items-center justify-start md:justify-center pt-4 md:pt-0 max-w-4xl mx-auto w-full">
-              <div ref={containerRef} className="w-full bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-sm border border-white flex flex-col items-center justify-center relative overflow-hidden min-h-[200px] md:min-h-[300px] px-8">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-pink-100 rounded-full blur-3xl opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-40 h-40 bg-indigo-100 rounded-full blur-3xl opacity-50"></div>
-                
-                <h2 ref={textRef} className="text-5xl md:text-8xl font-extrabold tracking-widest text-slate-800 leading-tight text-center relative z-10 drop-shadow-sm whitespace-nowrap origin-center transition-transform duration-200">
-                  {questions[currentIndex].question}
-                </h2>
-              </div>
-
-              <div className="w-full grid grid-cols-2 gap-4 md:gap-6 animate-fade-in-up mt-2">
-                {currentOptions.map((opt, idx) => {
-                  // 根據作答結果設定按鈕的高亮樣式
-                  let btnClass = "bg-white/90 backdrop-blur-xl border-2 border-indigo-100 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700";
-                  if (selectedOption !== null) {
-                    if (opt === questions[currentIndex].answer) {
-                      btnClass = "bg-emerald-100 border-2 border-emerald-400 text-emerald-700 shadow-md shadow-emerald-200 scale-105"; 
-                    } else if (opt === selectedOption && feedback === 'incorrect') {
-                      btnClass = "bg-rose-100 border-2 border-rose-400 text-rose-700 opacity-80 scale-95"; 
-                    } else {
-                      btnClass = "bg-slate-50 border-2 border-slate-100 text-slate-400 opacity-50"; 
-                    }
-                  }
-
-                  return (
-                    <button 
-                      key={idx}
-                      onClick={() => handleOptionClick(opt)} 
-                      disabled={selectedOption !== null}
-                      className={`${btnClass} rounded-[2.5rem] px-4 py-8 md:py-12 text-3xl md:text-5xl font-black shadow-sm transition-all flex items-center justify-center text-center group`}
-                    >
-                      <span className="inline-block transition-transform group-hover:scale-110">
-                        {opt}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* --- 測驗結果畫面 --- */}
-        {gameState === 'result' && (
-          <div className="p-6 md:p-10 max-w-5xl mx-auto w-full animate-fade-in pb-24 md:pb-10">
-            <div className="text-center mb-10 relative">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 text-white shadow-xl shadow-amber-200 mb-4 border-4 border-white">
-                <Award size={40} className="fill-white/20" />
-              </div>
-              <h2 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight">特訓完成！</h2>
-              <p className="text-slate-500 font-medium mt-2">來看看你的分析數據儀表板吧。</p>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
-              <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-white shadow-sm flex flex-col items-center justify-center col-span-2 md:col-span-1">
-                <p className="text-slate-400 font-bold text-sm mb-1 uppercase tracking-wider">總作答數</p>
-                <p className="text-5xl font-black text-slate-700">{score.correct + score.incorrect}</p>
-              </div>
-              <div className="bg-gradient-to-br from-emerald-400 to-teal-400 p-6 rounded-[2rem] border border-white shadow-lg shadow-emerald-200 flex flex-col items-center justify-center text-white col-span-2 md:col-span-1 transform md:-translate-y-2">
-                <p className="font-bold text-emerald-100 text-sm mb-1 uppercase tracking-wider">正確題數</p>
-                <p className="text-6xl font-black">{score.correct}</p>
-              </div>
-              <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-white shadow-sm flex flex-col items-center justify-center col-span-2 md:col-span-1">
-                <p className="text-slate-400 font-bold text-sm mb-1 uppercase tracking-wider">總耗時</p>
-                <p className="text-4xl font-black text-slate-700">{formatTime(timeSpent)}</p>
-              </div>
-              <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-white shadow-sm flex flex-col items-center justify-center col-span-2 md:col-span-1 relative overflow-hidden">
-                <div className="absolute right-0 bottom-0 w-16 h-16 bg-purple-100 rounded-tl-[3rem] -z-10"></div>
-                <p className="text-slate-400 font-bold text-sm mb-1 uppercase tracking-wider">準確率</p>
-                <p className="text-4xl font-black text-purple-600">
-                  {acc}%
-                </p>
-              </div>
-            </div>
-
-            {/* 新增：動態鼓勵話語 */}
-            <div className="bg-indigo-50/80 rounded-[2rem] p-6 mb-10 text-center border border-indigo-100 shadow-sm animate-fade-in-up">
-              <p className="text-xl md:text-2xl font-bold text-indigo-700">
-                {getEncouragement(acc)}
-              </p>
-            </div>
-
-            {score.wrongList.length > 0 && (
-              <div className="bg-white/60 backdrop-blur-md rounded-[2rem] p-6 md:p-8 border border-white shadow-sm mb-8">
-                <h3 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-3">
-                  <div className="w-3 h-8 bg-rose-400 rounded-full"></div> 錯題檢討清單
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {score.wrongList.map((q, i) => (
-                    <div key={i} className="bg-white rounded-2xl p-5 border border-slate-100 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow group">
-                      <div>
-                        <div className="flex gap-2 mb-2">
-                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">{q.scope}</span>
-                          {/* 修正2：套用題型專屬色彩 */}
-                          <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${getTypeColor(q.type)}`}>{q.type}</span>
-                        </div>
-                        <span className="text-xl font-bold text-slate-700">{q.question}</span>
-                      </div>
-                      <div className="min-w-14 h-14 px-4 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 font-black text-2xl group-hover:scale-110 transition-transform">
-                        {q.answer}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <button onClick={handleReturnToMenu} className="flex items-center justify-center gap-2 bg-white text-slate-600 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-colors shadow-sm border border-slate-100">
-                <Home size={20} /> 回到儀表板
-              </button>
-              <button onClick={() => setShowNameModal(true)} className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-400 to-indigo-500 text-white px-10 py-4 rounded-2xl font-bold hover:shadow-lg hover:shadow-indigo-200 transition-all hover:-translate-y-1">
-                <RotateCcw size={20} /> 再挑戰一次
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* --- 自學區畫面 --- */}
-        {gameState === 'study' && (
-          <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in pb-24">
-            <header className="mb-8 md:mb-10">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight mb-2 flex items-center gap-3">
-                <div className="bg-indigo-100 text-indigo-600 p-2.5 rounded-2xl"><Library size={28} /></div> 自學區 📖
-              </h2>
-              <p className="text-slate-500 font-medium">依照年度/範圍瀏覽題目與正確解答，加深記憶。</p>
-            </header>
-
-            <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2rem] shadow-sm border border-white mb-8 flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm font-extrabold text-black bg-gradient-to-r from-amber-300 to-yellow-400 px-4 py-2 rounded-xl shrink-0 shadow-sm border border-yellow-500/30">年度範圍</span>
-                {/* 修正2：移除自學區的全部範圍按鈕 */}
-                {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => setStudyScope(scopeName)} 
-                    className={`py-2 px-4 rounded-xl font-bold text-sm transition-all ${studyScope === scopeName ? 'bg-indigo-500 text-white shadow-md shadow-indigo-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
-                  >
-                    {scopeName}
-                  </button>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm font-extrabold text-black bg-gradient-to-r from-amber-300 to-yellow-400 px-4 py-2 rounded-xl shrink-0 shadow-sm border border-yellow-500/30">題目類型</span>
-                <button onClick={() => setStudyType('all')} className={`py-2 px-4 rounded-xl font-bold text-sm transition-all ${studyType === 'all' ? 'bg-amber-500 text-white shadow-md shadow-amber-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>全部</button>
-                <button onClick={() => setStudyType('字音')} className={`py-2 px-4 rounded-xl font-bold text-sm transition-all ${studyType === '字音' ? 'bg-amber-500 text-white shadow-md shadow-amber-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>字音</button>
-                <button onClick={() => setStudyType('字形')} className={`py-2 px-4 rounded-xl font-bold text-sm transition-all ${studyType === '字形' ? 'bg-amber-500 text-white shadow-md shadow-amber-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>字形</button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => (
-                <div key={idx} className="bg-white rounded-2xl p-5 border border-slate-100 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow group relative">
-                  <div className="mb-4">
-                    <div className="flex gap-2 mb-3">
-                      <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">{q.scope}</span>
-                      {/* 修正2：套用題型專屬色彩 */}
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${getTypeColor(q.type)}`}>{q.type}</span>
-                    </div>
-                    <span className="text-xl font-bold text-slate-700 block mb-2">{q.question}</span>
-                  </div>
-                  <div className="w-full h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-black text-xl">
-                    {q.answer}
-                  </div>
-                </div>
-              ))}
-              {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).length === 0 && (
-                <div className="col-span-full text-center py-10 text-slate-400 font-bold">尚無題目資料</div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* --- 錯題集畫面 --- */}
-        {gameState === 'mistakes' && (() => {
-          // 安全地提取錯題陣列，過濾所有異常/受損的舊有資料
-          const mistakesArray = Object.values(localMistakes || {}).filter(q => q && q.question);
-          
-          // 修正：從完整的 questionBank 提取所有年度範圍，確保列出「所有年度選項」，即使該年度目前無錯題
-          const availableScopes = [...new Set(questionBank.map(q => String(q.scope || '未分類').trim()))].filter(s => s !== '錯題集' && s !== '未分類');
-          
-          // 修正：使用乾淨的 trim() 取代 replace，徹底解決篩選異常問題
-          const filteredMistakes = mistakesArray
-            .filter(q => mistakeFilterScope === 'all' || String(q.scope || '未分類').trim() === mistakeFilterScope)
-            .filter(q => mistakeFilterType === 'all' || String(q.type || '未分類').trim() === mistakeFilterType)
-            .sort((a, b) => b.count - a.count);
-
-          return (
-          <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in pb-24">
-            <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight flex items-center gap-3">
-                  <div className="bg-rose-100 text-rose-600 p-2.5 rounded-2xl"><Archive size={28} /></div> 錯題集 📝
-                </h2>
-                <p className="text-slate-500 font-medium mt-2">統計您歷次測驗中的錯題，找出最常犯錯的盲點。</p>
-              </div>
-              
-              {/* 新增：錯題總題數計數器 */}
-              <div className="flex items-center gap-4 bg-white px-6 py-4 rounded-[1.5rem] border-2 border-rose-50 shadow-sm self-start md:self-auto shrink-0">
-                 <span className="text-sm font-bold text-slate-400">當前篩選總題數</span>
-                 <div className="flex items-baseline gap-1">
-                   <span className="text-4xl font-black text-rose-500">{filteredMistakes.length}</span>
-                   <span className="text-sm font-bold text-rose-300">題</span>
-                 </div>
-              </div>
-            </header>
-
-            <div className="bg-white/80 backdrop-blur-md p-5 rounded-[2rem] shadow-sm border border-white mb-8 flex flex-col gap-4">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-sm font-extrabold text-black bg-gradient-to-r from-amber-300 to-yellow-400 px-4 py-2 rounded-xl shrink-0 shadow-sm border border-yellow-500/30">年度範圍</span>
-                <button onClick={() => setMistakeFilterScope('all')} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${mistakeFilterScope === 'all' ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>全部</button>
-                {availableScopes.map(s => (
-                  <button key={s} onClick={() => setMistakeFilterScope(s)} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${mistakeFilterScope === s ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>{s}</button>
-                ))}
-              </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-sm font-extrabold text-black bg-gradient-to-r from-amber-300 to-yellow-400 px-4 py-2 rounded-xl shrink-0 shadow-sm border border-yellow-500/30">測驗題型</span>
-                <button onClick={() => setMistakeFilterType('all')} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${mistakeFilterType === 'all' ? 'bg-amber-500 text-white shadow-md shadow-amber-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>全部</button>
-                <button onClick={() => setMistakeFilterType('字音')} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${mistakeFilterType === '字音' ? 'bg-amber-500 text-white shadow-md shadow-amber-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>字音</button>
-                <button onClick={() => setMistakeFilterType('字形')} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${mistakeFilterType === '字形' ? 'bg-amber-500 text-white shadow-md shadow-amber-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>字形</button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredMistakes.map((q, idx) => (
-                <div key={idx} className="bg-white rounded-2xl p-2 md:p-3 border border-slate-100 flex items-center justify-between shadow-sm relative overflow-hidden group">
-                  <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-rose-50 to-transparent z-0"></div>
-                  
-                  <div className="relative z-10 flex-1 pl-2 md:pl-4">
-                    <div className="flex gap-1 mb-1 items-center flex-wrap">
-                      {/* 確保不顯示「錯題集」或「未分類」標籤，依序顯示年度、題型、答錯次數 */}
-                      {q.scope && q.scope !== '錯題集' && q.scope !== '未分類' && (
-                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{String(q.scope).trim()}</span>
-                      )}
-                      {/* 修正2：套用題型專屬色彩，確保題型標籤絕對顯示 */}
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${getTypeColor(q.type)}`}>
-                        {q.type ? String(q.type).trim() : '未分類'}
-                      </span>
-                      <span className="text-[10px] font-black text-rose-500 bg-rose-100 px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-rose-200">
-                        答錯 {q.count} 次
-                      </span>
-                    </div>
-                    <span className="text-lg md:text-xl font-extrabold text-slate-700">{q.question}</span>
-                  </div>
-                  {/* 調整綠色框配置：強制寬度一致(w-24 shrink-0) 並加入 whitespace-nowrap 防止換行破壞注音閱讀 */}
-                  <div className="ml-3 w-24 shrink-0 whitespace-nowrap py-1 px-3 rounded-xl bg-emerald-50 border border-emerald-100 flex flex-col items-center justify-center text-emerald-600 font-black relative z-10 gap-1">
-                    <span className="text-[10px] text-emerald-500 tracking-wider">答案</span>
-                    <span className="text-lg md:text-xl leading-snug text-center">{q.answer}</span>
-                  </div>
-                </div>
-              ))}
-              
-              {filteredMistakes.length === 0 && (
-                <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
-                  <Archive size={48} className="mb-4 opacity-20" />
-                  <p className="font-bold text-lg">目前沒有符合條件的錯題</p>
-                  <p className="text-sm mt-1">太厲害了！繼續保持滿分狀態 🎉</p>
-                </div>
-              )}
-            </div>
-          </div>
-          );
-        })()}
-
-      </main>
-
-      <MobileNav />
-
-      {/* 設定 API 網址的專屬 Modal */}
-      {showApiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full shadow-2xl border border-white/50 animate-fade-in-up">
-            <h3 className="text-2xl font-extrabold text-slate-800 mb-2 flex items-center gap-3">
-              <div className="bg-indigo-100 text-indigo-600 p-2.5 rounded-2xl"><Link size={24} /></div>
-              雲端題庫 API 設定
-            </h3>
-            <p className="text-slate-500 mb-6 font-medium leading-relaxed">
-              請在下方輸入您發布的 Google Apps Script 網址。系統將自動記憶此網址並立即更新題庫。
-            </p>
-            <input 
-              type="text" 
-              value={inputApiUrl}
-              onChange={(e) => setInputApiUrl(e.target.value)}
-              placeholder="https://script.google.com/macros/s/.../exec"
-              className="w-full bg-slate-50 border-2 border-indigo-100 focus:border-indigo-400 outline-none rounded-2xl px-5 py-4 text-slate-700 font-mono text-sm shadow-sm transition-colors mb-8"
-            />
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <button 
-                onClick={() => {
-                  setInputApiUrl(GOOGLE_SCRIPT_API_URL);
-                  setApiUrl(GOOGLE_SCRIPT_API_URL);
-                  localStorage.removeItem('CUSTOM_API_URL');
-                  setShowApiModal(false);
-                }} 
-                className="px-6 py-3 rounded-xl font-bold text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors mr-auto"
-                title="恢復為系統預設題庫"
-              >
-                恢復預設
-              </button>
-              <button 
-                onClick={() => setShowApiModal(false)} 
-                className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
-              >
-                取消
-              </button>
-              <button 
-                onClick={() => {
-                  if(inputApiUrl.trim()){
-                    setApiUrl(inputApiUrl.trim());
-                    localStorage.setItem('CUSTOM_API_URL', inputApiUrl.trim());
-                  }
-                  setShowApiModal(false);
-                }} 
-                className="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:-translate-y-0.5 transition-all"
-              >
-                儲存並載入
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 計時挑戰設定 Modal */}
-      {showTimeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up flex flex-col">
-            <h3 className="text-2xl font-extrabold text-slate-800 mb-2">選擇測驗時間 ⏱️</h3>
-            <p className="text-slate-500 font-medium mb-6">請點選下方選項設定您的計時長度：</p>
-            <div className="max-h-60 overflow-y-auto flex flex-col gap-2 pr-2 mb-6">
-              {[...Array(10)].map((_, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => { setCustomTime(i + 1); setShowTimeModal(false); }} 
-                  className={`p-4 rounded-xl font-bold transition-all text-left ${customTime === i + 1 ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-sky-50 hover:text-sky-600'}`}
-                >
-                  {i + 1} 分鐘
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setShowTimeModal(false)} className="w-full py-4 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">
-              確定
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 一般測驗提示 Modal */}
-      {showNormalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up text-center">
-            <div className="mx-auto w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
-              <BookOpen size={32} />
-            </div>
-            <h3 className="text-2xl font-extrabold text-slate-800 mb-4">一般測驗模式</h3>
-            <p className="text-slate-600 font-medium mb-8 leading-relaxed">
-              此模式會依題目範圍選擇 100 題字音、100 題字形的題目進行測驗，一律計時 10 分鐘。
-            </p>
-            <button onClick={() => setShowNormalModal(false)} className="w-full py-4 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-200">
-              我知道了
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 建立使用者名稱 Modal */}
-      {showNameModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up flex flex-col">
-            <h3 className="text-2xl font-extrabold text-slate-800 mb-2 flex items-center gap-3">
-              <div className="bg-sky-100 text-sky-600 p-2.5 rounded-2xl"><PenTool size={24} /></div>
-              建立使用者名稱
-            </h3>
-            <p className="text-slate-500 font-medium mb-6">請輸入您的姓名或暱稱，系統將會記錄您的錯題與學習進度。</p>
-            <input 
-              type="text" 
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="例如：王小明"
-              className="w-full bg-slate-50 border-2 border-indigo-100 focus:border-indigo-400 outline-none rounded-2xl px-5 py-4 text-slate-700 font-bold shadow-sm transition-colors mb-6"
-              autoFocus
-            />
-            <div className="flex gap-3">
-              <button onClick={() => setShowNameModal(false)} className="flex-1 py-4 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">
-                取消
-              </button>
-              <button 
-                onClick={() => {
-                  if(!userName.trim()) {
-                    // 修正2：改用系統專屬的提示視窗
-                    setAlertMsg("請輸入使用者名稱！");
-                    return;
-                  }
-                  localStorage.setItem('USER_NAME', userName.trim());
-                  setShowNameModal(false);
-                  startGame();
-                }} 
-                className="flex-1 py-4 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-200"
-              >
-                確認並開始
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 修正2：專屬系統提示視窗 (取代被環境阻擋的 alert) */}
-      {alertMsg && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-white/50 animate-fade-in-up text-center flex flex-col items-center">
-            <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
-              <XCircle size={32} />
-            </div>
-            <h3 className="text-2xl font-extrabold text-slate-800 mb-2">系統提示</h3>
-            <p className="text-slate-600 font-medium mb-8 leading-relaxed">{alertMsg}</p>
-            <button onClick={() => setAlertMsg('')} className="w-full py-4 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 transition-colors shadow-lg shadow-rose-200">
-              我知道了
-            </button>
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
+</html>
