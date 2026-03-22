@@ -12,8 +12,8 @@
       theme: {
         extend: {
           animation: {
-            'fade-in': 'fadeIn 0.4s ease-out',
-            'fade-in-up': 'fadeInUp 0.4s ease-out',
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'fade-in-up': 'fadeInUp 0.3s ease-out',
             'bounce-soft': 'bounceSoft 2s infinite',
           },
           keyframes: {
@@ -22,7 +22,7 @@
               '100%': { opacity: '1' },
             },
             fadeInUp: {
-              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '0%': { opacity: '0', transform: 'translateY(15px)' },
               '100%': { opacity: '1', transform: 'translateY(0)' },
             },
             bounceSoft: {
@@ -463,7 +463,6 @@
                   scope: currentQ.scope,
                   type: currentQ.type,
                   questionNumber: currentQ.id,
-                  // 🚀 修正：測驗中回報文字格式
                   reportContent: `(由 ${userName || '神秘挑戰者'} 測驗時回報)`
               })
            }).catch(e => console.warn('回報錯誤失敗', e));
@@ -508,7 +507,6 @@
                   scope: currentQ.scope,
                   type: currentQ.type,
                   questionNumber: currentQ.id,
-                  // 🚀 修正：自學區回報文字格式
                   reportContent: `${studyReportModal.content.trim()} (由 ${studyReportModal.name.trim()} 回報)`
               })
            }).catch(e => console.warn('回報錯誤失敗', e));
@@ -712,11 +710,11 @@
               <Library size={22} className={gameState === 'study' ? 'text-indigo-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">自學區</span>}
             </button>
-            <button onClick={() => { setGameState('mistakes'); setIsSidebarCollapsed(false); }} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'mistakes' ? 'bg-rose-100 text-rose-600 border-rose-300 shadow-[0_4px_0_0_#fda4af]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="錯題集">
+            <button onClick={() => { setGameState('mistakes'); setIsSidebarCollapsed(true); }} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'mistakes' ? 'bg-rose-100 text-rose-600 border-rose-300 shadow-[0_4px_0_0_#fda4af]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="錯題集">
               <Archive size={22} className={gameState === 'mistakes' ? 'text-rose-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">錯題集</span>}
             </button>
-            <button onClick={() => { setGameState('leaderboard'); setIsSidebarCollapsed(false); }} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'leaderboard' ? 'bg-amber-100 text-amber-600 border-amber-300 shadow-[0_4px_0_0_#fcd34d]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="排行榜">
+            <button onClick={() => { setGameState('leaderboard'); setIsSidebarCollapsed(true); }} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'leaderboard' ? 'bg-amber-100 text-amber-600 border-amber-300 shadow-[0_4px_0_0_#fcd34d]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="排行榜">
               <Trophy size={22} className={gameState === 'leaderboard' ? 'text-amber-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">排行榜</span>}
             </button>
@@ -757,11 +755,11 @@
             <Library size={24} />
             <span className="text-[10px] font-black">自學</span>
           </button>
-          <button onClick={() => { setGameState('mistakes'); setIsSidebarCollapsed(false); }} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'mistakes' ? 'text-rose-500' : 'text-slate-400'}`}>
+          <button onClick={() => { setGameState('mistakes'); setIsSidebarCollapsed(true); }} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'mistakes' ? 'text-rose-500' : 'text-slate-400'}`}>
             <Archive size={24} />
             <span className="text-[10px] font-black">錯題</span>
           </button>
-          <button onClick={() => { setGameState('leaderboard'); setIsSidebarCollapsed(false); }} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'leaderboard' ? 'text-amber-500' : 'text-slate-400'}`}>
+          <button onClick={() => { setGameState('leaderboard'); setIsSidebarCollapsed(true); }} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'leaderboard' ? 'text-amber-500' : 'text-slate-400'}`}>
             <Trophy size={24} />
             <span className="text-[10px] font-black">排行</span>
           </button>
@@ -769,7 +767,6 @@
       );
 
       return (
-        // 🚀 修正：將 h-screen 改為 h-[100dvh] 完美解決 iPad 底層遮擋
         <div className="flex h-[100dvh] w-full font-sans relative bg-sky-50">
           
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
@@ -784,19 +781,19 @@
             
             {/* --- 練功區 --- */}
             {gameState === 'menu' && (
-              <div className="p-4 md:p-8 max-w-6xl mx-auto w-full flex-1 flex flex-col min-h-0 animate-fade-in">
-                <header className="mb-4 shrink-0">
-                  <h2 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight mb-2">準備好今天的特訓了嗎？ ✨</h2>
-                  <p className="text-slate-500 font-bold text-lg">選一個喜歡的模式開始挑戰吧！</p>
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full flex-1 flex flex-col min-h-0 animate-fade-in pb-24">
+                <header className="mb-4 md:mb-6 shrink-0">
+                  <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight mb-2">準備好今天的特訓了嗎？ ✨</h2>
+                  <p className="text-slate-500 font-bold text-base md:text-lg">選一個喜歡的模式開始挑戰吧！</p>
                 </header>
 
                 <div className="flex flex-col flex-1 min-h-0">
-                  <div className="flex flex-col lg:flex-row gap-4 md:gap-6 flex-1 min-h-0 mb-4">
-                    <div className="bg-white rounded-[2rem] p-5 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col relative overflow-hidden shrink-0 lg:w-1/3">
-                      <h3 className="text-xl font-black text-slate-700 mb-4 flex items-center gap-3 shrink-0 relative z-10">
-                        <div className="bg-yellow-100 text-yellow-600 p-2.5 rounded-[1rem]"><Timer size={24} /></div> 選擇模式
+                  <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 mb-4">
+                    <div className="bg-white rounded-2xl p-4 md:p-5 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col relative overflow-hidden shrink-0 lg:w-1/3">
+                      <h3 className="text-lg font-black text-slate-700 mb-4 flex items-center gap-3 shrink-0 relative z-10">
+                        <div className="bg-yellow-100 text-yellow-600 p-2 rounded-xl"><Timer size={20} /></div> 選擇模式
                       </h3>
-                      <div className="flex flex-col gap-4 relative z-10 flex-1 overflow-y-auto hide-scrollbar">
+                      <div className="flex flex-col gap-3 relative z-10 flex-1 overflow-y-auto hide-scrollbar">
                         {[
                           { id: 'timeChallenge', label: '計時挑戰 ⏱️', selBg: 'bg-amber-100', selBorder: 'border-amber-400', selShadow: 'shadow-[0_4px_0_0_#fbbf24]', textCol: 'text-amber-700', dotBorder: 'border-amber-500', dotBg: 'bg-amber-500', badgeBorder: 'border-amber-200' },
                           { id: 'normalTest', label: '一般測驗 📝', selBg: 'bg-sky-100', selBorder: 'border-sky-400', selShadow: 'shadow-[0_4px_0_0_#38bdf8]', textCol: 'text-sky-700', dotBorder: 'border-sky-500', dotBg: 'bg-sky-500', badgeBorder: 'border-sky-200' },
@@ -811,14 +808,14 @@
                                 if (modeOpt.id === 'timeChallenge') setShowTimeModal(true);
                                 if (modeOpt.id === 'normalTest') setShowNormalModal(true);
                               }} 
-                              className={`flex items-center gap-3 sm:gap-4 p-4 rounded-2xl transition-all border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? `${modeOpt.selBg} ${modeOpt.selBorder} ${modeOpt.selShadow}` : 'bg-white border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
+                              className={`flex items-center gap-3 p-3 rounded-2xl transition-all border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? `${modeOpt.selBg} ${modeOpt.selBorder} ${modeOpt.selShadow}` : 'bg-white border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
                             >
-                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? `${modeOpt.dotBorder} bg-white` : 'border-slate-300'}`}>
-                                {isSelected && <div className={`w-3 h-3 ${modeOpt.dotBg} rounded-full`} />}
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? `${modeOpt.dotBorder} bg-white` : 'border-slate-300'}`}>
+                                {isSelected && <div className={`w-2.5 h-2.5 ${modeOpt.dotBg} rounded-full`} />}
                               </div>
-                              <span className={`font-black text-lg whitespace-nowrap ${isSelected ? modeOpt.textCol : 'text-slate-600'}`}>{modeOpt.label}</span>
+                              <span className={`font-black text-base md:text-lg whitespace-nowrap ${isSelected ? modeOpt.textCol : 'text-slate-600'}`}>{modeOpt.label}</span>
                               {isSelected && modeOpt.id === 'timeChallenge' && (
-                                <span className={`ml-auto text-xs font-black ${modeOpt.textCol} bg-white px-2.5 py-1.5 rounded-xl shrink-0 whitespace-nowrap border-2 ${modeOpt.badgeBorder}`}>{customTime} 分鐘</span>
+                                <span className={`ml-auto text-xs font-black ${modeOpt.textCol} bg-white px-2 py-1 rounded-xl shrink-0 whitespace-nowrap border-2 ${modeOpt.badgeBorder}`}>{customTime} 分鐘</span>
                               )}
                             </button>
                           );
@@ -826,7 +823,7 @@
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-5 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 relative overflow-hidden flex flex-col group flex-1 min-h-0 lg:w-2/3">
+                    <div className="bg-white rounded-2xl p-4 md:p-5 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 relative overflow-hidden flex flex-col group flex-1 min-h-0 lg:w-2/3">
                       {settings.mode !== 'mistakePractice' && (() => {
                         const availableScopes = [...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集');
                         const isAllSelected = availableScopes.length > 0 && settings.scope.length === availableScopes.length;
@@ -836,22 +833,22 @@
                               if (isAllSelected) setSettings(s => ({ ...s, scope: [] }));
                               else setSettings(s => ({ ...s, scope: availableScopes }));
                             }} 
-                            className={`absolute top-5 right-5 text-sm py-2 px-5 rounded-xl font-black transition-all active:translate-y-[2px] active:shadow-none border-2 z-20 ${isAllSelected ? 'bg-emerald-200 text-emerald-800 border-emerald-400 shadow-[0_2px_0_0_#34d399]' : 'bg-white text-slate-500 border-slate-200 shadow-[0_2px_0_0_#cbd5e1] hover:bg-slate-50'}`}
+                            className={`absolute top-4 right-4 text-xs py-1.5 px-3 md:px-4 rounded-xl font-black transition-all active:translate-y-[2px] active:shadow-none border-2 z-20 ${isAllSelected ? 'bg-emerald-200 text-emerald-800 border-emerald-400 shadow-[0_2px_0_0_#34d399]' : 'bg-white text-slate-500 border-slate-200 shadow-[0_2px_0_0_#cbd5e1] hover:bg-slate-50'}`}
                           >
                             {isAllSelected ? '取消全選' : '全部範圍'}
                           </button>
                         );
                       })()}
 
-                      <h3 className="text-xl font-black text-slate-700 mb-4 flex items-center gap-3 shrink-0 relative z-10">
-                        <div className="bg-emerald-100 text-emerald-600 p-2.5 rounded-[1rem]"><BookOpen size={24} /></div> 題目範圍
+                      <h3 className="text-lg font-black text-slate-700 mb-3 flex items-center gap-3 shrink-0 relative z-10">
+                        <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl"><BookOpen size={20} /></div> 題目範圍
                       </h3>
                       
                       {settings.mode === 'mistakePractice' ? (
-                        <div className="flex flex-col items-center justify-center flex-1 bg-slate-50 rounded-3xl border-4 border-dashed border-slate-200 relative z-10 min-h-0">
-                          <Archive size={40} className="text-slate-300 mb-3" />
-                          <p className="font-black text-slate-500 text-xl">已鎖定為「錯題集」</p>
-                          <p className="text-sm font-bold text-slate-400 mt-2">系統將為您安排專屬的弱點強化特訓！</p>
+                        <div className="flex flex-col items-center justify-center flex-1 bg-slate-50 rounded-2xl border-4 border-dashed border-slate-200 relative z-10 min-h-0">
+                          <Archive size={32} className="text-slate-300 mb-2" />
+                          <p className="font-black text-slate-500 text-lg">已鎖定為「錯題集」</p>
+                          <p className="text-xs font-bold text-slate-400 mt-1">系統將為您安排專屬的弱點強化特訓！</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 flex-1 overflow-y-auto pr-2 min-h-0 content-start pb-2">
@@ -866,7 +863,7 @@
                                     return { ...s, scope: newScope };
                                   });
                                 }} 
-                                className={`py-4 px-2 rounded-2xl font-black transition-all text-base border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? 'bg-emerald-400 text-white border-emerald-600 shadow-[0_4px_0_0_#059669]' : 'bg-white text-slate-600 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
+                                className={`py-3 px-2 rounded-xl font-black transition-all text-sm border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? 'bg-emerald-400 text-white border-emerald-600 shadow-[0_4px_0_0_#059669]' : 'bg-white text-slate-600 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
                               >
                                 {scopeName}
                               </button>
@@ -877,12 +874,12 @@
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-[2rem] p-4 md:p-6 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden shrink-0">
+                  <div className="bg-white rounded-2xl p-4 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden shrink-0">
                     <div className="w-full md:w-auto">
-                      <h3 className="text-xl font-black text-slate-700 mb-4 flex items-center gap-3">
-                        <div className="bg-purple-100 text-purple-600 p-2.5 rounded-[1rem]"><Settings size={24} /></div> 題型
+                      <h3 className="text-lg font-black text-slate-700 mb-3 flex items-center gap-3">
+                        <div className="bg-purple-100 text-purple-600 p-2 rounded-xl"><Settings size={20} /></div> 題型
                       </h3>
-                      <div className="flex gap-3 md:gap-4 flex-wrap">
+                      <div className="flex gap-2 md:gap-3 flex-wrap">
                         {[
                           { id: '字音', label: '字音', selStyle: 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_4px_0_0_#5b75a6]', unselStyle: 'bg-white text-[#718ebf] border-[#a3b7d7] shadow-[0_4px_0_0_#a3b7d7]' },
                           { id: '字形', label: '字形', selStyle: 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_4px_0_0_#b87474]', unselStyle: 'bg-white text-[#d28b8b] border-[#dca6a6] shadow-[0_4px_0_0_#dca6a6]' },
@@ -894,7 +891,7 @@
                               key={type.id} 
                               onClick={() => settings.mode !== 'normalTest' && setSettings(s => ({ ...s, type: type.id }))} 
                               disabled={settings.mode === 'normalTest'}
-                              className={`py-3 px-5 md:px-8 rounded-2xl font-black transition-all border-2 active:translate-y-[4px] active:shadow-none text-lg flex-1 md:flex-none ${isSelected ? type.selStyle : type.unselStyle} ${settings.mode === 'normalTest' && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}`}
+                              className={`py-2 px-4 md:px-6 rounded-xl font-black transition-all border-2 active:translate-y-[4px] active:shadow-none text-base flex-1 md:flex-none ${isSelected ? type.selStyle : type.unselStyle} ${settings.mode === 'normalTest' && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}`}
                             >
                               {type.label}
                             </button>
@@ -903,7 +900,7 @@
                       </div>
                     </div>
 
-                    <div className="w-full md:w-auto mt-2 md:mt-0">
+                    <div className="w-full md:w-auto mt-1 md:mt-0">
                       <button 
                         onClick={() => {
                           if (settings.mode !== 'mistakePractice' && settings.scope.length === 0) {
@@ -913,9 +910,9 @@
                           setShowNameModal(true);
                         }} 
                         disabled={isDbLoading} 
-                        className={`w-full md:w-auto flex items-center justify-center gap-3 bg-emerald-500 border-2 border-emerald-700 shadow-[0_6px_0_0_#047857] hover:-translate-y-1 hover:shadow-[0_8px_0_0_#047857] hover:bg-emerald-400 active:translate-y-[6px] active:shadow-none text-white px-10 py-4 md:py-5 rounded-[2rem] text-xl md:text-2xl font-black transition-all ${isDbLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`w-full md:w-auto flex items-center justify-center gap-2 bg-emerald-500 border-2 border-emerald-700 shadow-[0_6px_0_0_#047857] hover:-translate-y-1 hover:shadow-[0_8px_0_0_#047857] hover:bg-emerald-400 active:translate-y-[6px] active:shadow-none text-white px-8 py-3 md:py-4 rounded-2xl text-xl font-black transition-all ${isDbLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        {isDbLoading ? <RefreshCw className="animate-spin" size={32} /> : <Play size={32} className="fill-white" />}
+                        {isDbLoading ? <RefreshCw className="animate-spin" size={24} /> : <Play size={24} className="fill-white" />}
                         {isDbLoading ? '準備中...' : '開始挑戰 GO!'}
                       </button>
                     </div>
@@ -926,64 +923,64 @@
 
             {/* --- 測驗進行畫面 --- */}
             {gameState === 'playing' && questions[currentIndex] && (
-              <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full flex flex-col">
-                <div className="bg-white rounded-[2rem] p-4 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-wrap justify-between items-center gap-4 mb-5 md:mb-8 shrink-0 z-20 relative transition-all">
-                  <div className="flex items-center gap-4 pl-2">
-                    <div className="w-14 h-14 rounded-[1rem] bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] flex items-center justify-center text-white font-black text-2xl shrink-0">
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full h-full flex flex-col pb-24 md:pb-6">
+                <div className="bg-white rounded-2xl p-4 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-wrap justify-between items-center gap-3 mb-4 shrink-0 z-20 relative transition-all">
+                  <div className="flex items-center gap-3 pl-1">
+                    <div className="w-12 h-12 rounded-xl bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] flex items-center justify-center text-white font-black text-xl shrink-0">
                       {currentIndex + 1}
                     </div>
                     <div>
-                      <div className="text-sm font-black text-slate-400 tracking-wider uppercase mb-1">Question {currentIndex + 1} / {questions.length}</div>
+                      <div className="text-[10px] md:text-xs font-black text-slate-400 tracking-wider uppercase mb-1">Question {currentIndex + 1} / {questions.length}</div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-black text-sky-700 bg-sky-100 px-3 py-1 rounded-xl border-2 border-sky-200 whitespace-nowrap">{questions[currentIndex].scope}</span>
-                        <span className={`text-xs font-black px-3 py-1 rounded-xl whitespace-nowrap border-2 ${getTypeColor(questions[currentIndex].type)}`}>{questions[currentIndex].type}</span>
+                        <span className="text-[10px] md:text-xs font-black text-sky-700 bg-sky-100 px-2 py-0.5 rounded-lg border-2 border-sky-200 whitespace-nowrap">{questions[currentIndex].scope}</span>
+                        <span className={`text-[10px] md:text-xs font-black px-2 py-0.5 rounded-lg whitespace-nowrap border-2 ${getTypeColor(questions[currentIndex].type)}`}>{questions[currentIndex].type}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 md:gap-4 ml-auto md:ml-0">
+                  <div className="flex items-center gap-2 md:gap-3 ml-auto md:ml-0">
                     <button 
                       onClick={() => setConfirmModal({isOpen: true, type: 'report', data: questions[currentIndex]})} 
-                      className="flex items-center gap-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-4 py-3 rounded-2xl font-black transition-all active:translate-y-[2px] active:shadow-none text-sm border-2 border-yellow-400 shadow-[0_2px_0_0_#fde047]"
+                      className="flex items-center gap-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-2 rounded-xl font-black transition-all active:translate-y-[2px] active:shadow-none text-xs md:text-sm border-2 border-yellow-400 shadow-[0_2px_0_0_#fde047]"
                       title="若發現此題答案或敘述有誤，請點此回報"
                     >
-                      <AlertTriangle size={18} className="text-yellow-600" /> <span className="hidden sm:inline">問題回報</span>
+                      <AlertTriangle size={16} className="text-yellow-600" /> <span className="hidden sm:inline">問題回報</span>
                     </button>
 
                     {settings.mode === 'timeChallenge' || settings.mode === 'normalTest' ? (
-                      <div className={`flex items-center gap-2 px-5 py-2.5 md:py-3 rounded-2xl font-mono text-xl font-black shadow-[0_2px_0_0_#e2e8f0] border-2 ${timeLeft < 60 ? 'bg-rose-100 text-rose-600 border-rose-300 animate-pulse' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                        <Clock size={22} className={timeLeft < 60 ? 'text-rose-500' : 'text-slate-500'} /> {formatTime(timeLeft)}
+                      <div className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-mono text-lg font-black shadow-[0_2px_0_0_#e2e8f0] border-2 ${timeLeft < 60 ? 'bg-rose-100 text-rose-600 border-rose-300 animate-pulse' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                        <Clock size={18} className={timeLeft < 60 ? 'text-rose-500' : 'text-slate-500'} /> {formatTime(timeLeft)}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 px-5 py-3 rounded-2xl font-black bg-slate-100 text-slate-500 border-2 border-slate-200 shadow-[0_2px_0_0_#e2e8f0] text-sm">
-                        <Timer size={20} className="text-slate-400" /> 錯題加強中
+                      <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-black bg-slate-100 text-slate-500 border-2 border-slate-200 shadow-[0_2px_0_0_#e2e8f0] text-xs md:text-sm">
+                        <Timer size={16} className="text-slate-400" /> 錯題加強中
                       </div>
                     )}
-                    <button onClick={() => endGame(true)} className="hidden md:flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-500 px-5 py-3 rounded-2xl font-black transition-colors text-sm border-2 border-slate-200 shadow-[0_2px_0_0_#e2e8f0] active:translate-y-[2px] active:shadow-none">
+                    <button onClick={() => endGame(true)} className="hidden md:flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-500 px-4 py-2 rounded-xl font-black transition-colors text-xs md:text-sm border-2 border-slate-200 shadow-[0_2px_0_0_#e2e8f0] active:translate-y-[2px] active:shadow-none">
                       提早結束
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1 flex flex-col gap-4 md:gap-6 items-center justify-start md:justify-center w-full min-h-0">
-                  <div ref={containerRef} className="w-full bg-blue-500 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_0_0_#1d4ed8] border-4 border-blue-600 flex flex-col items-center justify-center relative overflow-hidden flex-1 min-h-[140px] md:min-h-[220px] px-8 py-6">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl opacity-20"></div>
-                    <h2 ref={textRef} className="text-4xl md:text-8xl font-black tracking-widest text-white leading-tight text-center relative z-10 drop-shadow-md whitespace-nowrap origin-center transition-transform duration-200">
+                <div className="flex-1 flex flex-col gap-3 md:gap-5 items-center justify-start md:justify-center w-full min-h-0">
+                  <div ref={containerRef} className="w-full bg-blue-500 rounded-[2rem] shadow-[0_6px_0_0_#1d4ed8] border-4 border-blue-600 flex flex-col items-center justify-center relative overflow-hidden flex-1 min-h-[120px] md:min-h-[180px] px-6 py-4">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white rounded-full blur-3xl opacity-20"></div>
+                    <h2 ref={textRef} className="text-3xl md:text-6xl font-black tracking-widest text-white leading-tight text-center relative z-10 drop-shadow-md whitespace-nowrap origin-center transition-transform duration-200">
                       {questions[currentIndex].question}
                     </h2>
                   </div>
 
-                  <div className="w-full grid grid-cols-2 gap-4 md:gap-6 animate-fade-in-up shrink-0">
+                  <div className="w-full grid grid-cols-2 gap-3 md:gap-5 animate-fade-in-up shrink-0">
                     {currentOptions.map((opt, idx) => {
-                      let btnClass = "bg-white border-2 border-slate-300 shadow-[0_6px_0_0_#cbd5e1] hover:-translate-y-1 hover:shadow-[0_8px_0_0_#cbd5e1] hover:bg-sky-50 active:translate-y-[6px] active:shadow-none text-slate-700";
+                      let btnClass = "bg-white border-2 border-slate-300 shadow-[0_4px_0_0_#cbd5e1] hover:-translate-y-1 hover:shadow-[0_6px_0_0_#cbd5e1] hover:bg-sky-50 active:translate-y-[4px] active:shadow-none text-slate-700";
                       
                       if (selectedOption !== null) {
                         if (opt === questions[currentIndex].answer) {
-                          btnClass = "bg-emerald-400 border-2 border-emerald-600 shadow-[0_6px_0_0_#059669] text-white scale-105 z-10"; 
+                          btnClass = "bg-emerald-400 border-2 border-emerald-600 shadow-[0_4px_0_0_#059669] text-white scale-[1.02] z-10"; 
                         } else if (opt === selectedOption && feedback === 'incorrect') {
-                          btnClass = "bg-rose-500 border-2 border-rose-600 shadow-none translate-y-[6px] text-white opacity-90"; 
+                          btnClass = "bg-rose-500 border-2 border-rose-600 shadow-none translate-y-[4px] text-white opacity-90"; 
                         } else {
-                          btnClass = "bg-slate-100 border-2 border-slate-300 shadow-none translate-y-[6px] text-slate-400 opacity-60"; 
+                          btnClass = "bg-slate-100 border-2 border-slate-300 shadow-none translate-y-[4px] text-slate-400 opacity-60"; 
                         }
                       }
 
@@ -992,9 +989,9 @@
                           key={idx}
                           onClick={() => handleOptionClick(opt)} 
                           disabled={selectedOption !== null}
-                          className={`${btnClass} rounded-[1.5rem] md:rounded-[2.5rem] px-4 py-6 md:py-10 text-3xl md:text-5xl font-black transition-all duration-150 ease-out flex items-center justify-center text-center group touch-manipulation`}
+                          className={`${btnClass} rounded-2xl md:rounded-[2rem] px-3 py-5 md:py-8 text-2xl md:text-4xl font-black transition-all duration-150 ease-out flex items-center justify-center text-center group touch-manipulation`}
                         >
-                          <span className="inline-block transition-transform group-hover:scale-110">
+                          <span className="inline-block transition-transform group-hover:scale-105">
                             {opt}
                           </span>
                         </button>
@@ -1007,63 +1004,63 @@
 
             {/* --- 測驗結果畫面 --- */}
             {gameState === 'result' && (
-              <div className="p-6 md:p-10 max-w-5xl mx-auto w-full animate-fade-in pb-24 md:pb-10">
+              <div className="p-4 md:p-6 max-w-5xl mx-auto w-full animate-fade-in pb-24 md:pb-6">
                 
-                <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-8 relative">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-[1.5rem] bg-yellow-400 text-yellow-900 shadow-[0_6px_0_0_#ca8a04] border-4 border-yellow-500 relative shrink-0">
-                    <div className="absolute top-1 right-1 w-5 h-5 bg-white/40 rounded-full blur-sm"></div>
-                    <Award size={48} className="fill-yellow-100" />
+                <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-5 mb-6 relative">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-yellow-400 text-yellow-900 shadow-[0_4px_0_0_#ca8a04] border-2 border-yellow-500 relative shrink-0">
+                    <div className="absolute top-1 right-1 w-4 h-4 bg-white/40 rounded-full blur-sm"></div>
+                    <Award size={36} className="fill-yellow-100" />
                   </div>
                   <div className="text-center md:text-left">
-                    <h2 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight mb-2">測驗結果</h2>
-                    <p className="text-slate-500 font-bold text-lg">快來看看你的戰力分析吧！</p>
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight mb-1">測驗結果</h2>
+                    <p className="text-slate-500 font-bold text-base">快來看看你的戰力分析吧！</p>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                  <div className="bg-white rounded-[1.5rem] p-4 border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1">
-                    <p className="text-slate-400 font-black text-xs mb-1 uppercase tracking-wider">總作答數</p>
-                    <p className="text-4xl font-black text-slate-700">{score.correct + score.incorrect}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  <div className="bg-white rounded-2xl p-3 border-2 border-slate-200 shadow-sm flex flex-col items-center justify-center col-span-2 md:col-span-1">
+                    <p className="text-slate-400 font-black text-[10px] mb-1 uppercase tracking-wider">總作答數</p>
+                    <p className="text-3xl font-black text-slate-700">{score.correct + score.incorrect}</p>
                   </div>
-                  <div className="bg-emerald-400 p-4 rounded-[1.5rem] border-2 border-emerald-600 shadow-[0_6px_0_0_#059669] flex flex-col items-center justify-center text-white col-span-2 md:col-span-1 transform md:-translate-y-2">
-                    <p className="font-black text-emerald-100 text-xs mb-1 uppercase tracking-wider">正確題數</p>
-                    <p className="text-5xl font-black">{score.correct}</p>
+                  <div className="bg-emerald-400 p-3 rounded-2xl border-2 border-emerald-600 shadow-md flex flex-col items-center justify-center text-white col-span-2 md:col-span-1 transform md:-translate-y-1">
+                    <p className="font-black text-emerald-100 text-[10px] mb-1 uppercase tracking-wider">正確題數</p>
+                    <p className="text-4xl font-black">{score.correct}</p>
                   </div>
-                  <div className="bg-white rounded-[1.5rem] p-4 border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1">
-                    <p className="text-slate-400 font-black text-xs mb-1 uppercase tracking-wider">總耗時</p>
-                    <p className="text-3xl font-black text-slate-700">{formatTime(timeSpent)}</p>
+                  <div className="bg-white rounded-2xl p-3 border-2 border-slate-200 shadow-sm flex flex-col items-center justify-center col-span-2 md:col-span-1">
+                    <p className="text-slate-400 font-black text-[10px] mb-1 uppercase tracking-wider">總耗時</p>
+                    <p className="text-2xl font-black text-slate-700">{formatTime(timeSpent)}</p>
                   </div>
-                  <div className="bg-white rounded-[1.5rem] p-4 border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1 relative overflow-hidden">
-                    <div className="absolute right-0 bottom-0 w-16 h-16 bg-sky-100 rounded-tl-[2rem] -z-10"></div>
-                    <p className="text-slate-400 font-black text-xs mb-1 uppercase tracking-wider">準確率</p>
-                    <p className="text-4xl font-black text-sky-500">
+                  <div className="bg-white rounded-2xl p-3 border-2 border-slate-200 shadow-sm flex flex-col items-center justify-center col-span-2 md:col-span-1 relative overflow-hidden">
+                    <div className="absolute right-0 bottom-0 w-12 h-12 bg-sky-100 rounded-tl-2xl -z-10"></div>
+                    <p className="text-slate-400 font-black text-[10px] mb-1 uppercase tracking-wider">準確率</p>
+                    <p className="text-3xl font-black text-sky-500">
                       {acc}%
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-sky-100 rounded-[1.5rem] p-5 mb-10 text-center border-2 border-sky-300 shadow-[0_4px_0_0_#bae6fd] animate-fade-in-up">
-                  <p className="text-xl md:text-2xl font-black text-sky-700">
+                <div className="bg-sky-100 rounded-2xl p-4 mb-6 text-center border-2 border-sky-300 shadow-sm animate-fade-in-up">
+                  <p className="text-lg md:text-xl font-black text-sky-700">
                     {getEncouragement(acc)}
                   </p>
                 </div>
 
                 {score.wrongList.length > 0 && (
-                  <div className="bg-white rounded-[2rem] p-6 md:p-8 border-2 border-slate-200 shadow-[0_6px_0_0_#e2e8f0] mb-8">
-                    <h3 className="text-xl font-black text-slate-700 mb-6 flex items-center gap-3">
-                      <div className="bg-rose-100 text-rose-600 p-2.5 rounded-[1rem]"><Archive size={24} /></div> 錯題檢討清單
+                  <div className="bg-white rounded-2xl p-4 md:p-6 border-2 border-slate-200 shadow-sm mb-6">
+                    <h3 className="text-lg font-black text-slate-700 mb-4 flex items-center gap-2">
+                      <div className="bg-rose-100 text-rose-600 p-2 rounded-xl"><Archive size={20} /></div> 錯題檢討清單
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {score.wrongList.map((q, i) => (
-                        <div key={i} className="bg-slate-50 rounded-[1.5rem] p-4 border-2 border-slate-200 flex items-center justify-between shadow-[0_4px_0_0_#cbd5e1] hover:-translate-y-1 hover:shadow-[0_6px_0_0_#cbd5e1] transition-all group">
+                        <div key={i} className="bg-slate-50 rounded-xl p-3 border-2 border-slate-200 flex items-center justify-between shadow-sm hover:-translate-y-1 hover:shadow-md transition-all group">
                           <div>
-                            <div className="flex gap-2 mb-2">
-                              <span className="text-xs font-black text-indigo-600 bg-indigo-100 px-3 py-1 rounded-xl border border-indigo-200">{q.scope}</span>
-                              <span className={`text-xs font-black px-3 py-1 rounded-xl border ${getTypeColor(q.type)}`}>{q.type}</span>
+                            <div className="flex gap-2 mb-1.5 flex-wrap">
+                              <span className="text-[10px] font-black text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200">{q.scope}</span>
+                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${getTypeColor(q.type).replace('shadow-sm', '')}`}>{q.type}</span>
                             </div>
-                            <span className="text-xl font-black text-slate-700">{q.question}</span>
+                            <span className="text-lg font-black text-slate-700">{q.question}</span>
                           </div>
-                          <div className="min-w-[4rem] h-14 px-3 rounded-2xl bg-white border-2 border-rose-200 shadow-[0_4px_0_0_#fecaca] flex items-center justify-center text-rose-500 font-black text-2xl group-hover:scale-110 transition-transform">
+                          <div className="min-w-[3.5rem] h-10 px-2 rounded-xl bg-white border-2 border-rose-200 shadow-sm flex items-center justify-center text-rose-500 font-black text-xl group-hover:scale-110 transition-transform">
                             {q.answer}
                           </div>
                         </div>
@@ -1072,12 +1069,12 @@
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-                  <button onClick={handleReturnToMenu} className="flex items-center justify-center gap-3 bg-white text-slate-600 px-8 py-4 rounded-[1.5rem] font-black text-lg hover:bg-slate-50 transition-all border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none">
-                    <Home size={20} /> 回到儀表板
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+                  <button onClick={handleReturnToMenu} className="flex items-center justify-center gap-2 bg-white text-slate-600 px-6 py-3 rounded-xl font-black text-base hover:bg-slate-50 transition-all border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none">
+                    <Home size={18} /> 回到儀表板
                   </button>
-                  <button onClick={() => setShowNameModal(true)} className="flex items-center justify-center gap-3 bg-sky-500 text-white px-8 py-4 rounded-[1.5rem] font-black text-lg hover:bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] transition-all active:translate-y-[4px] active:shadow-none">
-                    <RotateCcw size={20} /> 再挑戰一次
+                  <button onClick={() => setShowNameModal(true)} className="flex items-center justify-center gap-2 bg-sky-500 text-white px-6 py-3 rounded-xl font-black text-base hover:bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] transition-all active:translate-y-[4px] active:shadow-none">
+                    <RotateCcw size={18} /> 再挑戰一次
                   </button>
                 </div>
               </div>
@@ -1085,46 +1082,47 @@
 
             {/* --- 自學區畫面 --- */}
             {gameState === 'study' && (
-              <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in pb-24">
-                <header className="mb-8 md:mb-12">
-                  <h2 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight mb-3 flex items-center gap-4">
-                    <div className="bg-indigo-100 text-indigo-600 p-3 rounded-[1rem]"><Library size={32} /></div> 自學區 📖
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full animate-fade-in pb-24">
+                <header className="mb-6">
+                  <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-3">
+                    <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl"><Library size={24} /></div> 自學區 📖
                   </h2>
-                  <p className="text-slate-500 font-bold text-lg">依照年度/範圍瀏覽題目與正確解答，加深記憶。</p>
+                  <p className="text-slate-500 font-bold text-base">依照年度/範圍瀏覽題目與正確解答，加深記憶。</p>
                 </header>
 
-                <div className="bg-white p-6 rounded-[2rem] shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 mb-10 flex flex-col gap-5">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-base font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-4 py-2.5 rounded-xl shrink-0">年度範圍</span>
+                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col gap-3 md:gap-4">
+                  <div className="flex flex-wrap items-center gap-2 w-full">
+                    <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
                     {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
                       <button 
                         key={idx} 
                         onClick={() => setStudyScope(scopeName)} 
-                        className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyScope === scopeName ? 'bg-indigo-500 text-white border-indigo-700 shadow-[0_4px_0_0_#4338ca]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}
+                        className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyScope === scopeName ? 'bg-indigo-500 text-white border-indigo-700 shadow-[0_2px_0_0_#4338ca]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}
                       >
                         {scopeName}
                       </button>
                     ))}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-base font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-4 py-2.5 rounded-xl shrink-0">題目類型</span>
-                    <button onClick={() => setStudyType('all')} className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_4px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>全部</button>
-                    <button onClick={() => setStudyType('字音')} className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_4px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字音</button>
-                    <button onClick={() => setStudyType('字形')} className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_4px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字形</button>
+                  <div className="flex flex-wrap items-center gap-2 w-full">
+                    <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">題目類型</span>
+                    <button onClick={() => setStudyType('all')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_2px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>全部</button>
+                    <button onClick={() => setStudyType('字音')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_2px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>字音</button>
+                    <button onClick={() => setStudyType('字形')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_2px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>字形</button>
                   </div>
                 </div>
 
-                {/* 🚀 修正：自學區字卡智慧排版 (隨文字長度適應、不換行) */}
-                <div className="flex flex-wrap gap-5 justify-center md:justify-start">
+                {/* 🚀 修正：改用 Grid 強制全字卡等寬排列 */}
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                   {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
                     const isReported = q.isCloudReported || reportedList.includes(q.question);
                     return (
-                      <div key={idx} className={`w-full md:w-auto flex-1 min-w-[280px] max-w-full bg-white rounded-[2rem] p-6 border-2 ${isReported ? 'border-rose-300 shadow-[0_6px_0_0_#fda4af] bg-rose-50/50' : 'border-slate-200 shadow-[0_6px_0_0_#e2e8f0]'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_8px_0_0_#cbd5e1] transition-all group relative min-h-[220px]`}>
+                      // 🚀 修正：加入 min-w-0 防止被長文字撐破網格
+                      <div key={idx} className={`min-w-0 w-full bg-white rounded-2xl p-4 md:p-5 border-2 ${isReported ? 'border-rose-300 shadow-sm bg-rose-50/50' : 'border-slate-200 shadow-sm'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-md transition-all group relative min-h-[160px] md:min-h-[180px]`}>
                         
                         {!isReported && (
                           <button 
                             onClick={() => setStudyReportModal({ isOpen: true, data: q, name: userName, content: '' })}
-                            className="absolute -top-3 -right-3 w-10 h-10 bg-sky-100 text-sky-600 rounded-full border-2 border-sky-300 shadow-[0_4px_0_0_#7dd3fc] flex items-center justify-center font-black text-xl hover:-translate-y-1 hover:shadow-[0_6px_0_0_#7dd3fc] active:translate-y-[4px] active:shadow-none z-10 transition-all"
+                            className="absolute -top-3 -right-3 w-8 h-8 bg-sky-100 text-sky-600 rounded-full border-2 border-sky-300 shadow-sm flex items-center justify-center font-black text-lg hover:-translate-y-0.5 hover:shadow-md active:translate-y-[2px] active:shadow-none z-10 transition-all"
                             title="回報題目錯誤"
                           >
                             ?
@@ -1132,29 +1130,36 @@
                         )}
 
                         {isReported && (
-                          <div className="absolute -top-4 -right-3 bg-rose-500 text-white text-xs font-black px-4 py-2 rounded-full shadow-md flex items-center gap-1.5 z-10 border-2 border-white animate-pulse">
-                            <AlertTriangle size={16} /> 疑似有誤
+                          <div className="absolute -top-3 -right-3 bg-rose-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 z-10 border border-white animate-pulse">
+                            <AlertTriangle size={14} /> 疑似有誤
                           </div>
                         )}
                         
-                        <div className="flex gap-2 mb-2 flex-wrap shrink-0">
-                          <span className="text-xs font-black text-indigo-700 bg-indigo-100 px-3 py-1.5 rounded-xl border-2 border-indigo-200">{q.scope}</span>
-                          <span className={`text-xs font-black px-3 py-1.5 rounded-xl border-2 ${getTypeColor(q.type)}`}>{q.type}</span>
-                          <span className="text-xs font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border-2 border-slate-200">第 {q.id} 題</span>
+                        {/* 🚀 修正：標籤列支援水平滑動、不換行 */}
+                        <div className="flex gap-2 mb-2 flex-nowrap overflow-x-auto hide-scrollbar w-full shrink-0">
+                          <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 whitespace-nowrap shrink-0">{q.scope}</span>
+                          <span className={`text-[10px] font-black px-2 py-1 rounded-lg border whitespace-nowrap shrink-0 ${getTypeColor(q.type).replace('shadow-sm', '')}`}>{q.type}</span>
+                          <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">第 {q.id} 題</span>
                         </div>
                         
-                        <div className="flex-1 flex items-center justify-center w-full py-4 overflow-hidden">
-                          <span className={`text-2xl md:text-3xl text-center font-black whitespace-nowrap overflow-hidden text-ellipsis ${isReported ? 'text-slate-400 line-through decoration-rose-400 decoration-4' : 'text-slate-800'}`}>{q.question}</span>
+                        {/* 🚀 修正：題目區塊彈性置中、支援水平滑動、不截斷 */}
+                        <div className="flex-1 flex items-center w-full py-2 md:py-3 overflow-x-auto hide-scrollbar">
+                          <div className="w-full text-center min-w-max px-1">
+                            <span className={`text-xl md:text-2xl font-black whitespace-nowrap ${isReported ? 'text-slate-400 line-through decoration-rose-400 decoration-4' : 'text-slate-800'}`}>{q.question}</span>
+                          </div>
                         </div>
 
-                        <div className={`w-full h-16 shrink-0 rounded-[1.5rem] flex items-center justify-center font-black text-2xl border-2 ${isReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-[0_4px_0_0_#e2e8f0]' : 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-[0_4px_0_0_#6ee7b7]'}`}>
-                          {q.answer}
+                        {/* 🚀 修正：答案區塊彈性置中、支援水平滑動、不截斷 */}
+                        <div className={`w-full h-12 md:h-14 shrink-0 rounded-xl flex items-center overflow-x-auto hide-scrollbar border-2 ${isReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-sm' : 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm'}`}>
+                          <div className="w-full text-center min-w-max px-2 md:px-4">
+                            <span className="whitespace-nowrap font-black text-xl">{q.answer}</span>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                   {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).length === 0 && (
-                    <div className="col-span-full w-full text-center py-16 text-slate-400 font-black text-xl">尚無題目資料</div>
+                    <div className="col-span-full w-full text-center py-10 text-slate-400 font-black text-lg">尚無題目資料</div>
                   )}
                 </div>
               </div>
@@ -1171,68 +1176,68 @@
                 .sort((a, b) => b.count - a.count);
 
               return (
-              <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in pb-24">
-                <header className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full animate-fade-in pb-24">
+                <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight flex items-center gap-4">
-                      <div className="bg-rose-100 text-rose-600 p-3 rounded-[1rem]"><Archive size={32} /></div> 錯題集 📝
+                    <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                      <div className="bg-rose-100 text-rose-600 p-2 rounded-xl"><Archive size={24} /></div> 錯題集 📝
                     </h2>
-                    <p className="text-slate-500 font-bold text-lg mt-3">統計您歷次測驗中的錯題，找出最常犯錯的盲點。</p>
+                    <p className="text-slate-500 font-bold text-base mt-2">統計您歷次測驗中的錯題，找出最常犯錯的盲點。</p>
                   </div>
                   
-                  <div className="flex items-center gap-4 bg-white px-8 py-5 rounded-[2rem] border-2 border-rose-200 shadow-[0_6px_0_0_#fecaca] self-start md:self-auto shrink-0">
-                     <span className="text-base font-black text-slate-500">當前題數</span>
+                  <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border-2 border-rose-200 shadow-sm self-start md:self-auto shrink-0">
+                     <span className="text-sm font-black text-slate-500">當前題數</span>
                      <div className="flex items-baseline gap-1">
-                       <span className="text-5xl font-black text-rose-500">{filteredMistakes.length}</span>
-                       <span className="text-lg font-bold text-rose-400">題</span>
+                       <span className="text-4xl font-black text-rose-500">{filteredMistakes.length}</span>
+                       <span className="text-base font-bold text-rose-400">題</span>
                      </div>
                   </div>
                 </header>
 
-                <div className="bg-white p-6 rounded-[2rem] shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 mb-10 flex flex-col gap-5">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-base font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-4 py-2.5 rounded-xl shrink-0">年度範圍</span>
-                    <button onClick={() => setMistakeFilterScope('all')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === 'all' ? 'bg-rose-500 text-white border-rose-700 shadow-[0_4px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>全部</button>
+                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col gap-3 md:gap-4">
+                  <div className="flex items-center gap-2 flex-wrap w-full">
+                    <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
+                    <button onClick={() => setMistakeFilterScope('all')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === 'all' ? 'bg-rose-500 text-white border-rose-700 shadow-[0_2px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>全部</button>
                     {availableScopes.map(s => (
-                      <button key={s} onClick={() => setMistakeFilterScope(s)} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === s ? 'bg-rose-500 text-white border-rose-700 shadow-[0_4px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>{s}</button>
+                      <button key={s} onClick={() => setMistakeFilterScope(s)} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === s ? 'bg-rose-500 text-white border-rose-700 shadow-[0_2px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>{s}</button>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-base font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-4 py-2.5 rounded-xl shrink-0">測驗題型</span>
-                    <button onClick={() => setMistakeFilterType('all')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_4px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>全部</button>
-                    <button onClick={() => setMistakeFilterType('字音')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_4px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字音</button>
-                    <button onClick={() => setMistakeFilterType('字形')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_4px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字形</button>
+                  <div className="flex items-center gap-2 flex-wrap w-full">
+                    <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">測驗題型</span>
+                    <button onClick={() => setMistakeFilterType('all')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_2px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>全部</button>
+                    <button onClick={() => setMistakeFilterType('字音')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_2px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>字音</button>
+                    <button onClick={() => setMistakeFilterType('字形')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_2px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>字形</button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                   {filteredMistakes.map((q, idx) => (
-                    <div key={idx} className="bg-white rounded-[2rem] p-4 md:p-5 border-2 border-slate-200 shadow-[0_6px_0_0_#e2e8f0] flex items-center justify-between relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_8px_0_0_#cbd5e1] transition-all">
-                      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-rose-50 to-transparent z-0"></div>
-                      <div className="relative z-10 flex-1 pl-2 md:pl-3">
-                        <div className="flex gap-2 mb-3 items-center flex-wrap">
+                    <div key={idx} className="bg-white rounded-2xl p-3 md:p-4 border-2 border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all">
+                      <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-rose-50 to-transparent z-0"></div>
+                      <div className="relative z-10 flex-1 pl-1 md:pl-2">
+                        <div className="flex gap-2 mb-2 items-center flex-wrap">
                           {q.scope && q.scope !== '錯題集' && q.scope !== '未分類' && (
-                            <span className="text-xs font-black text-indigo-700 bg-indigo-100 px-3 py-1 rounded-xl border-2 border-indigo-200">{String(q.scope).trim()}</span>
+                            <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200">{String(q.scope).trim()}</span>
                           )}
-                          <span className={`text-xs font-black px-3 py-1 rounded-xl border-2 ${getTypeColor(q.type)}`}>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${getTypeColor(q.type).replace('shadow-sm', '')}`}>
                             {q.type ? String(q.type).trim() : '未分類'}
                           </span>
-                          <span className="text-xs font-black text-rose-600 bg-rose-100 px-3 py-1 rounded-xl flex items-center gap-1 border-2 border-rose-300">
+                          <span className="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full flex items-center gap-1 border border-rose-300">
                             答錯 {q.count} 次
                           </span>
                         </div>
-                        <span className="text-2xl font-black text-slate-800">{q.question}</span>
+                        <span className="text-xl font-black text-slate-800">{q.question}</span>
                       </div>
-                      <div className="ml-4 w-28 shrink-0 whitespace-nowrap py-2 px-3 rounded-2xl bg-white border-2 border-emerald-300 shadow-[0_4px_0_0_#a7f3d0] flex flex-col items-center justify-center text-emerald-600 font-black relative z-10 gap-1">
-                        <span className="text-xs text-emerald-500 tracking-widest uppercase">答案</span>
-                        <span className="text-2xl leading-snug text-center">{q.answer}</span>
+                      <div className="ml-3 w-24 shrink-0 whitespace-nowrap py-2 px-2 rounded-xl bg-white border-2 border-emerald-300 shadow-sm flex flex-col items-center justify-center text-emerald-600 font-black relative z-10 gap-0.5">
+                        <span className="text-[10px] text-emerald-500 tracking-widest uppercase">答案</span>
+                        <span className="text-xl leading-snug text-center">{q.answer}</span>
                       </div>
                     </div>
                   ))}
                   {filteredMistakes.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center py-24 text-slate-400">
-                      <Archive size={64} className="mb-5 opacity-20" />
-                      <p className="font-black text-2xl">目前沒有符合條件的錯題</p>
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-slate-400">
+                      <Archive size={48} className="mb-4 opacity-20" />
+                      <p className="font-black text-xl">目前沒有符合條件的錯題</p>
                     </div>
                   )}
                 </div>
@@ -1242,23 +1247,23 @@
 
             {/* --- 排行榜畫面 --- */}
             {gameState === 'leaderboard' && (
-              <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in pb-24">
-                <header className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full animate-fade-in pb-24">
+                <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight flex items-center gap-4">
-                      <div className="bg-amber-100 text-amber-600 p-3 rounded-[1rem]"><Trophy size={32} /></div> 特訓排行榜 🏆
+                    <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                      <div className="bg-amber-100 text-amber-600 p-2 rounded-xl"><Trophy size={24} /></div> 特訓排行榜 🏆
                     </h2>
-                    <p className="text-slate-500 font-bold text-lg mt-3">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
+                    <p className="text-slate-500 font-bold text-base mt-2">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
                   </div>
                 </header>
 
-                <div className="bg-white p-6 rounded-[2rem] shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 mb-10 flex flex-col md:flex-row gap-5">
-                  <div className="flex-1 flex flex-col gap-2">
-                    <label className="text-sm font-black text-slate-500 pl-1">題型</label>
+                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col md:flex-row gap-3 md:gap-4">
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <label className="text-xs font-black text-slate-500 pl-1">題型</label>
                     <select 
                       value={lbFilter.type} 
                       onChange={e => setLbFilter({...lbFilter, type: e.target.value})}
-                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-black text-base shadow-inner cursor-pointer"
+                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
                     >
                       <option value="all">全部題型</option>
                       <option value="字音">字音</option>
@@ -1266,24 +1271,24 @@
                       <option value="字音+字形">字音+字形</option>
                     </select>
                   </div>
-                  <div className="flex-1 flex flex-col gap-2">
-                    <label className="text-sm font-black text-slate-500 pl-1">測驗模式</label>
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <label className="text-xs font-black text-slate-500 pl-1">測驗模式</label>
                     <select 
                       value={lbFilter.mode} 
                       onChange={e => setLbFilter({...lbFilter, mode: e.target.value})}
-                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-black text-base shadow-inner cursor-pointer"
+                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
                     >
                       <option value="all">全部模式</option>
                       <option value="計時挑戰">計時挑戰</option>
                       <option value="一般測驗">一般測驗</option>
                     </select>
                   </div>
-                  <div className="flex-1 flex flex-col gap-2">
-                    <label className="text-sm font-black text-slate-500 pl-1">題目範圍</label>
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <label className="text-xs font-black text-slate-500 pl-1">題目範圍</label>
                     <select 
                       value={lbFilter.scope} 
                       onChange={e => setLbFilter({...lbFilter, scope: e.target.value})}
-                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-black text-base shadow-inner cursor-pointer"
+                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
                     >
                       <option value="all">全部範圍</option>
                       <option value="單一年度">單一年度</option>
@@ -1292,68 +1297,69 @@
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <ul className="flex flex-col gap-2 md:gap-3">
                   {filteredAndSortedLeaderboard.map((item, idx) => {
-                    let rankStyle = "bg-white border-slate-200 shadow-[0_4px_0_0_#e2e8f0]";
+                    let rankStyle = "bg-white border-slate-200 shadow-sm";
                     let rankBadge = "bg-slate-100 text-slate-500 border-slate-200";
                     let rankIcon = null;
 
                     if (idx === 0) {
-                      rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-100 border-yellow-400 shadow-[0_6px_0_0_#facc15] scale-[1.02] z-10";
-                      rankBadge = "bg-yellow-400 text-white border-yellow-500 shadow-sm";
-                      rankIcon = <Trophy size={20} className="ml-1" />;
+                      rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-400 shadow-md scale-[1.01] z-10";
+                      rankBadge = "bg-yellow-400 text-white border-yellow-500";
+                      rankIcon = <Trophy size={16} className="ml-0.5" />;
                     } else if (idx === 1) {
-                      rankStyle = "bg-gradient-to-r from-slate-50 to-gray-100 border-slate-300 shadow-[0_4px_0_0_#94a3b8]";
-                      rankBadge = "bg-slate-300 text-white border-slate-400 shadow-sm";
+                      rankStyle = "bg-gradient-to-r from-slate-50 to-gray-50 border-slate-300 shadow-sm";
+                      rankBadge = "bg-slate-300 text-white border-slate-400";
                     } else if (idx === 2) {
-                      rankStyle = "bg-gradient-to-r from-orange-50 to-amber-50 border-orange-300 shadow-[0_4px_0_0_#fdba74]";
-                      rankBadge = "bg-orange-300 text-white border-orange-400 shadow-sm";
+                      rankStyle = "bg-gradient-to-r from-orange-50 to-amber-50/50 border-orange-300 shadow-sm";
+                      rankBadge = "bg-orange-300 text-white border-orange-400";
                     }
 
                     return (
-                      <div key={idx} className={`rounded-[2rem] p-4 md:p-6 border-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all hover:-translate-y-1 hover:shadow-lg ${rankStyle}`}>
-                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
-                          <div className={`w-12 h-12 md:w-16 md:h-16 shrink-0 rounded-[1rem] flex items-center justify-center font-black text-xl md:text-3xl border-2 ${rankBadge}`}>
+                      <li key={idx} className={`rounded-xl py-2 px-3 md:px-4 border-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md ${rankStyle}`}>
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                          <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-lg flex items-center justify-center font-black text-lg md:text-xl border-2 ${rankBadge}`}>
                             {idx + 1} {rankIcon}
                           </div>
-                          <div className="flex-1 overflow-hidden">
-                            <h3 className="text-xl md:text-2xl font-black text-slate-800 truncate">{item.userName || '神秘挑戰者'}</h3>
-                            <div className="flex gap-2 mt-2 flex-wrap">
-                              <span className="text-[10px] md:text-xs font-black text-indigo-600 bg-indigo-100/80 px-2 py-1 rounded-lg border border-indigo-200">{item.mode}</span>
-                              <span className={`text-[10px] md:text-xs font-black px-2 py-1 rounded-lg border ${getTypeColor(item.type).replace('shadow-sm', '')}`}>{item.type}</span>
-                              <span className="text-[10px] md:text-xs font-black text-slate-500 bg-slate-100/80 px-2 py-1 rounded-lg border border-slate-200 truncate max-w-[120px]">{item.scope}</span>
+                          <div className="flex-1">
+                            <h3 className="text-base md:text-lg font-black text-slate-800 truncate">{item.userName || '神秘挑戰者'}</h3>
+                            <div className="flex gap-2 mt-1 flex-wrap">
+                              <span className="text-[10px] font-black text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200 whitespace-nowrap">{item.mode}</span>
+                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap ${getTypeColor(item.type).replace('shadow-sm', '')}`}>{item.type}</span>
+                              {/* 🚀 修正：移除 truncate max-w，加入 break-words 使長清單自然換行 */}
+                              <span className="text-[10px] font-black text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md border border-slate-200 break-words">{item.scope}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-4 gap-2 md:gap-4 w-full md:w-auto shrink-0 bg-white/50 p-2 md:p-3 rounded-2xl border border-white/60">
-                          <div className="flex flex-col items-center text-center px-1">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">總題數</span>
-                            <span className="text-lg md:text-xl font-black text-slate-700">{item.totalQuestions}</span>
+                        <div className="flex gap-2 md:gap-4 w-full md:w-auto shrink-0 bg-white/60 p-2 md:px-3 rounded-lg border border-slate-200/60 justify-between md:justify-start">
+                          <div className="flex flex-col items-center text-center px-1 md:px-2">
+                            <span className="text-[9px] font-black text-slate-400 uppercase">作答</span>
+                            <span className="text-sm md:text-base font-black text-slate-700">{item.totalQuestions}</span>
                           </div>
-                          <div className="flex flex-col items-center text-center px-1 border-l-2 border-slate-200/50">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">正確</span>
-                            <span className="text-lg md:text-xl font-black text-emerald-500">{item.correctCount}</span>
+                          <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
+                            <span className="text-[9px] font-black text-slate-400 uppercase">正確</span>
+                            <span className="text-sm md:text-base font-black text-emerald-500">{item.correctCount}</span>
                           </div>
-                          <div className="flex flex-col items-center text-center px-1 border-l-2 border-slate-200/50">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">耗時</span>
-                            <span className="text-lg md:text-xl font-black text-slate-700">{item.timeSpent}</span>
+                          <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
+                            <span className="text-[9px] font-black text-slate-400 uppercase">耗時</span>
+                            <span className="text-sm md:text-base font-black text-slate-700">{item.timeSpent}</span>
                           </div>
-                          <div className="flex flex-col items-center text-center px-1 border-l-2 border-slate-200/50">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">準確率</span>
-                            <span className="text-lg md:text-xl font-black text-sky-500">{item.accuracy}</span>
+                          <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
+                            <span className="text-[9px] font-black text-slate-400 uppercase">準確率</span>
+                            <span className="text-sm md:text-base font-black text-sky-500">{item.accuracy}</span>
                           </div>
                         </div>
-                      </div>
+                      </li>
                     );
                   })}
                   {filteredAndSortedLeaderboard.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                      <Trophy size={64} className="mb-5 opacity-20" />
-                      <p className="font-black text-2xl">目前還沒有符合的戰績，快去挑戰吧！</p>
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                      <Trophy size={48} className="mb-4 opacity-20" />
+                      <p className="font-black text-xl">目前還沒有符合的戰績，快去挑戰吧！</p>
                     </div>
                   )}
-                </div>
+                </ul>
               </div>
             )}
 
@@ -1364,18 +1370,18 @@
           {/* 回報問題確認彈窗 */}
           {confirmModal.isOpen && confirmModal.type === 'report' && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl animate-fade-in-up text-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <div className="mx-auto w-20 h-20 bg-rose-100 text-rose-500 rounded-[1.5rem] border-2 border-rose-200 flex items-center justify-center mb-6 shadow-[0_4px_0_0_#fda4af]">
-                  <AlertTriangle size={40} />
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl animate-fade-in-up text-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <div className="mx-auto w-16 h-16 bg-rose-100 text-rose-500 rounded-2xl border-2 border-rose-200 flex items-center justify-center mb-5 shadow-sm">
+                  <AlertTriangle size={32} />
                 </div>
-                <h3 className="text-3xl font-black text-slate-800 mb-3">確認回報問題</h3>
-                <p className="text-slate-500 font-bold mb-8 text-base leading-relaxed">
+                <h3 className="text-2xl font-black text-slate-800 mb-2">確認回報問題</h3>
+                <p className="text-slate-500 font-bold mb-6 text-sm leading-relaxed">
                   您確定這題的敘述或答案有誤嗎？<br/>
-                  <span className="text-rose-500 mt-2 block">回報後系統將跳過此題，且不計入您的成績與錯題集！</span>
+                  <span className="text-rose-500 mt-1 block">回報後系統將跳過此題，且不計入您的成績與錯題集！</span>
                 </p>
-                <div className="flex gap-4">
-                  <button onClick={() => setConfirmModal({isOpen: false, type: '', data: null})} className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none">取消</button>
-                  <button onClick={executeReportError} className="flex-1 py-4 rounded-2xl font-black text-white bg-rose-500 hover:bg-rose-400 transition-colors border-2 border-rose-700 shadow-[0_4px_0_0_#be123c] active:translate-y-[4px] active:shadow-none">確認回報</button>
+                <div className="flex gap-3">
+                  <button onClick={() => setConfirmModal({isOpen: false, type: '', data: null})} className="flex-1 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm active:translate-y-[2px] active:shadow-none">取消</button>
+                  <button onClick={executeReportError} className="flex-1 py-3 rounded-xl font-black text-white bg-rose-500 hover:bg-rose-400 transition-colors border-2 border-rose-700 shadow-sm active:translate-y-[2px] active:shadow-none">確認回報</button>
                 </div>
               </div>
             </div>
@@ -1384,36 +1390,36 @@
           {/* 計時挑戰設定 Modal */}
           {showTimeModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <h3 className="text-3xl font-black text-slate-800 mb-3 text-center">測驗時間 ⏱️</h3>
-                <p className="text-slate-500 font-bold mb-4 text-center">請上下滑動選擇計時長度：</p>
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <h3 className="text-2xl font-black text-slate-800 mb-2 text-center">測驗時間 ⏱️</h3>
+                <p className="text-slate-500 font-bold mb-4 text-center text-sm">請上下滑動選擇計時長度：</p>
                 
                 <div 
-                  className="relative h-48 my-5 bg-slate-50 rounded-[1.5rem] border-2 border-slate-200 shadow-inner" 
+                  className="relative h-40 my-4 bg-slate-50 rounded-2xl border-2 border-slate-200 shadow-inner" 
                   style={{ maskImage: 'linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)', WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)' }}
                 >
-                  <div className="absolute top-1/2 left-0 w-full h-14 -mt-7 border-y-4 border-sky-400 bg-sky-100/30 pointer-events-none z-10"></div>
+                  <div className="absolute top-1/2 left-0 w-full h-12 -mt-6 border-y-4 border-sky-400 bg-sky-100/30 pointer-events-none z-10"></div>
                   <ul 
-                    className="h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar pt-[68px] pb-[68px]"
+                    className="h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar pt-[56px] pb-[56px]"
                     onScroll={(e) => {
-                        const itemHeight = 56; 
+                        const itemHeight = 48; 
                         const index = Math.round(e.target.scrollTop / itemHeight);
                         if(index >= 0 && index < 10) setCustomTime(index + 1);
                     }}
                   >
                     {[...Array(10)].map((_, i) => (
-                      <li key={i} className={`h-14 flex items-center justify-center snap-center text-4xl font-black cursor-pointer transition-all duration-200 ${customTime === i + 1 ? 'text-sky-600 scale-110' : 'text-slate-300'}`} onClick={() => setCustomTime(i + 1)}>
+                      <li key={i} className={`h-12 flex items-center justify-center snap-center text-3xl font-black cursor-pointer transition-all duration-200 ${customTime === i + 1 ? 'text-sky-600 scale-110' : 'text-slate-300'}`} onClick={() => setCustomTime(i + 1)}>
                         {i + 1}
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="text-center font-black text-sky-700 text-lg mb-8 bg-sky-100 py-3 rounded-xl border-2 border-sky-200">
+                <div className="text-center font-black text-sky-700 text-base mb-6 bg-sky-100 py-2.5 rounded-xl border-2 border-sky-200">
                   已選擇：{customTime} 分鐘
                 </div>
                 
-                <button onClick={() => setShowTimeModal(false)} className="w-full py-5 rounded-2xl font-black text-white text-xl bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-[0_6px_0_0_#0284c7] active:translate-y-[6px] active:shadow-none">
+                <button onClick={() => setShowTimeModal(false)} className="w-full py-4 rounded-xl font-black text-white text-lg bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-[0_4px_0_0_#0284c7] active:translate-y-[4px] active:shadow-none">
                   確定
                 </button>
               </div>
@@ -1423,15 +1429,15 @@
           {/* 一般測驗提示 Modal */}
           {showNormalModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up text-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <div className="mx-auto w-20 h-20 bg-indigo-100 text-indigo-500 rounded-[1.5rem] border-2 border-indigo-200 flex items-center justify-center mb-6 shadow-[0_4px_0_0_#a5b4fc]">
-                  <BookOpen size={40} />
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full animate-fade-in-up text-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <div className="mx-auto w-16 h-16 bg-indigo-100 text-indigo-500 rounded-[1.25rem] border-2 border-indigo-200 flex items-center justify-center mb-5 shadow-sm">
+                  <BookOpen size={32} />
                 </div>
-                <h3 className="text-3xl font-black text-slate-800 mb-4">一般測驗模式</h3>
-                <p className="text-slate-500 font-bold mb-8 text-lg leading-relaxed">
+                <h3 className="text-2xl font-black text-slate-800 mb-3">一般測驗模式</h3>
+                <p className="text-slate-500 font-bold mb-6 text-sm leading-relaxed">
                   此模式會依題目範圍選擇 100 題字音、100 題字形的題目進行測驗，一律計時 10 分鐘。
                 </p>
-                <button onClick={() => setShowNormalModal(false)} className="w-full py-5 rounded-2xl font-black text-white text-xl bg-indigo-500 hover:bg-indigo-400 transition-colors border-2 border-indigo-700 shadow-[0_6px_0_0_#4338ca] active:translate-y-[6px] active:shadow-none">
+                <button onClick={() => setShowNormalModal(false)} className="w-full py-4 rounded-xl font-black text-white text-lg bg-indigo-500 hover:bg-indigo-400 transition-colors border-2 border-indigo-700 shadow-[0_4px_0_0_#4338ca] active:translate-y-[4px] active:shadow-none">
                   我知道了
                 </button>
               </div>
@@ -1441,12 +1447,12 @@
           {/* API 設定 Modal */}
           {showApiModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-lg w-full animate-fade-in-up border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <h3 className="text-3xl font-black text-slate-800 mb-4 flex items-center gap-3">
-                  <div className="bg-sky-100 text-sky-600 p-3 rounded-[1rem] border-2 border-sky-200"><Link size={28} /></div>
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full animate-fade-in-up border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <h3 className="text-2xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                  <div className="bg-sky-100 text-sky-600 p-2.5 rounded-xl border-2 border-sky-200"><Link size={24} /></div>
                   雲端題庫設定
                 </h3>
-                <p className="text-slate-500 mb-6 font-bold leading-relaxed text-lg">
+                <p className="text-slate-500 mb-5 font-bold leading-relaxed text-sm">
                   請輸入您的 Google Apps Script 網址。系統將自動記憶並更新題庫。
                 </p>
                 <input 
@@ -1454,9 +1460,9 @@
                   value={inputApiUrl}
                   onChange={(e) => setInputApiUrl(e.target.value)}
                   placeholder="https://script.google.com/macros/s/.../exec"
-                  className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl px-5 py-5 text-slate-700 font-mono text-base md:text-sm transition-colors mb-8 shadow-inner"
+                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-mono text-sm transition-colors mb-6 shadow-inner"
                 />
-                <div className="flex flex-wrap items-center justify-end gap-4">
+                <div className="flex flex-wrap items-center justify-end gap-3">
                   <button 
                     onClick={() => {
                       setInputApiUrl(GOOGLE_SCRIPT_API_URL);
@@ -1464,13 +1470,13 @@
                       localStorage.removeItem('CUSTOM_API_URL');
                       setShowApiModal(false);
                     }} 
-                    className="px-6 py-4 rounded-2xl font-black text-rose-500 hover:bg-rose-50 transition-colors mr-auto border-2 border-transparent active:scale-95"
+                    className="px-4 py-3 rounded-xl font-black text-rose-500 hover:bg-rose-50 transition-colors mr-auto border-2 border-transparent active:scale-95 text-sm"
                   >
                     恢復預設
                   </button>
                   <button 
                     onClick={() => setShowApiModal(false)} 
-                    className="px-6 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none"
+                    className="px-4 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm active:translate-y-[2px] active:shadow-none text-sm"
                   >
                     取消
                   </button>
@@ -1482,7 +1488,7 @@
                       }
                       setShowApiModal(false);
                     }} 
-                    className="px-8 py-4 rounded-2xl font-black text-white bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-[0_4px_0_0_#0284c7] active:translate-y-[4px] active:shadow-none"
+                    className="px-5 py-3 rounded-xl font-black text-white bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-sm active:translate-y-[2px] active:shadow-none text-sm"
                   >
                     儲存並載入
                   </button>
@@ -1494,22 +1500,22 @@
           {/* 建立名稱 Modal */}
           {showNameModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <h3 className="text-3xl font-black text-slate-800 mb-4 flex items-center gap-3">
-                  <div className="bg-emerald-100 text-emerald-600 p-3 rounded-[1rem] border-2 border-emerald-200"><PenTool size={28} /></div>
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <h3 className="text-2xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                  <div className="bg-emerald-100 text-emerald-600 p-2.5 rounded-xl border-2 border-emerald-200"><PenTool size={24} /></div>
                   建立使用者名稱
                 </h3>
-                <p className="text-slate-500 font-bold mb-8 text-lg">輸入您的姓名或暱稱，系統將會記錄您的錯題與學習進度喔！</p>
+                <p className="text-slate-500 font-bold mb-6 text-sm">輸入您的姓名或暱稱，系統將會記錄您的錯題與學習進度喔！</p>
                 <input 
                   type="text" 
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder="例如：王小明"
-                  className="w-full bg-slate-50 border-4 border-slate-200 focus:border-emerald-400 outline-none rounded-2xl px-5 py-5 text-slate-800 font-black text-xl transition-colors mb-8 shadow-inner text-center"
+                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-emerald-400 outline-none rounded-xl px-4 py-3 text-slate-800 font-black text-lg transition-colors mb-6 shadow-inner text-center"
                   autoFocus
                 />
-                <div className="flex gap-4">
-                  <button onClick={() => setShowNameModal(false)} className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none text-lg">
+                <div className="flex gap-3">
+                  <button onClick={() => setShowNameModal(false)} className="flex-1 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm active:translate-y-[2px] active:shadow-none">
                     取消
                   </button>
                   <button 
@@ -1522,7 +1528,7 @@
                       setShowNameModal(false);
                       startGame();
                     }} 
-                    className="flex-[2] py-4 rounded-2xl font-black text-white bg-emerald-500 hover:bg-emerald-400 transition-colors border-2 border-emerald-700 shadow-[0_4px_0_0_#047857] active:translate-y-[4px] active:shadow-none text-lg"
+                    className="flex-[2] py-3 rounded-xl font-black text-white bg-emerald-500 hover:bg-emerald-400 transition-colors border-2 border-emerald-700 shadow-sm active:translate-y-[2px] active:shadow-none"
                   >
                     確認並開始
                   </button>
@@ -1534,13 +1540,13 @@
           {/* 全局提示訊息 Alert */}
           {alertMsg && (
             <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up text-center flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <div className="w-20 h-20 bg-rose-100 text-rose-500 rounded-[1.5rem] border-2 border-rose-200 flex items-center justify-center mb-6 shadow-[0_4px_0_0_#fda4af]">
-                  <XCircle size={40} />
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full animate-fade-in-up text-center flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-[1.25rem] border-2 border-rose-200 flex items-center justify-center mb-5 shadow-sm">
+                  <XCircle size={32} />
                 </div>
-                <h3 className="text-3xl font-black text-slate-800 mb-3">系統提示</h3>
-                <p className="text-slate-500 font-bold mb-8 leading-relaxed text-lg">{alertMsg}</p>
-                <button onClick={() => setAlertMsg('')} className="w-full py-4 rounded-2xl font-black text-white text-xl bg-rose-500 hover:bg-rose-400 transition-colors border-2 border-rose-700 shadow-[0_6px_0_0_#be123c] active:translate-y-[6px] active:shadow-none">
+                <h3 className="text-2xl font-black text-slate-800 mb-2">系統提示</h3>
+                <p className="text-slate-500 font-bold mb-6 leading-relaxed text-sm">{alertMsg}</p>
+                <button onClick={() => setAlertMsg('')} className="w-full py-3 rounded-xl font-black text-white text-lg bg-rose-500 hover:bg-rose-400 transition-colors border-2 border-rose-700 shadow-sm active:translate-y-[2px] active:shadow-none">
                   我知道了
                 </button>
               </div>
@@ -1592,7 +1598,7 @@
             </div>
           )}
 
-          {/* 全域頁尾版權宣告 */}
+          {/* 全域頁尾版權宣告 (深色高對比 + 膠囊白底) */}
           <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
             大榮老師製作 © 2026 | Version 3.1 (v.3.1)
           </div>
