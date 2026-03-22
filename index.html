@@ -89,9 +89,9 @@
 
     // --- 2. 預設示範題庫 ---
     const MOCK_QUESTIONS = [
-      { id: 1, scope: '第一課', type: '字音', question: '「豌」豆苗', answer: 'ㄨㄢ', wrongOptions: ['ㄨㄢˇ', 'ㄨㄢˋ', 'ㄨㄤ'] },
-      { id: 2, scope: '第一課', type: '字音', question: '「瞭」望臺', answer: 'ㄌㄧㄠˇ', wrongOptions: ['ㄌㄧㄠˋ', 'ㄌㄧㄠ', 'ㄌㄧㄠˊ'] },
-      { id: 3, scope: '第二課', type: '字形', question: '打擂「ㄊㄞˊ」', answer: '臺', wrongOptions: ['台', '擡', '苔'] },
+      { id: 1, scope: '第一課', type: '字音', question: '「豌」豆苗', answer: 'ㄨㄢ', wrongOptions: ['ㄨㄢˇ', 'ㄨㄢˋ', 'ㄨㄤ'], isCloudReported: false },
+      { id: 2, scope: '第一課', type: '字音', question: '「瞭」望臺', answer: 'ㄌㄧㄠˇ', wrongOptions: ['ㄌㄧㄠˋ', 'ㄌㄧㄠ', 'ㄌㄧㄠˊ'], isCloudReported: false },
+      { id: 3, scope: '第二課', type: '字形', question: '打擂「ㄊㄞˊ」', answer: '臺', wrongOptions: ['台', '擡', '苔'], isCloudReported: false },
     ];
 
     // 預設 API 網址
@@ -138,7 +138,6 @@
       return `${device} (${os}) - ${browser}`;
     };
 
-    // 產生格式化時間
     const getNowString = () => {
         const now = new Date();
         return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
@@ -149,11 +148,10 @@
       const [gameState, setGameState] = useState('menu'); 
       const [questionBank, setQuestionBank] = useState([]);
       const [isDbLoading, setIsDbLoading] = useState(false);
-      // 獨立狀態：專門處理背景更新指示，不會鎖死按鈕
       const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
       const [dbStatus, setDbStatus] = useState({ type: 'info', msg: '系統準備中' });
 
-      // 用於深度比對資料庫差異，避免無效重新渲染
+      // 資料庫深度比對指紋
       const dataHashRef = useRef('');
 
       const [apiUrl, setApiUrl] = useState(() => localStorage.getItem('CUSTOM_API_URL') || GOOGLE_SCRIPT_API_URL);
@@ -173,6 +171,7 @@
       const [selectedOption, setSelectedOption] = useState(null);
       const [feedback, setFeedback] = useState(null);
 
+      // 錯題資料庫與回報資料庫 (完全由雲端強制覆蓋同步，落實 Single Source of Truth)
       const [localMistakes, setLocalMistakes] = useState(() => JSON.parse(localStorage.getItem('MISTAKES_DB')) || {});
       const [reportedList, setReportedList] = useState(() => JSON.parse(localStorage.getItem('REPORTED_DB')) || []);
       
@@ -218,34 +217,34 @@
               answer: q.answer
             }));
 
-            fetch(apiUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({ action: 'logMistakes', userName: userName, deviceName: getDeviceName(), mistakes: uploadMistakes, recordTime: getNowString() })
-            }).catch(e => console.warn('雲端錯題同步失敗', e));
+            // 清理網址空白，防止發送失敗
+            const cleanApiUrl = (apiUrl || '').trim();
+            if (cleanApiUrl) {
+              fetch(cleanApiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'logMistakes', userName: userName, deviceName: getDeviceName(), mistakes: uploadMistakes, recordTime: getNowString() })
+              }).catch(e => console.warn('雲端錯題同步失敗', e));
+            }
           }
           setScore(prev => ({ ...prev, synced: true }));
         }
       }, [gameState, score.synced, score.wrongList, apiUrl, userName]);
 
-      // --- 即時且支援背景輪詢的 API 同步機制 ---
+      // --- 統一雲端同步引擎 (Single Source of Truth) ---
       const fetchQuestions = useCallback(async (isBackground = false) => {
-        // 初始載入時才鎖定畫面，背景載入不干擾操作
         if (!isBackground) {
           setIsDbLoading(true);
           setDbStatus({ type: 'info', msg: '同步雲端 API 資料中...' });
         }
         
         try {
-          if (!apiUrl) throw new Error("無網址");
+          const cleanApiUrl = (apiUrl || '').trim();
+          if (!cleanApiUrl) throw new Error("無網址");
           
-          // 利用時間戳記與 cache 屬性強制繞過快取，避免 CORS 預檢錯誤
-          const fetchUrl = apiUrl.includes('?') ? `${apiUrl}&t=${Date.now()}` : `${apiUrl}?t=${Date.now()}`;
-          const response = await fetch(fetchUrl, { 
-            method: 'GET', 
-            redirect: 'follow',
-            cache: 'no-store'
-          });
+          // 利用時間戳記強制繞過快取，並簡化 fetch 參數避免觸發嚴格瀏覽器的 CORS 阻擋
+          const fetchUrl = cleanApiUrl.includes('?') ? `${cleanApiUrl}&t=${Date.now()}` : `${cleanApiUrl}?t=${Date.now()}`;
+          const response = await fetch(fetchUrl);
           
           if (!response.ok) throw new Error(`請求失敗，狀態碼：${response.status}`);
           
@@ -254,24 +253,38 @@
           try {
             jsonData = JSON.parse(textData);
           } catch (parseError) {
+            console.error("API 格式錯誤，回傳內容為：", textData.substring(0, 150));
             throw new Error("資料格式錯誤 (非 JSON)");
           }
           
           const newParsedQuestions = [];
           const cloudMistakes = {};
           const cloudReportedSet = new Set();
-          const scopeCounters = {}; // 用於各年度獨立計算題號
+          const scopeCounters = {}; 
 
+          // --- 第一階段掃描：精準鎖定 I 欄尋找「疑似有誤」或「錯誤回報」 ---
           jsonData.forEach((q) => {
-            // 判斷是否為記錄表單 (帶有紀錄時間或特殊 scope)
+            // 嚴格讀取 I 欄的數值（標題通常為「錯誤回報」或預設「I」）
+            const columnIValue = String(q['錯誤回報'] || q['I'] || '').trim();
+            const isRowReported = columnIValue.includes('疑似有誤') || columnIValue.includes('錯誤回報');
+            
+            if (isRowReported) {
+              const qStr = String(q.question || q['錯題內容'] || q['有問題的題目'] || q['A'] || '').trim();
+              if (qStr) cloudReportedSet.add(qStr);
+            }
+            
+            // 特別防呆：若「題目錯誤回報」工作表明確有填寫「有問題的題目」欄位
+            if (q['有問題的題目']) {
+              cloudReportedSet.add(String(q['有問題的題目']).trim());
+            }
+          });
+
+          // --- 第二階段掃描：解析題庫與錯題 ---
+          jsonData.forEach((q) => {
+            // 判斷是否為「錯題集」或「題目錯誤回報」等歷史紀錄表單
             if (q['紀錄時間'] !== undefined || String(q.scope || '').trim() === '錯題集' || String(q.scope || '').trim() === '題目錯誤回報') {
-              
-              // 記錄表單若含有「有問題的題目」，代表是從回報系統寫入的
-              if (q['有問題的題目']) {
-                cloudReportedSet.add(String(q['有問題的題目']).trim());
-              } 
-              // 否則為學生一般錯題紀錄
-              else {
+              // 忽略「題目錯誤回報」，僅解析「錯題集」供錯題資料庫使用
+              if (!q['有問題的題目']) {
                 const mQuestion = String(q.question || q['錯題內容'] || '').trim();
                 const mAnswer = String(q.answer || q['正確答案'] || '').trim();
                 const mScope = String(q['年度範圍'] || q.year || q.scope || '未分類').trim();
@@ -294,26 +307,15 @@
               if (qQuestion && qAnswer) {
                 const qScope = String(q.scope || '未分類').trim();
 
-                // 獨立題號計數器：即使 C 欄沒資料，各年度題號也會從 1 獨立起算
                 if (!scopeCounters[qScope]) scopeCounters[qScope] = 0;
                 scopeCounters[qScope]++;
 
-                // 優先讀取工作表的 C 欄或題號作為 ID
                 const strictId = String(q['題號'] || q['C'] || q.id || q.questionNumber || '').trim();
                 const finalId = strictId || String(scopeCounters[qScope]);
                 
-                // 強悍防禦機制：不論欄位標題是否遭改動，只要該列任一格子包含「疑似有誤」或「錯誤回報」即判定為回報題
-                let isCloudReported = false;
-                for (const key in q) {
-                    if (q[key] && typeof q[key] === 'string' && (q[key].includes('疑似有誤') || q[key].includes('錯誤回報'))) {
-                        isCloudReported = true;
-                        break;
-                    }
-                }
-                
-                if (isCloudReported) {
-                  cloudReportedSet.add(qQuestion);
-                }
+                // 精準讀取 I 欄數值進行判斷，落實絕對同步
+                const columnIValue = String(q['錯誤回報'] || q['I'] || '').trim();
+                const isRowReportedLocal = columnIValue.includes('疑似有誤') || columnIValue.includes('錯誤回報');
 
                 newParsedQuestions.push({
                   id: finalId, 
@@ -322,26 +324,26 @@
                   answer: qAnswer, 
                   question: qQuestion,
                   wrongOptions: [q.wrong1, q.wrong2, q.wrong3].filter(Boolean),
-                  isCloudReported: isCloudReported
+                  isCloudReported: isRowReportedLocal || cloudReportedSet.has(qQuestion)
                 });
               }
             }
           });
           
           if (newParsedQuestions.length > 0) {
-            // 將欲儲存的狀態轉為字串，與前一次快取比對
-            const cloudReportedArray = Array.from(cloudReportedSet).sort();
+            // 從所有解析好的題目中，抽出 isCloudReported 為 true 的題目清單
+            const cloudReportedQs = newParsedQuestions.filter(q => q.isCloudReported).map(q => q.question);
+            
             const newDataHash = JSON.stringify({ 
                 questions: newParsedQuestions, 
-                reports: cloudReportedArray, 
-                mistakes: cloudMistakes 
+                mistakes: cloudMistakes,
+                reports: cloudReportedQs
             });
 
-            // 如果資料真正發生了變更，才執行更新與觸發轉動特效
+            // 僅在資料發生實質變更時觸發狀態更新
             if (dataHashRef.current !== newDataHash) {
                 dataHashRef.current = newDataHash;
 
-                // 若是背景更新且發生變更，顯示圖示轉動 2 秒鐘提示使用者
                 if (isBackground) {
                     setIsBackgroundSyncing(true);
                     setTimeout(() => setIsBackgroundSyncing(false), 2000);
@@ -349,22 +351,13 @@
 
                 setQuestionBank(newParsedQuestions);
                 if (!isBackground) setDbStatus({ type: 'success', msg: `已載入 ${newParsedQuestions.length} 題` });
-                
-                // 強制覆蓋本地回報清單，確保刪除標記能被正確同步解除
-                setReportedList(cloudReportedArray);
-                localStorage.setItem('REPORTED_DB', JSON.stringify(cloudReportedArray));
 
-                setLocalMistakes(prev => {
-                  const merged = { ...prev };
-                  Object.values(cloudMistakes).forEach(cm => {
-                    const key = cm.question; 
-                    if (!merged[key] || merged[key].count < cm.count) { 
-                      merged[key] = cm; 
-                    } 
-                  });
-                  localStorage.setItem('MISTAKES_DB', JSON.stringify(merged));
-                  return merged;
-                });
+                // ★ 架構大一統：錯題集與回報清單皆嚴格同步雲端，確保刪除時精準連動 ★
+                setLocalMistakes(cloudMistakes);
+                localStorage.setItem('MISTAKES_DB', JSON.stringify(cloudMistakes));
+
+                setReportedList(cloudReportedQs);
+                localStorage.setItem('REPORTED_DB', JSON.stringify(cloudReportedQs));
 
                 setStudyScope(prev => {
                   const scopes = [...new Set(newParsedQuestions.map(q => q.scope))];
@@ -401,6 +394,7 @@
         }
 
         let filtered = [];
+        // 防呆：測驗過濾條件嚴格對齊全域唯一的 reportedList
         if (settings.mode === 'mistakePractice') {
           filtered = Object.values(localMistakes).filter(q => !reportedList.includes(q.question));
           if (settings.type !== 'all') filtered = filtered.filter(q => q.type === settings.type);
@@ -438,24 +432,28 @@
       const executeReportError = () => {
          const currentQ = confirmModal.data;
          
+         // 立即更新全域 reportedList，讓自學區等畫面能秒換狀態，背景更新時再與雲端核對
          const newReported = [...new Set([...reportedList, currentQ.question])];
          setReportedList(newReported);
          localStorage.setItem('REPORTED_DB', JSON.stringify(newReported));
 
-         fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-                action: 'reportError',
-                userName: userName,
-                deviceName: getDeviceName(),
-                recordTime: getNowString(),
-                question: currentQ.question,
-                scope: currentQ.scope,
-                type: currentQ.type,
-                questionNumber: currentQ.id
-            })
-         }).catch(e => console.warn('回報錯誤失敗', e));
+         const cleanApiUrl = (apiUrl || '').trim();
+         if (cleanApiUrl) {
+           fetch(cleanApiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                  action: 'reportError',
+                  userName: userName,
+                  deviceName: getDeviceName(),
+                  recordTime: getNowString(),
+                  question: currentQ.question,
+                  scope: currentQ.scope,
+                  type: currentQ.type,
+                  questionNumber: currentQ.id
+              })
+           }).catch(e => console.warn('回報錯誤失敗', e));
+         }
 
          setConfirmModal({isOpen: false, type: '', data: null});
 
@@ -622,7 +620,6 @@
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2 text-rose-600 font-bold">
-                    {/* 左下角圖示：背景實際更新時才會旋轉 */}
                     {(isDbLoading || isBackgroundSyncing) ? <RefreshCw className="animate-spin w-4 h-4" /> : <CloudDownload className="w-4 h-4" />} 題庫狀態
                   </div>
                   <button 
@@ -795,7 +792,7 @@
                           }
                           setShowNameModal(true);
                         }} 
-                        disabled={isDbLoading} // 僅在初始載入時鎖定，背景靜默更新完全不干擾
+                        disabled={isDbLoading} 
                         className={`w-full md:w-auto flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-10 py-5 rounded-[2rem] text-xl font-extrabold shadow-xl shadow-purple-200 hover:shadow-2xl hover:shadow-purple-300 hover:-translate-y-1 active:scale-95 transition-all ${isDbLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {isDbLoading ? <RefreshCw className="animate-spin" size={28} /> : <Play size={28} className="fill-white" />}
@@ -996,11 +993,12 @@
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
+                    // 全面統一：嚴格比對唯一的絕對標準 reportedList (即時反應來自 fetchQuestions 解析到的 I 欄狀態)
                     const isReported = reportedList.includes(q.question);
                     return (
-                      <div key={idx} className={`bg-white rounded-2xl p-5 border ${isReported ? 'border-amber-300 shadow-md opacity-75' : 'border-slate-100 shadow-sm'} flex flex-col justify-between hover:shadow-md transition-all group relative`}>
+                      <div key={idx} className={`bg-white rounded-2xl p-5 border ${isReported ? 'border-rose-300 shadow-md bg-rose-50/50' : 'border-slate-100 shadow-sm'} flex flex-col justify-between hover:shadow-md transition-all group relative`}>
                         {isReported && (
-                          <div className="absolute -top-3 -right-2 bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-10 border-2 border-white">
+                          <div className="absolute -top-3 -right-2 bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 z-10 border-2 border-white animate-pulse">
                             <AlertTriangle size={14} /> 疑似有誤
                           </div>
                         )}
@@ -1030,7 +1028,7 @@
               const mistakesArray = Object.values(localMistakes || {}).filter(q => q && q.question);
               const availableScopes = [...new Set(questionBank.map(q => String(q.scope || '未分類').trim()))].filter(s => s !== '錯題集' && s !== '未分類');
               const filteredMistakes = mistakesArray
-                .filter(q => !reportedList.includes(q.question))
+                .filter(q => !reportedList.includes(q.question)) // 嚴格排除絕對標準 reportedList
                 .filter(q => mistakeFilterScope === 'all' || String(q.scope || '未分類').trim() === mistakeFilterScope)
                 .filter(q => mistakeFilterType === 'all' || String(q.type || '未分類').trim() === mistakeFilterType)
                 .sort((a, b) => b.count - a.count);
