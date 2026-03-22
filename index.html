@@ -91,7 +91,7 @@
     const MOCK_QUESTIONS = [
       { id: 1, scope: '第一課', type: '字音', question: '「豌」豆苗', answer: 'ㄨㄢ', wrongOptions: ['ㄨㄢˇ', 'ㄨㄢˋ', 'ㄨㄤ'], isCloudReported: false },
       { id: 2, scope: '第一課', type: '字音', question: '「瞭」望臺', answer: 'ㄌㄧㄠˇ', wrongOptions: ['ㄌㄧㄠˋ', 'ㄌㄧㄠ', 'ㄌㄧㄠˊ'], isCloudReported: false },
-      { id: 3, scope: '第二課', type: '字形', question: '打擂「ㄊㄞˊ」', answer: '臺', wrongOptions: ['台', '擡', '苔'], isCloudReported: false },
+      { id: 3, scope: '第二課', type: '字形', question: '打擂「ㄊㄞˊ」', answer: '臺', wrongOptions: ['台', '擡', '苔'], isCloudReported: true },
     ];
 
     // 預設 API 網址
@@ -252,6 +252,11 @@
           let jsonData;
           try {
             jsonData = JSON.parse(textData);
+            // 👨‍💻【終極測謊機：開發者除錯用】
+            // 請按 F12 打開 Console，確認這裡面到底有沒有您輸入的 mistake！
+            if (!isBackground) {
+              console.log("【系統即時掃描】後端 API 傳來的真實資料：", jsonData);
+            }
           } catch (parseError) {
             console.error("API 格式錯誤，回傳內容為：", textData.substring(0, 150));
             throw new Error("資料格式錯誤 (非 JSON)");
@@ -262,17 +267,8 @@
           const cloudReportedSet = new Set();
           const scopeCounters = {}; 
 
-          // --- 第一階段掃描：精準鎖定 I 欄尋找「疑似有誤」或「錯誤回報」 ---
+          // --- 第一階段掃描：保留歷史機制的支援 ---
           jsonData.forEach((q) => {
-            // 嚴格讀取 I 欄的數值（標題通常為「錯誤回報」或預設「I」）
-            const columnIValue = String(q['錯誤回報'] || q['I'] || '').trim();
-            const isRowReported = columnIValue.includes('疑似有誤') || columnIValue.includes('錯誤回報');
-            
-            if (isRowReported) {
-              const qStr = String(q.question || q['錯題內容'] || q['有問題的題目'] || q['A'] || '').trim();
-              if (qStr) cloudReportedSet.add(qStr);
-            }
-            
             // 特別防呆：若「題目錯誤回報」工作表明確有填寫「有問題的題目」欄位
             if (q['有問題的題目']) {
               cloudReportedSet.add(String(q['有問題的題目']).trim());
@@ -299,7 +295,7 @@
                 }
               }
             } 
-            // 正常年度工作表題庫解析
+            // 正常年度工作表題庫解析 (也就是「除錯題集和題目錯誤回報外」的一般題庫)
             else {
               const qQuestion = String(q.question || '').trim();
               const qAnswer = String(q.answer || '').trim();
@@ -313,9 +309,13 @@
                 const strictId = String(q['題號'] || q['C'] || q.id || q.questionNumber || '').trim();
                 const finalId = strictId || String(scopeCounters[qScope]);
                 
-                // 精準讀取 I 欄數值進行判斷，落實絕對同步
-                const columnIValue = String(q['錯誤回報'] || q['I'] || '').trim();
-                const isRowReportedLocal = columnIValue.includes('疑似有誤') || columnIValue.includes('錯誤回報');
+                // 🚀 【終極全域防呆掃描】🚀
+                // 不論標題是什麼，不論大小寫，同時掃描欄位名稱(Key)與儲存格內容(Value)
+                // 只要這行資料的任何角落出現 mistake，必定強制亮紅燈！
+                const isRowReportedLocal = Object.entries(q).some(([key, val]) => 
+                  String(key).toLowerCase().includes('mistake') || 
+                  String(val || '').toLowerCase().includes('mistake')
+                );
 
                 newParsedQuestions.push({
                   id: finalId, 
@@ -993,8 +993,8 @@
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
-                    // 全面統一：嚴格比對唯一的絕對標準 reportedList (即時反應來自 fetchQuestions 解析到的 I 欄狀態)
-                    const isReported = reportedList.includes(q.question);
+                    // 全面統一：結合題目本身的 isCloudReported 屬性與全域 reportedList
+                    const isReported = q.isCloudReported || reportedList.includes(q.question);
                     return (
                       <div key={idx} className={`bg-white rounded-2xl p-5 border ${isReported ? 'border-rose-300 shadow-md bg-rose-50/50' : 'border-slate-100 shadow-sm'} flex flex-col justify-between hover:shadow-md transition-all group relative`}>
                         {isReported && (
