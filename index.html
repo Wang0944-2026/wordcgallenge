@@ -719,16 +719,16 @@
               <LayoutDashboard size={22} className={gameState === 'menu' ? 'text-sky-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">練功區</span>}
             </button>
-            <button onClick={() => setGameState('study')} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'study' ? 'bg-indigo-100 text-indigo-600 border-indigo-300 shadow-[0_4px_0_0_#a5b4fc]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="自學區">
+            <button onClick={() => { setGameState('study'); setIsSidebarCollapsed(true); }} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'study' ? 'bg-indigo-100 text-indigo-600 border-indigo-300 shadow-[0_4px_0_0_#a5b4fc]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="自學區">
               <Library size={22} className={gameState === 'study' ? 'text-indigo-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">自學區</span>}
             </button>
-            <button onClick={() => setGameState('mistakes')} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'mistakes' ? 'bg-rose-100 text-rose-600 border-rose-300 shadow-[0_4px_0_0_#fda4af]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="錯題集">
+            <button onClick={() => { setGameState('mistakes'); setIsSidebarCollapsed(false); }} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'mistakes' ? 'bg-rose-100 text-rose-600 border-rose-300 shadow-[0_4px_0_0_#fda4af]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="錯題集">
               <Archive size={22} className={gameState === 'mistakes' ? 'text-rose-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">錯題集</span>}
             </button>
-            {/* 🚀 新增：側邊欄排行榜按鈕 */}
-            <button onClick={() => setGameState('leaderboard')} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'leaderboard' ? 'bg-amber-100 text-amber-600 border-amber-300 shadow-[0_4px_0_0_#fcd34d]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="排行榜">
+            {/* 🚀 側邊欄排行榜按鈕 */}
+            <button onClick={() => { setGameState('leaderboard'); setIsSidebarCollapsed(false); }} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'leaderboard' ? 'bg-amber-100 text-amber-600 border-amber-300 shadow-[0_4px_0_0_#fcd34d]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="排行榜">
               <Trophy size={22} className={gameState === 'leaderboard' ? 'text-amber-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">排行榜</span>}
             </button>
@@ -765,16 +765,16 @@
             <LayoutDashboard size={24} />
             <span className="text-[10px] font-black">練功</span>
           </button>
-          <button onClick={() => setGameState('study')} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'study' ? 'text-indigo-500' : 'text-slate-400'}`}>
+          <button onClick={() => { setGameState('study'); setIsSidebarCollapsed(true); }} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'study' ? 'text-indigo-500' : 'text-slate-400'}`}>
             <Library size={24} />
             <span className="text-[10px] font-black">自學</span>
           </button>
-          <button onClick={() => setGameState('mistakes')} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'mistakes' ? 'text-rose-500' : 'text-slate-400'}`}>
+          <button onClick={() => { setGameState('mistakes'); setIsSidebarCollapsed(false); }} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'mistakes' ? 'text-rose-500' : 'text-slate-400'}`}>
             <Archive size={24} />
             <span className="text-[10px] font-black">錯題</span>
           </button>
-          {/* 🚀 新增：底部導覽列排行榜按鈕 */}
-          <button onClick={() => setGameState('leaderboard')} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'leaderboard' ? 'text-amber-500' : 'text-slate-400'}`}>
+          {/* 🚀 底部導覽列排行榜按鈕 */}
+          <button onClick={() => { setGameState('leaderboard'); setIsSidebarCollapsed(false); }} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'leaderboard' ? 'text-amber-500' : 'text-slate-400'}`}>
             <Trophy size={24} />
             <span className="text-[10px] font-black">排行</span>
           </button>
