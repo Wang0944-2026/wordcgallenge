@@ -777,18 +777,18 @@
 
           <Sidebar />
 
-          <main className="flex-1 flex flex-col h-full overflow-y-auto pb-24 md:pb-0 relative scroll-smooth">
+          <main className="flex-1 flex flex-col h-full overflow-hidden relative">
             
             {/* --- 練功區 --- */}
             {gameState === 'menu' && (
-              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full flex-1 flex flex-col min-h-0 animate-fade-in pb-24">
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full h-full flex flex-col animate-fade-in overflow-y-auto hide-scrollbar pb-[90px] md:pb-6">
                 <header className="mb-4 md:mb-6 shrink-0">
                   <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight mb-2">準備好今天的特訓了嗎？ ✨</h2>
                   <p className="text-slate-500 font-bold text-base md:text-lg">選一個喜歡的模式開始挑戰吧！</p>
                 </header>
 
                 <div className="flex flex-col flex-1 min-h-0">
-                  <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 mb-4">
+                  <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 mb-4 shrink-0 lg:shrink">
                     <div className="bg-white rounded-2xl p-4 md:p-5 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col relative overflow-hidden shrink-0 lg:w-1/3">
                       <h3 className="text-lg font-black text-slate-700 mb-4 flex items-center gap-3 shrink-0 relative z-10">
                         <div className="bg-yellow-100 text-yellow-600 p-2 rounded-xl"><Timer size={20} /></div> 選擇模式
@@ -808,7 +808,7 @@
                                 if (modeOpt.id === 'timeChallenge') setShowTimeModal(true);
                                 if (modeOpt.id === 'normalTest') setShowNormalModal(true);
                               }} 
-                              className={`flex items-center gap-3 p-3 rounded-2xl transition-all border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? `${modeOpt.selBg} ${modeOpt.selBorder} ${modeOpt.selShadow}` : 'bg-white border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
+                              className={`flex items-center gap-3 p-3 rounded-2xl transition-all border-2 active:translate-y-[4px] active:shadow-none shrink-0 ${isSelected ? `${modeOpt.selBg} ${modeOpt.selBorder} ${modeOpt.selShadow}` : 'bg-white border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
                             >
                               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? `${modeOpt.dotBorder} bg-white` : 'border-slate-300'}`}>
                                 {isSelected && <div className={`w-2.5 h-2.5 ${modeOpt.dotBg} rounded-full`} />}
@@ -823,7 +823,7 @@
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-4 md:p-5 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 relative overflow-hidden flex flex-col group flex-1 min-h-0 lg:w-2/3">
+                    <div className="bg-white rounded-2xl p-4 md:p-5 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 relative overflow-hidden flex flex-col group flex-1 min-h-[200px] lg:min-h-0 shrink-0 lg:shrink lg:w-2/3">
                       {settings.mode !== 'mistakePractice' && (() => {
                         const availableScopes = [...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集');
                         const isAllSelected = availableScopes.length > 0 && settings.scope.length === availableScopes.length;
@@ -900,7 +900,7 @@
                       </div>
                     </div>
 
-                    <div className="w-full md:w-auto mt-1 md:mt-0">
+                    <div className="w-full md:w-auto mt-1 md:mt-0 shrink-0">
                       <button 
                         onClick={() => {
                           if (settings.mode !== 'mistakePractice' && settings.scope.length === 0) {
@@ -923,7 +923,7 @@
 
             {/* --- 測驗進行畫面 --- */}
             {gameState === 'playing' && questions[currentIndex] && (
-              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full h-full flex flex-col pb-24 md:pb-6">
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full h-full flex flex-col overflow-y-auto hide-scrollbar pb-[90px] md:pb-6 animate-fade-in">
                 <div className="bg-white rounded-2xl p-4 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-wrap justify-between items-center gap-3 mb-4 shrink-0 z-20 relative transition-all">
                   <div className="flex items-center gap-3 pl-1">
                     <div className="w-12 h-12 rounded-xl bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] flex items-center justify-center text-white font-black text-xl shrink-0">
@@ -962,7 +962,7 @@
                   </div>
                 </div>
 
-                <div className="flex-1 flex flex-col gap-3 md:gap-5 items-center justify-start md:justify-center w-full min-h-0">
+                <div className="flex-1 flex flex-col gap-3 md:gap-5 items-center justify-start md:justify-center w-full min-h-0 shrink-0">
                   <div ref={containerRef} className="w-full bg-blue-500 rounded-[2rem] shadow-[0_6px_0_0_#1d4ed8] border-4 border-blue-600 flex flex-col items-center justify-center relative overflow-hidden flex-1 min-h-[120px] md:min-h-[180px] px-6 py-4">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-white rounded-full blur-3xl opacity-20"></div>
                     <h2 ref={textRef} className="text-3xl md:text-6xl font-black tracking-widest text-white leading-tight text-center relative z-10 drop-shadow-md whitespace-nowrap origin-center transition-transform duration-200">
@@ -1004,9 +1004,9 @@
 
             {/* --- 測驗結果畫面 --- */}
             {gameState === 'result' && (
-              <div className="p-4 md:p-6 max-w-5xl mx-auto w-full animate-fade-in pb-24 md:pb-6">
+              <div className="p-4 md:p-6 max-w-5xl mx-auto w-full h-full flex flex-col overflow-y-auto hide-scrollbar pb-[90px] md:pb-6 animate-fade-in">
                 
-                <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-5 mb-6 relative">
+                <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-5 mb-6 relative shrink-0">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-yellow-400 text-yellow-900 shadow-[0_4px_0_0_#ca8a04] border-2 border-yellow-500 relative shrink-0">
                     <div className="absolute top-1 right-1 w-4 h-4 bg-white/40 rounded-full blur-sm"></div>
                     <Award size={36} className="fill-yellow-100" />
@@ -1017,7 +1017,7 @@
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 shrink-0">
                   <div className="bg-white rounded-2xl p-3 border-2 border-slate-200 shadow-sm flex flex-col items-center justify-center col-span-2 md:col-span-1">
                     <p className="text-slate-400 font-black text-[10px] mb-1 uppercase tracking-wider">總作答數</p>
                     <p className="text-3xl font-black text-slate-700">{score.correct + score.incorrect}</p>
@@ -1039,14 +1039,14 @@
                   </div>
                 </div>
 
-                <div className="bg-sky-100 rounded-2xl p-4 mb-6 text-center border-2 border-sky-300 shadow-sm animate-fade-in-up">
+                <div className="bg-sky-100 rounded-2xl p-4 mb-6 text-center border-2 border-sky-300 shadow-sm animate-fade-in-up shrink-0">
                   <p className="text-lg md:text-xl font-black text-sky-700">
                     {getEncouragement(acc)}
                   </p>
                 </div>
 
                 {score.wrongList.length > 0 && (
-                  <div className="bg-white rounded-2xl p-4 md:p-6 border-2 border-slate-200 shadow-sm mb-6">
+                  <div className="bg-white rounded-2xl p-4 md:p-6 border-2 border-slate-200 shadow-sm mb-6 shrink-0">
                     <h3 className="text-lg font-black text-slate-700 mb-4 flex items-center gap-2">
                       <div className="bg-rose-100 text-rose-600 p-2 rounded-xl"><Archive size={20} /></div> 錯題檢討清單
                     </h3>
@@ -1082,15 +1082,15 @@
 
             {/* --- 自學區畫面 --- */}
             {gameState === 'study' && (
-              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full animate-fade-in pb-24">
-                <header className="mb-6">
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full h-full flex flex-col animate-fade-in pb-[90px] md:pb-6">
+                <header className="mb-6 shrink-0">
                   <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-3">
                     <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl"><Library size={24} /></div> 自學區 📖
                   </h2>
                   <p className="text-slate-500 font-bold text-base">依照年度/範圍瀏覽題目與正確解答，加深記憶。</p>
                 </header>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col gap-3 md:gap-4">
+                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col gap-3 md:gap-4 shrink-0">
                   <div className="flex flex-wrap items-center gap-2 w-full">
                     <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
                     {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
@@ -1111,56 +1111,54 @@
                   </div>
                 </div>
 
-                {/* 🚀 修正：改用 Grid 強制全字卡等寬排列 */}
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-                  {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
-                    const isReported = q.isCloudReported || reportedList.includes(q.question);
-                    return (
-                      // 🚀 修正：加入 min-w-0 防止被長文字撐破網格
-                      <div key={idx} className={`min-w-0 w-full bg-white rounded-2xl p-4 md:p-5 border-2 ${isReported ? 'border-rose-300 shadow-sm bg-rose-50/50' : 'border-slate-200 shadow-sm'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-md transition-all group relative min-h-[160px] md:min-h-[180px]`}>
-                        
-                        {!isReported && (
-                          <button 
-                            onClick={() => setStudyReportModal({ isOpen: true, data: q, name: userName, content: '' })}
-                            className="absolute -top-3 -right-3 w-8 h-8 bg-sky-100 text-sky-600 rounded-full border-2 border-sky-300 shadow-sm flex items-center justify-center font-black text-lg hover:-translate-y-0.5 hover:shadow-md active:translate-y-[2px] active:shadow-none z-10 transition-all"
-                            title="回報題目錯誤"
-                          >
-                            ?
-                          </button>
-                        )}
+                {/* 🚀 修正：大幅增加捲動容器的 pt (top) 與 px (左右) 緩衝空間，徹底釋放被裁切的角標 */}
+                <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-5 px-4 -mx-4 md:pt-6 md:px-5 md:-mx-5">
+                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+                    {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
+                      const isReported = q.isCloudReported || reportedList.includes(q.question);
+                      return (
+                        <div key={idx} className={`min-w-0 w-full bg-white rounded-2xl p-4 md:p-5 border-2 ${isReported ? 'border-rose-300 shadow-sm bg-rose-50/50' : 'border-slate-200 shadow-sm'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-md transition-all group relative min-h-[160px] md:min-h-[180px]`}>
+                          
+                          {!isReported && (
+                            <button 
+                              onClick={() => setStudyReportModal({ isOpen: true, data: q, name: userName, content: '' })}
+                              className="absolute -top-3 -right-3 w-8 h-8 bg-sky-100 text-sky-600 rounded-full border-2 border-sky-300 shadow-sm flex items-center justify-center font-black text-lg hover:-translate-y-0.5 hover:shadow-md active:translate-y-[2px] active:shadow-none z-10 transition-all"
+                              title="回報題目錯誤"
+                            >
+                              ?
+                            </button>
+                          )}
 
-                        {isReported && (
-                          <div className="absolute -top-3 -right-3 bg-rose-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 z-10 border border-white animate-pulse">
-                            <AlertTriangle size={14} /> 疑似有誤
+                          {isReported && (
+                            <div className="absolute -top-3 -right-3 bg-rose-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 z-10 border border-white animate-pulse">
+                              <AlertTriangle size={14} /> 疑似有誤
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-2 mb-2 flex-nowrap overflow-x-auto hide-scrollbar w-full shrink-0">
+                            <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 whitespace-nowrap shrink-0">{q.scope}</span>
+                            <span className={`text-[10px] font-black px-2 py-1 rounded-lg border whitespace-nowrap shrink-0 ${getTypeColor(q.type).replace('shadow-sm', '')}`}>{q.type}</span>
+                            <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">第 {q.id} 題</span>
                           </div>
-                        )}
-                        
-                        {/* 🚀 修正：標籤列支援水平滑動、不換行 */}
-                        <div className="flex gap-2 mb-2 flex-nowrap overflow-x-auto hide-scrollbar w-full shrink-0">
-                          <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 whitespace-nowrap shrink-0">{q.scope}</span>
-                          <span className={`text-[10px] font-black px-2 py-1 rounded-lg border whitespace-nowrap shrink-0 ${getTypeColor(q.type).replace('shadow-sm', '')}`}>{q.type}</span>
-                          <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">第 {q.id} 題</span>
-                        </div>
-                        
-                        {/* 🚀 修正：題目區塊彈性置中、支援水平滑動、不截斷 */}
-                        <div className="flex-1 flex items-center w-full py-2 md:py-3 overflow-x-auto hide-scrollbar">
-                          <div className="w-full text-center min-w-max px-1">
-                            <span className={`text-xl md:text-2xl font-black whitespace-nowrap ${isReported ? 'text-slate-400 line-through decoration-rose-400 decoration-4' : 'text-slate-800'}`}>{q.question}</span>
+                          
+                          <div className="flex-1 flex items-center w-full py-2 md:py-3 overflow-x-auto hide-scrollbar">
+                            <div className="w-full text-center min-w-max px-1">
+                              <span className={`text-xl md:text-2xl font-black whitespace-nowrap ${isReported ? 'text-slate-400 line-through decoration-rose-400 decoration-4' : 'text-slate-800'}`}>{q.question}</span>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* 🚀 修正：答案區塊彈性置中、支援水平滑動、不截斷 */}
-                        <div className={`w-full h-12 md:h-14 shrink-0 rounded-xl flex items-center overflow-x-auto hide-scrollbar border-2 ${isReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-sm' : 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm'}`}>
-                          <div className="w-full text-center min-w-max px-2 md:px-4">
-                            <span className="whitespace-nowrap font-black text-xl">{q.answer}</span>
+                          <div className={`w-full h-12 md:h-14 shrink-0 rounded-xl flex items-center overflow-x-auto hide-scrollbar border-2 ${isReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-sm' : 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm'}`}>
+                            <div className="w-full text-center min-w-max px-2 md:px-4">
+                              <span className="whitespace-nowrap font-black text-xl">{q.answer}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).length === 0 && (
-                    <div className="col-span-full w-full text-center py-10 text-slate-400 font-black text-lg">尚無題目資料</div>
-                  )}
+                      );
+                    })}
+                    {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).length === 0 && (
+                      <div className="col-span-full w-full text-center py-10 text-slate-400 font-black text-lg">尚無題目資料</div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -1176,8 +1174,8 @@
                 .sort((a, b) => b.count - a.count);
 
               return (
-              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full animate-fade-in pb-24">
-                <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full h-full flex flex-col animate-fade-in pb-[90px] md:pb-6">
+                <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
                   <div>
                     <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
                       <div className="bg-rose-100 text-rose-600 p-2 rounded-xl"><Archive size={24} /></div> 錯題集 📝
@@ -1194,7 +1192,7 @@
                   </div>
                 </header>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col gap-3 md:gap-4">
+                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col gap-3 md:gap-4 shrink-0">
                   <div className="flex items-center gap-2 flex-wrap w-full">
                     <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
                     <button onClick={() => setMistakeFilterScope('all')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === 'all' ? 'bg-rose-500 text-white border-rose-700 shadow-[0_2px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>全部</button>
@@ -1210,36 +1208,39 @@
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                  {filteredMistakes.map((q, idx) => (
-                    <div key={idx} className="bg-white rounded-2xl p-3 md:p-4 border-2 border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all">
-                      <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-rose-50 to-transparent z-0"></div>
-                      <div className="relative z-10 flex-1 pl-1 md:pl-2">
-                        <div className="flex gap-2 mb-2 items-center flex-wrap">
-                          {q.scope && q.scope !== '錯題集' && q.scope !== '未分類' && (
-                            <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200">{String(q.scope).trim()}</span>
-                          )}
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${getTypeColor(q.type).replace('shadow-sm', '')}`}>
-                            {q.type ? String(q.type).trim() : '未分類'}
-                          </span>
-                          <span className="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full flex items-center gap-1 border border-rose-300">
-                            答錯 {q.count} 次
-                          </span>
+                {/* 🚀 修正：為卷動容器增加上下左右 padding，解決邊緣遮擋 */}
+                <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-2 px-2 -mx-2 md:px-4 md:-mx-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredMistakes.map((q, idx) => (
+                      <div key={idx} className="bg-white rounded-2xl p-3 md:p-4 border-2 border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all">
+                        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-rose-50 to-transparent z-0"></div>
+                        <div className="relative z-10 flex-1 pl-1 md:pl-2">
+                          <div className="flex gap-2 mb-2 items-center flex-wrap">
+                            {q.scope && q.scope !== '錯題集' && q.scope !== '未分類' && (
+                              <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200">{String(q.scope).trim()}</span>
+                            )}
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${getTypeColor(q.type).replace('shadow-sm', '')}`}>
+                              {q.type ? String(q.type).trim() : '未分類'}
+                            </span>
+                            <span className="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full flex items-center gap-1 border border-rose-300">
+                              答錯 {q.count} 次
+                            </span>
+                          </div>
+                          <span className="text-xl font-black text-slate-800">{q.question}</span>
                         </div>
-                        <span className="text-xl font-black text-slate-800">{q.question}</span>
+                        <div className="ml-3 w-24 shrink-0 whitespace-nowrap py-2 px-2 rounded-xl bg-white border-2 border-emerald-300 shadow-sm flex flex-col items-center justify-center text-emerald-600 font-black relative z-10 gap-0.5">
+                          <span className="text-[10px] text-emerald-500 tracking-widest uppercase">答案</span>
+                          <span className="text-xl leading-snug text-center">{q.answer}</span>
+                        </div>
                       </div>
-                      <div className="ml-3 w-24 shrink-0 whitespace-nowrap py-2 px-2 rounded-xl bg-white border-2 border-emerald-300 shadow-sm flex flex-col items-center justify-center text-emerald-600 font-black relative z-10 gap-0.5">
-                        <span className="text-[10px] text-emerald-500 tracking-widest uppercase">答案</span>
-                        <span className="text-xl leading-snug text-center">{q.answer}</span>
+                    ))}
+                    {filteredMistakes.length === 0 && (
+                      <div className="col-span-full flex flex-col items-center justify-center py-16 text-slate-400">
+                        <Archive size={48} className="mb-4 opacity-20" />
+                        <p className="font-black text-xl">目前沒有符合條件的錯題</p>
                       </div>
-                    </div>
-                  ))}
-                  {filteredMistakes.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-slate-400">
-                      <Archive size={48} className="mb-4 opacity-20" />
-                      <p className="font-black text-xl">目前沒有符合條件的錯題</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
               );
@@ -1247,8 +1248,8 @@
 
             {/* --- 排行榜畫面 --- */}
             {gameState === 'leaderboard' && (
-              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full animate-fade-in pb-24">
-                <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="p-4 md:p-6 max-w-6xl mx-auto w-full h-full flex flex-col animate-fade-in pb-[90px] md:pb-6">
+                <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
                   <div>
                     <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
                       <div className="bg-amber-100 text-amber-600 p-2 rounded-xl"><Trophy size={24} /></div> 特訓排行榜 🏆
@@ -1257,7 +1258,7 @@
                   </div>
                 </header>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col md:flex-row gap-3 md:gap-4">
+                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col md:flex-row gap-3 md:gap-4 shrink-0">
                   <div className="flex-1 flex flex-col gap-1.5">
                     <label className="text-xs font-black text-slate-500 pl-1">題型</label>
                     <select 
@@ -1297,69 +1298,70 @@
                   </div>
                 </div>
 
-                <ul className="flex flex-col gap-2 md:gap-3">
-                  {filteredAndSortedLeaderboard.map((item, idx) => {
-                    let rankStyle = "bg-white border-slate-200 shadow-sm";
-                    let rankBadge = "bg-slate-100 text-slate-500 border-slate-200";
-                    let rankIcon = null;
+                <div className="flex-1 flex flex-col min-h-0 bg-white/50 backdrop-blur-sm rounded-[2rem] border-4 border-white shadow-inner p-3 md:p-5">
+                  <ul className="flex-1 overflow-y-auto hide-scrollbar flex flex-col gap-2 md:gap-3 pr-1 pb-2">
+                    {filteredAndSortedLeaderboard.map((item, idx) => {
+                      let rankStyle = "bg-white border-slate-200 shadow-sm";
+                      let rankBadge = "bg-slate-100 text-slate-500 border-slate-200";
+                      let rankIcon = null;
 
-                    if (idx === 0) {
-                      rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-400 shadow-md scale-[1.01] z-10";
-                      rankBadge = "bg-yellow-400 text-white border-yellow-500";
-                      rankIcon = <Trophy size={16} className="ml-0.5" />;
-                    } else if (idx === 1) {
-                      rankStyle = "bg-gradient-to-r from-slate-50 to-gray-50 border-slate-300 shadow-sm";
-                      rankBadge = "bg-slate-300 text-white border-slate-400";
-                    } else if (idx === 2) {
-                      rankStyle = "bg-gradient-to-r from-orange-50 to-amber-50/50 border-orange-300 shadow-sm";
-                      rankBadge = "bg-orange-300 text-white border-orange-400";
-                    }
+                      if (idx === 0) {
+                        rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-400 shadow-md scale-[1.01] z-10";
+                        rankBadge = "bg-yellow-400 text-white border-yellow-500";
+                        rankIcon = <Trophy size={16} className="ml-0.5" />;
+                      } else if (idx === 1) {
+                        rankStyle = "bg-gradient-to-r from-slate-50 to-gray-50 border-slate-300 shadow-sm";
+                        rankBadge = "bg-slate-300 text-white border-slate-400";
+                      } else if (idx === 2) {
+                        rankStyle = "bg-gradient-to-r from-orange-50 to-amber-50/50 border-orange-300 shadow-sm";
+                        rankBadge = "bg-orange-300 text-white border-orange-400";
+                      }
 
-                    return (
-                      <li key={idx} className={`rounded-xl py-2 px-3 md:px-4 border-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md ${rankStyle}`}>
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                          <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-lg flex items-center justify-center font-black text-lg md:text-xl border-2 ${rankBadge}`}>
-                            {idx + 1} {rankIcon}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-base md:text-lg font-black text-slate-800 truncate">{item.userName || '神秘挑戰者'}</h3>
-                            <div className="flex gap-2 mt-1 flex-wrap">
-                              <span className="text-[10px] font-black text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200 whitespace-nowrap">{item.mode}</span>
-                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap ${getTypeColor(item.type).replace('shadow-sm', '')}`}>{item.type}</span>
-                              {/* 🚀 修正：移除 truncate max-w，加入 break-words 使長清單自然換行 */}
-                              <span className="text-[10px] font-black text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md border border-slate-200 break-words">{item.scope}</span>
+                      return (
+                        <li key={idx} className={`rounded-xl py-2 px-3 md:px-4 border-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md shrink-0 ${rankStyle}`}>
+                          <div className="flex items-center gap-3 w-full md:w-auto">
+                            <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-lg flex items-center justify-center font-black text-lg md:text-xl border-2 ${rankBadge}`}>
+                              {idx + 1} {rankIcon}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-base md:text-lg font-black text-slate-800 truncate">{item.userName || '神秘挑戰者'}</h3>
+                              <div className="flex gap-2 mt-1 flex-wrap">
+                                <span className="text-[10px] font-black text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200 whitespace-nowrap">{item.mode}</span>
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap ${getTypeColor(item.type).replace('shadow-sm', '')}`}>{item.type}</span>
+                                <span className="text-[10px] font-black text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md border border-slate-200 break-words">{item.scope}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="flex gap-2 md:gap-4 w-full md:w-auto shrink-0 bg-white/60 p-2 md:px-3 rounded-lg border border-slate-200/60 justify-between md:justify-start">
-                          <div className="flex flex-col items-center text-center px-1 md:px-2">
-                            <span className="text-[9px] font-black text-slate-400 uppercase">作答</span>
-                            <span className="text-sm md:text-base font-black text-slate-700">{item.totalQuestions}</span>
+                          <div className="flex gap-2 md:gap-4 w-full md:w-auto shrink-0 bg-white/60 p-2 md:px-3 rounded-lg border border-slate-200/60 justify-between md:justify-start">
+                            <div className="flex flex-col items-center text-center px-1 md:px-2">
+                              <span className="text-[9px] font-black text-slate-400 uppercase">作答</span>
+                              <span className="text-sm md:text-base font-black text-slate-700">{item.totalQuestions}</span>
+                            </div>
+                            <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
+                              <span className="text-[9px] font-black text-slate-400 uppercase">正確</span>
+                              <span className="text-sm md:text-base font-black text-emerald-500">{item.correctCount}</span>
+                            </div>
+                            <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
+                              <span className="text-[9px] font-black text-slate-400 uppercase">耗時</span>
+                              <span className="text-sm md:text-base font-black text-slate-700">{item.timeSpent}</span>
+                            </div>
+                            <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
+                              <span className="text-[9px] font-black text-slate-400 uppercase">準確率</span>
+                              <span className="text-sm md:text-base font-black text-sky-500">{item.accuracy}</span>
+                            </div>
                           </div>
-                          <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
-                            <span className="text-[9px] font-black text-slate-400 uppercase">正確</span>
-                            <span className="text-sm md:text-base font-black text-emerald-500">{item.correctCount}</span>
-                          </div>
-                          <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
-                            <span className="text-[9px] font-black text-slate-400 uppercase">耗時</span>
-                            <span className="text-sm md:text-base font-black text-slate-700">{item.timeSpent}</span>
-                          </div>
-                          <div className="flex flex-col items-center text-center px-1 md:px-2 border-l-2 border-slate-200/50">
-                            <span className="text-[9px] font-black text-slate-400 uppercase">準確率</span>
-                            <span className="text-sm md:text-base font-black text-sky-500">{item.accuracy}</span>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                  {filteredAndSortedLeaderboard.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                      <Trophy size={48} className="mb-4 opacity-20" />
-                      <p className="font-black text-xl">目前還沒有符合的戰績，快去挑戰吧！</p>
-                    </div>
-                  )}
-                </ul>
+                        </li>
+                      );
+                    })}
+                    {filteredAndSortedLeaderboard.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <Trophy size={64} className="mb-5 opacity-20" />
+                        <p className="font-black text-2xl">目前還沒有符合的戰績，快去挑戰吧！</p>
+                      </div>
+                    )}
+                  </ul>
+                </div>
               </div>
             )}
 
@@ -1447,9 +1449,9 @@
           {/* API 設定 Modal */}
           {showApiModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full animate-fade-in-up border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <h3 className="text-2xl font-black text-slate-800 mb-3 flex items-center gap-2">
-                  <div className="bg-sky-100 text-sky-600 p-2.5 rounded-xl border-2 border-sky-200"><Link size={24} /></div>
+              <div className="bg-white rounded-[2rem] p-8 max-w-lg w-full animate-fade-in-up border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <h3 className="text-3xl font-black text-slate-800 mb-4 flex items-center gap-3">
+                  <div className="bg-sky-100 text-sky-600 p-3 rounded-[1rem] border-2 border-sky-200"><Link size={28} /></div>
                   雲端題庫設定
                 </h3>
                 <p className="text-slate-500 mb-5 font-bold leading-relaxed text-sm">
@@ -1460,9 +1462,9 @@
                   value={inputApiUrl}
                   onChange={(e) => setInputApiUrl(e.target.value)}
                   placeholder="https://script.google.com/macros/s/.../exec"
-                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-mono text-sm transition-colors mb-6 shadow-inner"
+                  className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl px-5 py-5 text-slate-700 font-mono text-base md:text-sm transition-colors mb-8 shadow-inner"
                 />
-                <div className="flex flex-wrap items-center justify-end gap-3">
+                <div className="flex flex-wrap items-center justify-end gap-4">
                   <button 
                     onClick={() => {
                       setInputApiUrl(GOOGLE_SCRIPT_API_URL);
@@ -1470,13 +1472,13 @@
                       localStorage.removeItem('CUSTOM_API_URL');
                       setShowApiModal(false);
                     }} 
-                    className="px-4 py-3 rounded-xl font-black text-rose-500 hover:bg-rose-50 transition-colors mr-auto border-2 border-transparent active:scale-95 text-sm"
+                    className="px-6 py-4 rounded-2xl font-black text-rose-500 hover:bg-rose-50 transition-colors mr-auto border-2 border-transparent active:scale-95"
                   >
                     恢復預設
                   </button>
                   <button 
                     onClick={() => setShowApiModal(false)} 
-                    className="px-4 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm active:translate-y-[2px] active:shadow-none text-sm"
+                    className="px-6 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none"
                   >
                     取消
                   </button>
@@ -1488,7 +1490,7 @@
                       }
                       setShowApiModal(false);
                     }} 
-                    className="px-5 py-3 rounded-xl font-black text-white bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-sm active:translate-y-[2px] active:shadow-none text-sm"
+                    className="px-8 py-4 rounded-2xl font-black text-white bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-[0_4px_0_0_#0284c7] active:translate-y-[4px] active:shadow-none"
                   >
                     儲存並載入
                   </button>
@@ -1500,22 +1502,22 @@
           {/* 建立名稱 Modal */}
           {showNameModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <h3 className="text-2xl font-black text-slate-800 mb-3 flex items-center gap-2">
-                  <div className="bg-emerald-100 text-emerald-600 p-2.5 rounded-xl border-2 border-emerald-200"><PenTool size={24} /></div>
+              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <h3 className="text-3xl font-black text-slate-800 mb-4 flex items-center gap-3">
+                  <div className="bg-emerald-100 text-emerald-600 p-3 rounded-[1rem] border-2 border-emerald-200"><PenTool size={28} /></div>
                   建立使用者名稱
                 </h3>
-                <p className="text-slate-500 font-bold mb-6 text-sm">輸入您的姓名或暱稱，系統將會記錄您的錯題與學習進度喔！</p>
+                <p className="text-slate-500 font-bold mb-8 text-lg">輸入您的姓名或暱稱，系統將會記錄您的錯題與學習進度喔！</p>
                 <input 
                   type="text" 
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder="例如：王小明"
-                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-emerald-400 outline-none rounded-xl px-4 py-3 text-slate-800 font-black text-lg transition-colors mb-6 shadow-inner text-center"
+                  className="w-full bg-slate-50 border-4 border-slate-200 focus:border-emerald-400 outline-none rounded-2xl px-5 py-5 text-slate-800 font-black text-xl transition-colors mb-8 shadow-inner text-center"
                   autoFocus
                 />
-                <div className="flex gap-3">
-                  <button onClick={() => setShowNameModal(false)} className="flex-1 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm active:translate-y-[2px] active:shadow-none">
+                <div className="flex gap-4">
+                  <button onClick={() => setShowNameModal(false)} className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none text-lg">
                     取消
                   </button>
                   <button 
@@ -1528,7 +1530,7 @@
                       setShowNameModal(false);
                       startGame();
                     }} 
-                    className="flex-[2] py-3 rounded-xl font-black text-white bg-emerald-500 hover:bg-emerald-400 transition-colors border-2 border-emerald-700 shadow-sm active:translate-y-[2px] active:shadow-none"
+                    className="flex-[2] py-4 rounded-2xl font-black text-white bg-emerald-500 hover:bg-emerald-400 transition-colors border-2 border-emerald-700 shadow-[0_4px_0_0_#047857] active:translate-y-[4px] active:shadow-none text-lg"
                   >
                     確認並開始
                   </button>
@@ -1540,13 +1542,13 @@
           {/* 全局提示訊息 Alert */}
           {alertMsg && (
             <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-full animate-fade-in-up text-center flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-[1.25rem] border-2 border-rose-200 flex items-center justify-center mb-5 shadow-sm">
-                  <XCircle size={32} />
+              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up text-center flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <div className="w-20 h-20 bg-rose-100 text-rose-500 rounded-[1.5rem] border-2 border-rose-200 flex items-center justify-center mb-6 shadow-[0_4px_0_0_#fda4af]">
+                  <XCircle size={40} />
                 </div>
-                <h3 className="text-2xl font-black text-slate-800 mb-2">系統提示</h3>
-                <p className="text-slate-500 font-bold mb-6 leading-relaxed text-sm">{alertMsg}</p>
-                <button onClick={() => setAlertMsg('')} className="w-full py-3 rounded-xl font-black text-white text-lg bg-rose-500 hover:bg-rose-400 transition-colors border-2 border-rose-700 shadow-sm active:translate-y-[2px] active:shadow-none">
+                <h3 className="text-3xl font-black text-slate-800 mb-3">系統提示</h3>
+                <p className="text-slate-500 font-bold mb-8 leading-relaxed text-lg">{alertMsg}</p>
+                <button onClick={() => setAlertMsg('')} className="w-full py-4 rounded-2xl font-black text-white text-xl bg-rose-500 hover:bg-rose-400 transition-colors border-2 border-rose-700 shadow-[0_6px_0_0_#be123c] active:translate-y-[6px] active:shadow-none">
                   我知道了
                 </button>
               </div>
