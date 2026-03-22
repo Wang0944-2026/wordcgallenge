@@ -1305,16 +1305,19 @@
                       let rankBadge = "bg-slate-100 text-slate-500 border-slate-200";
                       let rankIcon = null;
 
+                      // 🚀 修正：移除第一名的 scale，統一寬度，並為前三名加入金、銀、銅專屬色彩與圖示
                       if (idx === 0) {
-                        rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-400 shadow-md scale-[1.01] z-10";
-                        rankBadge = "bg-yellow-400 text-white border-yellow-500";
-                        rankIcon = <Trophy size={16} className="ml-0.5" />;
+                        rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-100 border-yellow-400 shadow-md z-10";
+                        rankBadge = "bg-yellow-400 text-white border-yellow-500 shadow-sm";
+                        rankIcon = <Trophy size={18} className="ml-1" />;
                       } else if (idx === 1) {
-                        rankStyle = "bg-gradient-to-r from-slate-50 to-gray-50 border-slate-300 shadow-sm";
-                        rankBadge = "bg-slate-300 text-white border-slate-400";
+                        rankStyle = "bg-gradient-to-r from-slate-50 to-slate-100 border-slate-400 shadow-sm";
+                        rankBadge = "bg-slate-400 text-white border-slate-500 shadow-sm";
+                        rankIcon = <Award size={18} className="ml-1" />;
                       } else if (idx === 2) {
-                        rankStyle = "bg-gradient-to-r from-orange-50 to-amber-50/50 border-orange-300 shadow-sm";
-                        rankBadge = "bg-orange-300 text-white border-orange-400";
+                        rankStyle = "bg-gradient-to-r from-orange-50 to-orange-100 border-orange-400 shadow-sm";
+                        rankBadge = "bg-orange-400 text-white border-orange-500 shadow-sm";
+                        rankIcon = <Award size={18} className="ml-1" />;
                       }
 
                       return (
