@@ -86,7 +86,6 @@
     const Library = (p) => <IconWrapper {...p}><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></IconWrapper>;
     const Archive = (p) => <IconWrapper {...p}><rect width="20" height="5" x="2" y="4" rx="2"/><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></IconWrapper>;
     const AlertTriangle = (p) => <IconWrapper {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconWrapper>;
-    // 🚀 新增 Trophy 圖示用於排行榜
     const Trophy = (p) => <IconWrapper {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconWrapper>;
 
     const MOCK_QUESTIONS = [
@@ -97,7 +96,6 @@
 
     const GOOGLE_SCRIPT_API_URL = "https://script.google.com/macros/s/AKfycbxDdp-HTmjumR_kzqJZlAf9LvV5OGiTPj9NaIw1YAv9c9SJVzQKEGUG0V8rhr2-aP98/exec"; 
 
-    // 🎨 莫蘭迪全站色系統一設定 (灰藍、灰粉、灰紫)
     const getTypeColor = (type) => {
       const t = String(type || '').trim();
       if (t === '字音') return 'text-[#475b7a] bg-[#718ebf]/15 border border-[#718ebf]/40 shadow-sm';
@@ -145,7 +143,6 @@
     function App() {
       const [gameState, setGameState] = useState('menu'); 
       const [questionBank, setQuestionBank] = useState([]);
-      // 🚀 新增：儲存後端傳來的排行榜資料
       const [leaderboardData, setLeaderboardData] = useState([]);
       
       const [isDbLoading, setIsDbLoading] = useState(false);
@@ -178,7 +175,6 @@
       const [studyScope, setStudyScope] = useState('');
       const [studyType, setStudyType] = useState('all');
 
-      // 🚀 新增：排行榜的篩選狀態
       const [lbFilter, setLbFilter] = useState({ type: 'all', mode: 'all', scope: 'all' });
 
       const [showTimeModal, setShowTimeModal] = useState(false);
@@ -288,10 +284,9 @@
           const cloudMistakes = {};
           const cloudReportedSet = new Set();
           const scopeCounters = {}; 
-          const parsedLeaderboard = []; // 🚀 收集排行榜資料
+          const parsedLeaderboard = []; 
 
           jsonData.forEach((q) => {
-            // 🚀 擷取排行榜工作表的資料
             if (q.sheet === '排行榜') {
               parsedLeaderboard.push(q);
             } else if (q['有問題的題目']) {
@@ -300,7 +295,7 @@
           });
 
           jsonData.forEach((q) => {
-            if (q.sheet === '排行榜') return; // 排行榜已獨立處理
+            if (q.sheet === '排行榜') return; 
 
             if (q['紀錄時間'] !== undefined || String(q.scope || '').trim() === '錯題集' || String(q.scope || '').trim() === '題目錯誤回報') {
               if (!q['有問題的題目']) {
@@ -349,7 +344,6 @@
             }
           });
           
-          // 🚀 更新排行榜資料
           setLeaderboardData(parsedLeaderboard);
 
           if (newParsedQuestions.length > 0) {
@@ -359,7 +353,7 @@
                 questions: newParsedQuestions, 
                 mistakes: cloudMistakes,
                 reports: cloudReportedQs,
-                leaderboard: parsedLeaderboard // 加入指紋比對
+                leaderboard: parsedLeaderboard 
             });
 
             if (dataHashRef.current !== newDataHash) {
@@ -469,7 +463,8 @@
                   scope: currentQ.scope,
                   type: currentQ.type,
                   questionNumber: currentQ.id,
-                  reportContent: "系統預設回報(無內容)"
+                  // 🚀 修正：測驗中回報文字格式
+                  reportContent: `(由 ${userName || '神秘挑戰者'} 測驗時回報)`
               })
            }).catch(e => console.warn('回報錯誤失敗', e));
          }
@@ -513,7 +508,8 @@
                   scope: currentQ.scope,
                   type: currentQ.type,
                   questionNumber: currentQ.id,
-                  reportContent: studyReportModal.content.trim()
+                  // 🚀 修正：自學區回報文字格式
+                  reportContent: `${studyReportModal.content.trim()} (由 ${studyReportModal.name.trim()} 回報)`
               })
            }).catch(e => console.warn('回報錯誤失敗', e));
          }
@@ -653,25 +649,18 @@
         setIsSidebarCollapsed(false);
       };
 
-      // 🚀 新增：排行榜過濾與排序邏輯
       const filteredAndSortedLeaderboard = useMemo(() => {
         return leaderboardData
-          // 剔除提早結束的作答
           .filter(item => item.isEndedEarly !== '是' && item.isEndedEarly !== 'TRUE')
-          // 篩選題型
           .filter(item => lbFilter.type === 'all' || item.type === lbFilter.type)
-          // 篩選模式
           .filter(item => lbFilter.mode === 'all' || item.mode === lbFilter.mode)
-          // 篩選範圍
           .filter(item => {
              if (lbFilter.scope === 'all') return true;
-             // 若字串包含逗號，或是「全部範圍」，則判定為「多年度」
              const isMulti = String(item.scope || '').includes(',') || String(item.scope || '') === '全部範圍';
              if (lbFilter.scope === '單一年度') return !isMulti;
              if (lbFilter.scope === '多年度') return isMulti;
              return true;
           })
-          // 嚴格排序：準確率(降) -> 總耗時(升) -> 總作答數(降)
           .sort((a, b) => {
              const accA = parseFloat(a.accuracy) || 0;
              const accB = parseFloat(b.accuracy) || 0;
@@ -727,7 +716,6 @@
               <Archive size={22} className={gameState === 'mistakes' ? 'text-rose-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">錯題集</span>}
             </button>
-            {/* 🚀 側邊欄排行榜按鈕 */}
             <button onClick={() => { setGameState('leaderboard'); setIsSidebarCollapsed(false); }} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'leaderboard' ? 'bg-amber-100 text-amber-600 border-amber-300 shadow-[0_4px_0_0_#fcd34d]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="排行榜">
               <Trophy size={22} className={gameState === 'leaderboard' ? 'text-amber-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">排行榜</span>}
@@ -773,7 +761,6 @@
             <Archive size={24} />
             <span className="text-[10px] font-black">錯題</span>
           </button>
-          {/* 🚀 底部導覽列排行榜按鈕 */}
           <button onClick={() => { setGameState('leaderboard'); setIsSidebarCollapsed(false); }} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'leaderboard' ? 'text-amber-500' : 'text-slate-400'}`}>
             <Trophy size={24} />
             <span className="text-[10px] font-black">排行</span>
@@ -782,7 +769,8 @@
       );
 
       return (
-        <div className="flex h-screen w-full font-sans relative bg-sky-50">
+        // 🚀 修正：將 h-screen 改為 h-[100dvh] 完美解決 iPad 底層遮擋
+        <div className="flex h-[100dvh] w-full font-sans relative bg-sky-50">
           
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
             <div className="absolute top-[10%] left-[5%] w-32 h-32 bg-yellow-200/40 rounded-full blur-xl animate-bounce-soft"></div>
@@ -1126,13 +1114,13 @@
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {/* 🚀 修正：自學區字卡智慧排版 (隨文字長度適應、不換行) */}
+                <div className="flex flex-wrap gap-5 justify-center md:justify-start">
                   {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
                     const isReported = q.isCloudReported || reportedList.includes(q.question);
                     return (
-                      <div key={idx} className={`bg-white rounded-[2rem] p-6 border-2 ${isReported ? 'border-rose-300 shadow-[0_6px_0_0_#fda4af] bg-rose-50/50' : 'border-slate-200 shadow-[0_6px_0_0_#e2e8f0]'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_8px_0_0_#cbd5e1] transition-all group relative min-h-[220px]`}>
+                      <div key={idx} className={`w-full md:w-auto flex-1 min-w-[280px] max-w-full bg-white rounded-[2rem] p-6 border-2 ${isReported ? 'border-rose-300 shadow-[0_6px_0_0_#fda4af] bg-rose-50/50' : 'border-slate-200 shadow-[0_6px_0_0_#e2e8f0]'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_8px_0_0_#cbd5e1] transition-all group relative min-h-[220px]`}>
                         
-                        {/* 🚀 修正：問題回報按鈕移至 -right-3 */}
                         {!isReported && (
                           <button 
                             onClick={() => setStudyReportModal({ isOpen: true, data: q, name: userName, content: '' })}
@@ -1155,8 +1143,8 @@
                           <span className="text-xs font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border-2 border-slate-200">第 {q.id} 題</span>
                         </div>
                         
-                        <div className="flex-1 flex items-center justify-center w-full py-4">
-                          <span className={`text-2xl md:text-3xl text-center font-black ${isReported ? 'text-slate-400 line-through decoration-rose-400 decoration-4' : 'text-slate-800'}`}>{q.question}</span>
+                        <div className="flex-1 flex items-center justify-center w-full py-4 overflow-hidden">
+                          <span className={`text-2xl md:text-3xl text-center font-black whitespace-nowrap overflow-hidden text-ellipsis ${isReported ? 'text-slate-400 line-through decoration-rose-400 decoration-4' : 'text-slate-800'}`}>{q.question}</span>
                         </div>
 
                         <div className={`w-full h-16 shrink-0 rounded-[1.5rem] flex items-center justify-center font-black text-2xl border-2 ${isReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-[0_4px_0_0_#e2e8f0]' : 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-[0_4px_0_0_#6ee7b7]'}`}>
@@ -1166,7 +1154,7 @@
                     );
                   })}
                   {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).length === 0 && (
-                    <div className="col-span-full text-center py-16 text-slate-400 font-black text-xl">尚無題目資料</div>
+                    <div className="col-span-full w-full text-center py-16 text-slate-400 font-black text-xl">尚無題目資料</div>
                   )}
                 </div>
               </div>
@@ -1252,7 +1240,7 @@
               );
             })()}
 
-            {/* 🚀 新增：排行榜畫面 */}
+            {/* --- 排行榜畫面 --- */}
             {gameState === 'leaderboard' && (
               <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in pb-24">
                 <header className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -1261,13 +1249,6 @@
                       <div className="bg-amber-100 text-amber-600 p-3 rounded-[1rem]"><Trophy size={32} /></div> 特訓排行榜 🏆
                     </h2>
                     <p className="text-slate-500 font-bold text-lg mt-3">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
-                  </div>
-                  <div className="flex items-center gap-4 bg-white px-8 py-5 rounded-[2rem] border-2 border-amber-200 shadow-[0_6px_0_0_#fde68a] self-start md:self-auto shrink-0">
-                     <span className="text-base font-black text-slate-500">上榜人數</span>
-                     <div className="flex items-baseline gap-1">
-                       <span className="text-5xl font-black text-amber-500">{filteredAndSortedLeaderboard.length}</span>
-                       <span className="text-lg font-bold text-amber-400">人</span>
-                     </div>
                   </div>
                 </header>
 
@@ -1380,7 +1361,7 @@
 
           <MobileNav />
 
-          {/* 1. 回報問題確認彈窗 */}
+          {/* 回報問題確認彈窗 */}
           {confirmModal.isOpen && confirmModal.type === 'report' && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl animate-fade-in-up text-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
@@ -1400,7 +1381,7 @@
             </div>
           )}
 
-          {/* 2. 計時挑戰設定 Modal */}
+          {/* 計時挑戰設定 Modal */}
           {showTimeModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
@@ -1439,7 +1420,7 @@
             </div>
           )}
 
-          {/* 3. 一般測驗提示 Modal */}
+          {/* 一般測驗提示 Modal */}
           {showNormalModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up text-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
@@ -1457,7 +1438,7 @@
             </div>
           )}
 
-          {/* 4. API 設定 Modal */}
+          {/* API 設定 Modal */}
           {showApiModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-8 max-w-lg w-full animate-fade-in-up border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
@@ -1510,7 +1491,7 @@
             </div>
           )}
 
-          {/* 5. 建立名稱 Modal */}
+          {/* 建立名稱 Modal */}
           {showNameModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
@@ -1550,7 +1531,7 @@
             </div>
           )}
 
-          {/* 6. 全局提示訊息 Alert */}
+          {/* 全局提示訊息 Alert */}
           {alertMsg && (
             <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up text-center flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
@@ -1566,7 +1547,7 @@
             </div>
           )}
 
-          {/* 7. 報錯 Modal */}
+          {/* 報錯 Modal */}
           {studyReportModal.isOpen && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
@@ -1611,7 +1592,7 @@
             </div>
           )}
 
-          {/* 8. 全域頁尾版權宣告 (深色高對比 + 膠囊白底) */}
+          {/* 全域頁尾版權宣告 */}
           <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
             大榮老師製作 © 2026 | Version 3.1 (v.3.1)
           </div>
