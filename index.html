@@ -37,21 +37,14 @@
 
   <!-- 自訂輔助 CSS -->
   <style>
-    /* 處理 iOS 底部安全距離，確保行動版導覽列不被切斷 */
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
-    /* 美化滾動條 */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    /* 隱藏滾動條（用於圓筒滾動特效） */
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    /* 確保觸控裝置上的點擊不會有藍色高光閃爍 */
     * { -webkit-tap-highlight-color: transparent; }
-    
-    /* 字體加粗，更適合兒童風格 */
     body { font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
   </style>
 
@@ -64,15 +57,11 @@
 </head>
 <body class="bg-sky-50 overflow-hidden m-0 p-0 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
   
-  <!-- 應用程式掛載點 -->
   <div id="root"></div>
 
-  <!-- 主程式碼 -->
   <script type="text/babel">
-    // --- 1. 從全域變數中解構出需要的 React Hooks ---
-    const { useState, useEffect, useRef, useCallback } = React;
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
     
-    // --- 內聯 SVG 元件 ---
     const IconWrapper = ({ size = 24, className = "", children, ...props }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
         {children}
@@ -97,26 +86,25 @@
     const Library = (p) => <IconWrapper {...p}><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></IconWrapper>;
     const Archive = (p) => <IconWrapper {...p}><rect width="20" height="5" x="2" y="4" rx="2"/><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></IconWrapper>;
     const AlertTriangle = (p) => <IconWrapper {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconWrapper>;
+    // 🚀 新增 Trophy 圖示用於排行榜
+    const Trophy = (p) => <IconWrapper {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconWrapper>;
 
-    // --- 2. 預設示範題庫 ---
     const MOCK_QUESTIONS = [
       { id: 1, scope: '第一課', type: '字音', question: '「豌」豆苗', answer: 'ㄨㄢ', wrongOptions: ['ㄨㄢˇ', 'ㄨㄢˋ', 'ㄨㄤ'], isCloudReported: false },
       { id: 2, scope: '第一課', type: '字音', question: '「瞭」望臺', answer: 'ㄌㄧㄠˇ', wrongOptions: ['ㄌㄧㄠˋ', 'ㄌㄧㄠ', 'ㄌㄧㄠˊ'], isCloudReported: false },
       { id: 3, scope: '第二課', type: '字形', question: '打擂「ㄊㄞˊ」', answer: '臺', wrongOptions: ['台', '擡', '苔'], isCloudReported: true },
     ];
 
-    // 預設 API 網址
     const GOOGLE_SCRIPT_API_URL = "https://script.google.com/macros/s/AKfycbxDdp-HTmjumR_kzqJZlAf9LvV5OGiTPj9NaIw1YAv9c9SJVzQKEGUG0V8rhr2-aP98/exec"; 
 
-    // 調整題型專屬色彩 (活潑高對比)
+    // 🎨 莫蘭迪全站色系統一設定 (灰藍、灰粉、灰紫)
     const getTypeColor = (type) => {
       const t = String(type || '').trim();
-      if (t === '字音') return 'text-blue-700 bg-blue-100 border border-blue-300 shadow-sm';
-      if (t === '字形') return 'text-rose-700 bg-rose-100 border border-rose-300 shadow-sm';
-      return 'text-amber-700 bg-amber-100 border border-amber-300 shadow-sm';
+      if (t === '字音') return 'text-[#475b7a] bg-[#718ebf]/15 border border-[#718ebf]/40 shadow-sm';
+      if (t === '字形') return 'text-[#9c5959] bg-[#d28b8b]/15 border border-[#d28b8b]/40 shadow-sm';
+      return 'text-[#6e588c] bg-[#9f86c0]/15 border border-[#9f86c0]/40 shadow-sm';
     };
 
-    // 取得裝置名稱
     const getDeviceName = () => {
       const ua = navigator.userAgent;
       let browser = "未知瀏覽器";
@@ -154,15 +142,16 @@
         return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
     }
 
-    // --- 3. 主應用程式組件 ---
     function App() {
       const [gameState, setGameState] = useState('menu'); 
       const [questionBank, setQuestionBank] = useState([]);
+      // 🚀 新增：儲存後端傳來的排行榜資料
+      const [leaderboardData, setLeaderboardData] = useState([]);
+      
       const [isDbLoading, setIsDbLoading] = useState(false);
       const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
       const [dbStatus, setDbStatus] = useState({ type: 'info', msg: '系統準備中' });
 
-      // 資料庫深度比對指紋
       const dataHashRef = useRef('');
 
       const [apiUrl, setApiUrl] = useState(() => localStorage.getItem('CUSTOM_API_URL') || GOOGLE_SCRIPT_API_URL);
@@ -178,16 +167,19 @@
       
       const [currentOptions, setCurrentOptions] = useState([]); 
       const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); 
+      const [isEarlyEnd, setIsEarlyEnd] = useState(false); 
 
       const [selectedOption, setSelectedOption] = useState(null);
       const [feedback, setFeedback] = useState(null);
 
-      // 錯題資料庫與回報資料庫
       const [localMistakes, setLocalMistakes] = useState(() => JSON.parse(localStorage.getItem('MISTAKES_DB')) || {});
       const [reportedList, setReportedList] = useState(() => JSON.parse(localStorage.getItem('REPORTED_DB')) || []);
       
       const [studyScope, setStudyScope] = useState('');
       const [studyType, setStudyType] = useState('all');
+
+      // 🚀 新增：排行榜的篩選狀態
+      const [lbFilter, setLbFilter] = useState({ type: 'all', mode: 'all', scope: 'all' });
 
       const [showTimeModal, setShowTimeModal] = useState(false);
       const [showNormalModal, setShowNormalModal] = useState(false);
@@ -198,14 +190,15 @@
       const [userName, setUserName] = useState(() => localStorage.getItem('USER_NAME') || '');
       const [showNameModal, setShowNameModal] = useState(false);
       const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', data: null });
+      const [studyReportModal, setStudyReportModal] = useState({ isOpen: false, data: null, name: userName, content: '' });
       const [alertMsg, setAlertMsg] = useState('');
 
       const containerRef = useRef(null);
       const textRef = useRef(null);
 
-      // 上傳測驗錯誤題目的邏輯
       useEffect(() => {
         if (gameState === 'result' && !score.synced) {
+          
           if (score.wrongList.length > 0) {
             setLocalMistakes(prev => {
               const newMistakes = { ...prev };
@@ -237,11 +230,36 @@
               }).catch(e => console.warn('雲端錯題同步失敗', e));
             }
           }
+
+          const accuracyVal = (score.correct + score.incorrect) === 0 ? 0 : Math.round((score.correct / (score.correct + score.incorrect)) * 100);
+          const leaderboardPayload = {
+            action: 'saveLeaderboard',
+            isEndedEarly: isEarlyEnd ? '是' : '否',
+            recordTime: getNowString(),
+            userName: userName || '未具名',
+            mode: settings.mode === 'timeChallenge' ? '計時挑戰' : settings.mode === 'normalTest' ? '一般測驗' : '錯題加強',
+            type: settings.type === 'all' ? '字音+字形' : settings.type,
+            scope: settings.scope.length > 0 ? settings.scope.join(', ') : '全部範圍',
+            totalQuestions: score.correct + score.incorrect,
+            correctCount: score.correct,
+            timeSpent: formatTime(timeSpent),
+            accuracy: accuracyVal + '%',
+            deviceName: getDeviceName()
+          };
+
+          const cleanApiUrl = (apiUrl || '').trim();
+          if (cleanApiUrl) {
+            fetch(cleanApiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(leaderboardPayload)
+            }).catch(e => console.warn('排行榜同步失敗', e));
+          }
+
           setScore(prev => ({ ...prev, synced: true }));
         }
-      }, [gameState, score.synced, score.wrongList, apiUrl, userName]);
+      }, [gameState, score.synced, score.wrongList, apiUrl, userName, isEarlyEnd, settings, score.correct, score.incorrect, timeSpent]);
 
-      // --- 統一雲端同步引擎 ---
       const fetchQuestions = useCallback(async (isBackground = false) => {
         if (!isBackground) {
           setIsDbLoading(true);
@@ -261,9 +279,6 @@
           let jsonData;
           try {
             jsonData = JSON.parse(textData);
-            if (!isBackground) {
-              console.log("【系統即時掃描】後端 API 傳來的真實資料：", jsonData);
-            }
           } catch (parseError) {
             console.error("API 格式錯誤，回傳內容為：", textData.substring(0, 150));
             throw new Error("資料格式錯誤 (非 JSON)");
@@ -273,14 +288,20 @@
           const cloudMistakes = {};
           const cloudReportedSet = new Set();
           const scopeCounters = {}; 
+          const parsedLeaderboard = []; // 🚀 收集排行榜資料
 
           jsonData.forEach((q) => {
-            if (q['有問題的題目']) {
+            // 🚀 擷取排行榜工作表的資料
+            if (q.sheet === '排行榜') {
+              parsedLeaderboard.push(q);
+            } else if (q['有問題的題目']) {
               cloudReportedSet.add(String(q['有問題的題目']).trim());
             }
           });
 
           jsonData.forEach((q) => {
+            if (q.sheet === '排行榜') return; // 排行榜已獨立處理
+
             if (q['紀錄時間'] !== undefined || String(q.scope || '').trim() === '錯題集' || String(q.scope || '').trim() === '題目錯誤回報') {
               if (!q['有問題的題目']) {
                 const mQuestion = String(q.question || q['錯題內容'] || '').trim();
@@ -328,13 +349,17 @@
             }
           });
           
+          // 🚀 更新排行榜資料
+          setLeaderboardData(parsedLeaderboard);
+
           if (newParsedQuestions.length > 0) {
             const cloudReportedQs = newParsedQuestions.filter(q => q.isCloudReported).map(q => q.question);
             
             const newDataHash = JSON.stringify({ 
                 questions: newParsedQuestions, 
                 mistakes: cloudMistakes,
-                reports: cloudReportedQs
+                reports: cloudReportedQs,
+                leaderboard: parsedLeaderboard // 加入指紋比對
             });
 
             if (dataHashRef.current !== newDataHash) {
@@ -371,7 +396,6 @@
         }
       }, [apiUrl]);
 
-      // 每 10 秒執行一次背景靜默同步
       useEffect(() => {
         fetchQuestions(false);
         const intervalId = setInterval(() => {
@@ -413,6 +437,7 @@
         setQuestions(shuffleArray(filtered));
         setCurrentIndex(0);
         setScore({ correct: 0, incorrect: 0, wrongList: [], synced: false });
+        setIsEarlyEnd(false);
         
         if (settings.mode === 'timeChallenge') setTimeLeft(customTime * 60);
         else if (settings.mode === 'normalTest') setTimeLeft(600);
@@ -443,7 +468,8 @@
                   question: currentQ.question,
                   scope: currentQ.scope,
                   type: currentQ.type,
-                  questionNumber: currentQ.id
+                  questionNumber: currentQ.id,
+                  reportContent: "系統預設回報(無內容)"
               })
            }).catch(e => console.warn('回報錯誤失敗', e));
          }
@@ -455,8 +481,45 @@
             setSelectedOption(null);
             setFeedback(null);
          } else {
-            endGame();
+            endGame(false);
          }
+      };
+
+      const executeStudyReport = () => {
+         if (!studyReportModal.name.trim() || !studyReportModal.content.trim()) {
+           setAlertMsg("請完整填寫「真實姓名」與「問題回報內容」喔！");
+           return;
+         }
+
+         const currentQ = studyReportModal.data;
+         localStorage.setItem('USER_NAME', studyReportModal.name.trim());
+         setUserName(studyReportModal.name.trim());
+
+         const newReported = [...new Set([...reportedList, currentQ.question])];
+         setReportedList(newReported);
+         localStorage.setItem('REPORTED_DB', JSON.stringify(newReported));
+
+         const cleanApiUrl = (apiUrl || '').trim();
+         if (cleanApiUrl) {
+           fetch(cleanApiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                  action: 'reportError',
+                  userName: studyReportModal.name.trim(),
+                  deviceName: getDeviceName(),
+                  recordTime: getNowString(),
+                  question: currentQ.question,
+                  scope: currentQ.scope,
+                  type: currentQ.type,
+                  questionNumber: currentQ.id,
+                  reportContent: studyReportModal.content.trim()
+              })
+           }).catch(e => console.warn('回報錯誤失敗', e));
+         }
+
+         setStudyReportModal({ isOpen: false, data: null, name: studyReportModal.name, content: '' });
+         setAlertMsg("感謝您的回報！系統已為該題作上記號並傳送給老師。");
       };
 
       useEffect(() => {
@@ -499,12 +562,10 @@
         }
       }, [currentIndex, questions, gameState, questionBank]);
 
-      // 🛠️ 核心優化：獨立出文字縮放邏輯，支援載具翻轉與視窗調整
       const handleTextResize = useCallback(() => {
         if (gameState === 'playing' && textRef.current && containerRef.current) {
           const container = containerRef.current;
           const text = textRef.current;
-          // 先重置縮放，以便重新取得精確寬度
           text.style.transform = 'scale(1)';
           const containerWidth = container.clientWidth - 64; 
           const textWidth = text.scrollWidth;
@@ -515,7 +576,6 @@
         }
       }, [gameState, currentIndex, questions]);
 
-      // 綁定 resize 與 orientationchange 事件
       useEffect(() => {
         handleTextResize();
         window.addEventListener('resize', handleTextResize);
@@ -541,7 +601,8 @@
         return "別氣餒！失敗是成功的養分，多練習幾次一定行！ 💡";
       };
 
-      const endGame = useCallback(() => {
+      const endGame = useCallback((early = false) => {
+        setIsEarlyEnd(early === true);
         setGameState('result');
         setIsSidebarCollapsed(false); 
       }, []);
@@ -552,7 +613,7 @@
           timer = setInterval(() => {
             if (settings.mode === 'timeChallenge' || settings.mode === 'normalTest') {
               setTimeLeft(prev => {
-                if (prev <= 1) { clearInterval(timer); endGame(); return 0; }
+                if (prev <= 1) { clearInterval(timer); endGame(false); return 0; }
                 return prev - 1;
               });
             }
@@ -580,7 +641,7 @@
           if (currentIndex + 1 < questions.length) {
             setCurrentIndex(prev => prev + 1);
           } else {
-            endGame();
+            endGame(false);
           }
           setSelectedOption(null);
           setFeedback(null);
@@ -592,15 +653,53 @@
         setIsSidebarCollapsed(false);
       };
 
+      // 🚀 新增：排行榜過濾與排序邏輯
+      const filteredAndSortedLeaderboard = useMemo(() => {
+        return leaderboardData
+          // 剔除提早結束的作答
+          .filter(item => item.isEndedEarly !== '是' && item.isEndedEarly !== 'TRUE')
+          // 篩選題型
+          .filter(item => lbFilter.type === 'all' || item.type === lbFilter.type)
+          // 篩選模式
+          .filter(item => lbFilter.mode === 'all' || item.mode === lbFilter.mode)
+          // 篩選範圍
+          .filter(item => {
+             if (lbFilter.scope === 'all') return true;
+             // 若字串包含逗號，或是「全部範圍」，則判定為「多年度」
+             const isMulti = String(item.scope || '').includes(',') || String(item.scope || '') === '全部範圍';
+             if (lbFilter.scope === '單一年度') return !isMulti;
+             if (lbFilter.scope === '多年度') return isMulti;
+             return true;
+          })
+          // 嚴格排序：準確率(降) -> 總耗時(升) -> 總作答數(降)
+          .sort((a, b) => {
+             const accA = parseFloat(a.accuracy) || 0;
+             const accB = parseFloat(b.accuracy) || 0;
+             if (accA !== accB) return accB - accA;
+
+             const timeToSec = (t) => {
+                 if (!t) return 99999;
+                 const [m, s] = t.split(':').map(Number);
+                 return (m || 0) * 60 + (s || 0);
+             };
+             const timeA = timeToSec(a.timeSpent);
+             const timeB = timeToSec(b.timeSpent);
+             if (timeA !== timeB) return timeA - timeB;
+
+             const totA = parseInt(a.totalQuestions) || 0;
+             const totB = parseInt(b.totalQuestions) || 0;
+             return totB - totA;
+          });
+      }, [leaderboardData, lbFilter]);
+
       const Sidebar = () => (
         <aside className={`hidden md:flex flex-col bg-white border-r-2 border-slate-200 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.05)] z-20 transition-all duration-500 ease-in-out ${isSidebarCollapsed ? 'w-24 items-center px-4 py-6' : 'w-72 p-6'}`}>
           <div className={`flex items-center gap-3 mb-12 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <div className="shrink-0 w-14 h-14 rounded-[1rem] shadow-[0_4px_0_0_#cbd5e1] overflow-hidden bg-white border-2 border-slate-200 flex items-center justify-center relative">
-              {/* 終極防破圖：使用 Thumbnail API 並加上 onError SVG 替換 */}
+            <div className="shrink-0 w-14 h-14 flex items-center justify-center relative">
               <img 
                 src="https://drive.google.com/thumbnail?id=1gyziBxjBBTP7PzNf_tRqbRO6yr3pIWo7&sz=w200" 
                 alt="上岐 Logo" 
-                className="w-full h-full object-contain p-1"
+                className="w-full h-full object-contain drop-shadow-sm"
                 onError={(e) => {
                   e.target.onerror = null; 
                   e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e0e7ff' rx='20'/%3E%3Ctext x='50' y='65' font-size='45' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%234f46e5'%3E岐%3C/text%3E%3C/svg%3E";
@@ -627,6 +726,11 @@
             <button onClick={() => setGameState('mistakes')} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'mistakes' ? 'bg-rose-100 text-rose-600 border-rose-300 shadow-[0_4px_0_0_#fda4af]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="錯題集">
               <Archive size={22} className={gameState === 'mistakes' ? 'text-rose-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
               {!isSidebarCollapsed && <span className="whitespace-nowrap">錯題集</span>}
+            </button>
+            {/* 🚀 新增：側邊欄排行榜按鈕 */}
+            <button onClick={() => setGameState('leaderboard')} className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-4 px-5 py-4'} rounded-2xl font-black transition-all active:translate-y-[4px] active:shadow-none border-2 ${gameState === 'leaderboard' ? 'bg-amber-100 text-amber-600 border-amber-300 shadow-[0_4px_0_0_#fcd34d]' : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`} title="排行榜">
+              <Trophy size={22} className={gameState === 'leaderboard' ? 'text-amber-500 shrink-0' : 'shrink-0 text-slate-400'} /> 
+              {!isSidebarCollapsed && <span className="whitespace-nowrap">排行榜</span>}
             </button>
           </nav>
 
@@ -656,18 +760,23 @@
       );
 
       const MobileNav = () => (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-slate-200 pb-safe px-6 py-3 flex justify-between items-center z-50">
-          <button onClick={handleReturnToMenu} className={`flex flex-col items-center gap-1 p-2 active:scale-95 transition-transform ${gameState === 'menu' ? 'text-sky-500' : 'text-slate-400'}`}>
-            <LayoutDashboard size={26} />
-            <span className="text-[10px] font-black">練功區</span>
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-slate-200 pb-safe px-4 py-2 flex justify-between items-center z-50">
+          <button onClick={handleReturnToMenu} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'menu' ? 'text-sky-500' : 'text-slate-400'}`}>
+            <LayoutDashboard size={24} />
+            <span className="text-[10px] font-black">練功</span>
           </button>
-          <button onClick={() => setGameState('study')} className={`flex flex-col items-center gap-1 p-2 active:scale-95 transition-transform ${gameState === 'study' ? 'text-indigo-500' : 'text-slate-400'}`}>
-            <Library size={26} />
+          <button onClick={() => setGameState('study')} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'study' ? 'text-indigo-500' : 'text-slate-400'}`}>
+            <Library size={24} />
             <span className="text-[10px] font-black">自學</span>
           </button>
-          <button onClick={() => setGameState('mistakes')} className={`flex flex-col items-center gap-1 p-2 active:scale-95 transition-transform ${gameState === 'mistakes' ? 'text-rose-500' : 'text-slate-400'}`}>
-            <Archive size={26} />
+          <button onClick={() => setGameState('mistakes')} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'mistakes' ? 'text-rose-500' : 'text-slate-400'}`}>
+            <Archive size={24} />
             <span className="text-[10px] font-black">錯題</span>
+          </button>
+          {/* 🚀 新增：底部導覽列排行榜按鈕 */}
+          <button onClick={() => setGameState('leaderboard')} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'leaderboard' ? 'text-amber-500' : 'text-slate-400'}`}>
+            <Trophy size={24} />
+            <span className="text-[10px] font-black">排行</span>
           </button>
         </div>
       );
@@ -675,7 +784,6 @@
       return (
         <div className="flex h-screen w-full font-sans relative bg-sky-50">
           
-          {/* 背景泡泡裝飾，增添童趣 */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
             <div className="absolute top-[10%] left-[5%] w-32 h-32 bg-yellow-200/40 rounded-full blur-xl animate-bounce-soft"></div>
             <div className="absolute bottom-[20%] right-[10%] w-40 h-40 bg-sky-200/40 rounded-full blur-xl animate-bounce-soft" style={{ animationDelay: '1s' }}></div>
@@ -688,118 +796,126 @@
             
             {/* --- 練功區 --- */}
             {gameState === 'menu' && (
-              <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in">
-                <header className="mb-8 md:mb-12">
-                  <h2 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight mb-3">準備好今天的特訓了嗎？ ✨</h2>
+              <div className="p-4 md:p-8 max-w-6xl mx-auto w-full flex-1 flex flex-col min-h-0 animate-fade-in">
+                <header className="mb-4 shrink-0">
+                  <h2 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight mb-2">準備好今天的特訓了嗎？ ✨</h2>
                   <p className="text-slate-500 font-bold text-lg">選一個喜歡的模式開始挑戰吧！</p>
                 </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-10">
-                  <div className="bg-white rounded-[2rem] p-6 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col relative overflow-hidden">
-                    <h3 className="text-xl font-black text-slate-700 mb-5 flex items-center gap-3 relative z-10">
-                      <div className="bg-yellow-100 text-yellow-600 p-2.5 rounded-[1rem]"><Timer size={24} /></div> 選擇模式
-                    </h3>
-                    <div className="flex flex-col gap-4 relative z-10 flex-1">
-                      {[
-                        { id: 'timeChallenge', label: '計時挑戰', color: 'amber' },
-                        { id: 'normalTest', label: '一般測驗', color: 'sky' },
-                        { id: 'mistakePractice', label: '錯題加強', color: 'rose' }
-                      ].map(modeOpt => {
-                        const isSelected = settings.mode === modeOpt.id;
-                        const baseColor = modeOpt.color;
-                        return (
-                          <button 
-                            key={modeOpt.id} 
-                            onClick={() => {
-                              setSettings(s => ({ ...s, mode: modeOpt.id, type: modeOpt.id === 'normalTest' ? 'all' : s.type }));
-                              if (modeOpt.id === 'timeChallenge') setShowTimeModal(true);
-                              if (modeOpt.id === 'normalTest') setShowNormalModal(true);
-                            }} 
-                            className={`flex items-center gap-3 sm:gap-4 p-4 rounded-2xl transition-all border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? `bg-${baseColor}-100 border-${baseColor}-400 shadow-[0_4px_0_0_#${baseColor === 'amber' ? 'fbbf24' : baseColor === 'sky' ? '38bdf8' : 'fb7185'}]` : 'bg-white border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
-                          >
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? `border-${baseColor}-500 bg-white` : 'border-slate-300'}`}>
-                              {isSelected && <div className={`w-3 h-3 bg-${baseColor}-500 rounded-full`} />}
-                            </div>
-                            <span className={`font-black text-lg whitespace-nowrap ${isSelected ? `text-${baseColor}-700` : 'text-slate-600'}`}>{modeOpt.label}</span>
-                            {isSelected && modeOpt.id === 'timeChallenge' && (
-                              <span className={`ml-auto text-xs font-black text-${baseColor}-700 bg-white px-2.5 py-1.5 rounded-xl shrink-0 whitespace-nowrap border-2 border-${baseColor}-200`}>{customTime} 分鐘</span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-[2rem] p-6 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 lg:col-span-2 relative overflow-hidden group">
-                    {settings.mode !== 'mistakePractice' && (() => {
-                      const availableScopes = [...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集');
-                      const isAllSelected = availableScopes.length > 0 && settings.scope.length === availableScopes.length;
-                      return (
-                        <button 
-                          onClick={() => {
-                            if (isAllSelected) setSettings(s => ({ ...s, scope: [] }));
-                            else setSettings(s => ({ ...s, scope: availableScopes }));
-                          }} 
-                          className={`absolute top-5 right-5 text-sm py-2 px-5 rounded-xl font-black transition-all active:translate-y-[2px] active:shadow-none border-2 z-20 ${isAllSelected ? 'bg-emerald-100 text-emerald-600 border-emerald-300 shadow-[0_2px_0_0_#6ee7b7]' : 'bg-white text-slate-500 border-slate-200 shadow-[0_2px_0_0_#cbd5e1] hover:bg-slate-50'}`}
-                        >
-                          {isAllSelected ? '取消全選' : '全部範圍'}
-                        </button>
-                      );
-                    })()}
-
-                    <h3 className="text-xl font-black text-slate-700 mb-5 flex items-center gap-3 relative z-10">
-                      <div className="bg-emerald-100 text-emerald-600 p-2.5 rounded-[1rem]"><BookOpen size={24} /></div> 題目範圍
-                    </h3>
-                    
-                    {settings.mode === 'mistakePractice' ? (
-                      <div className="flex flex-col items-center justify-center h-48 bg-slate-50 rounded-3xl border-4 border-dashed border-slate-200 relative z-10">
-                        <Archive size={40} className="text-slate-300 mb-3" />
-                        <p className="font-black text-slate-500 text-xl">已鎖定為「錯題集」</p>
-                        <p className="text-sm font-bold text-slate-400 mt-2">系統將為您安排專屬的弱點強化特訓！</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 relative z-10 max-h-48 overflow-y-auto pr-2">
-                        {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => {
-                          const isSelected = settings.scope.includes(scopeName);
+                <div className="flex flex-col flex-1 min-h-0">
+                  <div className="flex flex-col lg:flex-row gap-4 md:gap-6 flex-1 min-h-0 mb-4">
+                    <div className="bg-white rounded-[2rem] p-5 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col relative overflow-hidden shrink-0 lg:w-1/3">
+                      <h3 className="text-xl font-black text-slate-700 mb-4 flex items-center gap-3 shrink-0 relative z-10">
+                        <div className="bg-yellow-100 text-yellow-600 p-2.5 rounded-[1rem]"><Timer size={24} /></div> 選擇模式
+                      </h3>
+                      <div className="flex flex-col gap-4 relative z-10 flex-1 overflow-y-auto hide-scrollbar">
+                        {[
+                          { id: 'timeChallenge', label: '計時挑戰 ⏱️', selBg: 'bg-amber-100', selBorder: 'border-amber-400', selShadow: 'shadow-[0_4px_0_0_#fbbf24]', textCol: 'text-amber-700', dotBorder: 'border-amber-500', dotBg: 'bg-amber-500', badgeBorder: 'border-amber-200' },
+                          { id: 'normalTest', label: '一般測驗 📝', selBg: 'bg-sky-100', selBorder: 'border-sky-400', selShadow: 'shadow-[0_4px_0_0_#38bdf8]', textCol: 'text-sky-700', dotBorder: 'border-sky-500', dotBg: 'bg-sky-500', badgeBorder: 'border-sky-200' },
+                          { id: 'mistakePractice', label: '錯題加強 🎯', selBg: 'bg-rose-100', selBorder: 'border-rose-400', selShadow: 'shadow-[0_4px_0_0_#fb7185]', textCol: 'text-rose-700', dotBorder: 'border-rose-500', dotBg: 'bg-rose-500', badgeBorder: 'border-rose-200' }
+                        ].map(modeOpt => {
+                          const isSelected = settings.mode === modeOpt.id;
                           return (
                             <button 
-                              key={idx} 
+                              key={modeOpt.id} 
                               onClick={() => {
-                                setSettings(s => {
-                                  const newScope = s.scope.includes(scopeName) ? s.scope.filter(sn => sn !== scopeName) : [...s.scope, scopeName];
-                                  return { ...s, scope: newScope };
-                                });
+                                setSettings(s => ({ ...s, mode: modeOpt.id, type: modeOpt.id === 'normalTest' ? 'all' : s.type }));
+                                if (modeOpt.id === 'timeChallenge') setShowTimeModal(true);
+                                if (modeOpt.id === 'normalTest') setShowNormalModal(true);
                               }} 
-                              className={`py-4 px-2 rounded-2xl font-black transition-all text-base border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? 'bg-emerald-400 text-white border-emerald-600 shadow-[0_4px_0_0_#059669]' : 'bg-white text-slate-600 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
+                              className={`flex items-center gap-3 sm:gap-4 p-4 rounded-2xl transition-all border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? `${modeOpt.selBg} ${modeOpt.selBorder} ${modeOpt.selShadow}` : 'bg-white border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
                             >
-                              {scopeName}
+                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? `${modeOpt.dotBorder} bg-white` : 'border-slate-300'}`}>
+                                {isSelected && <div className={`w-3 h-3 ${modeOpt.dotBg} rounded-full`} />}
+                              </div>
+                              <span className={`font-black text-lg whitespace-nowrap ${isSelected ? modeOpt.textCol : 'text-slate-600'}`}>{modeOpt.label}</span>
+                              {isSelected && modeOpt.id === 'timeChallenge' && (
+                                <span className={`ml-auto text-xs font-black ${modeOpt.textCol} bg-white px-2.5 py-1.5 rounded-xl shrink-0 whitespace-nowrap border-2 ${modeOpt.badgeBorder}`}>{customTime} 分鐘</span>
+                              )}
                             </button>
                           );
                         })}
                       </div>
-                    )}
+                    </div>
+
+                    <div className="bg-white rounded-[2rem] p-5 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 relative overflow-hidden flex flex-col group flex-1 min-h-0 lg:w-2/3">
+                      {settings.mode !== 'mistakePractice' && (() => {
+                        const availableScopes = [...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集');
+                        const isAllSelected = availableScopes.length > 0 && settings.scope.length === availableScopes.length;
+                        return (
+                          <button 
+                            onClick={() => {
+                              if (isAllSelected) setSettings(s => ({ ...s, scope: [] }));
+                              else setSettings(s => ({ ...s, scope: availableScopes }));
+                            }} 
+                            className={`absolute top-5 right-5 text-sm py-2 px-5 rounded-xl font-black transition-all active:translate-y-[2px] active:shadow-none border-2 z-20 ${isAllSelected ? 'bg-emerald-200 text-emerald-800 border-emerald-400 shadow-[0_2px_0_0_#34d399]' : 'bg-white text-slate-500 border-slate-200 shadow-[0_2px_0_0_#cbd5e1] hover:bg-slate-50'}`}
+                          >
+                            {isAllSelected ? '取消全選' : '全部範圍'}
+                          </button>
+                        );
+                      })()}
+
+                      <h3 className="text-xl font-black text-slate-700 mb-4 flex items-center gap-3 shrink-0 relative z-10">
+                        <div className="bg-emerald-100 text-emerald-600 p-2.5 rounded-[1rem]"><BookOpen size={24} /></div> 題目範圍
+                      </h3>
+                      
+                      {settings.mode === 'mistakePractice' ? (
+                        <div className="flex flex-col items-center justify-center flex-1 bg-slate-50 rounded-3xl border-4 border-dashed border-slate-200 relative z-10 min-h-0">
+                          <Archive size={40} className="text-slate-300 mb-3" />
+                          <p className="font-black text-slate-500 text-xl">已鎖定為「錯題集」</p>
+                          <p className="text-sm font-bold text-slate-400 mt-2">系統將為您安排專屬的弱點強化特訓！</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 flex-1 overflow-y-auto pr-2 min-h-0 content-start pb-2">
+                          {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => {
+                            const isSelected = settings.scope.includes(scopeName);
+                            return (
+                              <button 
+                                key={idx} 
+                                onClick={() => {
+                                  setSettings(s => {
+                                    const newScope = s.scope.includes(scopeName) ? s.scope.filter(sn => sn !== scopeName) : [...s.scope, scopeName];
+                                    return { ...s, scope: newScope };
+                                  });
+                                }} 
+                                className={`py-4 px-2 rounded-2xl font-black transition-all text-base border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? 'bg-emerald-400 text-white border-emerald-600 shadow-[0_4px_0_0_#059669]' : 'bg-white text-slate-600 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
+                              >
+                                {scopeName}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="bg-white rounded-[2rem] p-6 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 lg:col-span-3 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                  <div className="bg-white rounded-[2rem] p-4 md:p-6 shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden shrink-0">
                     <div className="w-full md:w-auto">
                       <h3 className="text-xl font-black text-slate-700 mb-4 flex items-center gap-3">
                         <div className="bg-purple-100 text-purple-600 p-2.5 rounded-[1rem]"><Settings size={24} /></div> 題型
                       </h3>
-                      <div className="flex gap-3 md:gap-4">
-                        {[{id: '字音', label: '字音'}, {id: '字形', label: '字形'}, {id: 'all', label: '字音+字形'}].map(type => (
-                          <button 
-                            key={type.id} 
-                            onClick={() => settings.mode !== 'normalTest' && setSettings(s => ({ ...s, type: type.id }))} 
-                            disabled={settings.mode === 'normalTest'}
-                            className={`py-3 px-6 md:px-8 rounded-2xl font-black transition-all border-2 active:translate-y-[4px] active:shadow-none text-lg ${settings.type === type.id ? 'bg-purple-400 text-white border-purple-600 shadow-[0_4px_0_0_#7e22ce]' : 'bg-white text-slate-600 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'} ${settings.mode === 'normalTest' && settings.type !== type.id ? 'opacity-40 cursor-not-allowed' : ''}`}
-                          >
-                            {type.label}
-                          </button>
-                        ))}
+                      <div className="flex gap-3 md:gap-4 flex-wrap">
+                        {[
+                          { id: '字音', label: '字音', selStyle: 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_4px_0_0_#5b75a6]', unselStyle: 'bg-white text-[#718ebf] border-[#a3b7d7] shadow-[0_4px_0_0_#a3b7d7]' },
+                          { id: '字形', label: '字形', selStyle: 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_4px_0_0_#b87474]', unselStyle: 'bg-white text-[#d28b8b] border-[#dca6a6] shadow-[0_4px_0_0_#dca6a6]' },
+                          { id: 'all', label: '字音+字形', selStyle: 'bg-[#9f86c0] text-white border-[#856ea8] shadow-[0_4px_0_0_#856ea8]', unselStyle: 'bg-white text-[#9f86c0] border-[#bfa8db] shadow-[0_4px_0_0_#bfa8db]' }
+                        ].map(type => {
+                          const isSelected = settings.type === type.id;
+                          return (
+                            <button 
+                              key={type.id} 
+                              onClick={() => settings.mode !== 'normalTest' && setSettings(s => ({ ...s, type: type.id }))} 
+                              disabled={settings.mode === 'normalTest'}
+                              className={`py-3 px-5 md:px-8 rounded-2xl font-black transition-all border-2 active:translate-y-[4px] active:shadow-none text-lg flex-1 md:flex-none ${isSelected ? type.selStyle : type.unselStyle} ${settings.mode === 'normalTest' && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            >
+                              {type.label}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <div className="w-full md:w-auto mt-4 md:mt-0">
+                    <div className="w-full md:w-auto mt-2 md:mt-0">
                       <button 
                         onClick={() => {
                           if (settings.mode !== 'mistakePractice' && settings.scope.length === 0) {
@@ -809,8 +925,7 @@
                           setShowNameModal(true);
                         }} 
                         disabled={isDbLoading} 
-                        // 🎮 Duolingo 經典大按鈕
-                        className={`w-full md:w-auto flex items-center justify-center gap-3 bg-emerald-500 border-2 border-emerald-700 shadow-[0_6px_0_0_#047857] hover:-translate-y-1 hover:shadow-[0_8px_0_0_#047857] hover:bg-emerald-400 active:translate-y-[6px] active:shadow-none text-white px-12 py-5 rounded-[2rem] text-2xl font-black transition-all ${isDbLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`w-full md:w-auto flex items-center justify-center gap-3 bg-emerald-500 border-2 border-emerald-700 shadow-[0_6px_0_0_#047857] hover:-translate-y-1 hover:shadow-[0_8px_0_0_#047857] hover:bg-emerald-400 active:translate-y-[6px] active:shadow-none text-white px-10 py-4 md:py-5 rounded-[2rem] text-xl md:text-2xl font-black transition-all ${isDbLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {isDbLoading ? <RefreshCw className="animate-spin" size={32} /> : <Play size={32} className="fill-white" />}
                         {isDbLoading ? '準備中...' : '開始挑戰 GO!'}
@@ -824,7 +939,6 @@
             {/* --- 測驗進行畫面 --- */}
             {gameState === 'playing' && questions[currentIndex] && (
               <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full flex flex-col">
-                {/* 🎮 狀態列 */}
                 <div className="bg-white rounded-[2rem] p-4 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-wrap justify-between items-center gap-4 mb-5 md:mb-8 shrink-0 z-20 relative transition-all">
                   <div className="flex items-center gap-4 pl-2">
                     <div className="w-14 h-14 rounded-[1rem] bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] flex items-center justify-center text-white font-black text-2xl shrink-0">
@@ -834,7 +948,7 @@
                       <div className="text-sm font-black text-slate-400 tracking-wider uppercase mb-1">Question {currentIndex + 1} / {questions.length}</div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-black text-sky-700 bg-sky-100 px-3 py-1 rounded-xl border-2 border-sky-200 whitespace-nowrap">{questions[currentIndex].scope}</span>
-                        <span className={`text-xs font-black px-3 py-1 rounded-xl whitespace-nowrap border-2 ${questions[currentIndex].type === '字音' ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-purple-100 text-purple-700 border-purple-300'}`}>{questions[currentIndex].type}</span>
+                        <span className={`text-xs font-black px-3 py-1 rounded-xl whitespace-nowrap border-2 ${getTypeColor(questions[currentIndex].type)}`}>{questions[currentIndex].type}</span>
                       </div>
                     </div>
                   </div>
@@ -842,10 +956,10 @@
                   <div className="flex items-center gap-3 md:gap-4 ml-auto md:ml-0">
                     <button 
                       onClick={() => setConfirmModal({isOpen: true, type: 'report', data: questions[currentIndex]})} 
-                      className="flex items-center gap-1.5 bg-rose-100 hover:bg-rose-200 text-rose-600 px-4 py-3 rounded-2xl font-black transition-all active:translate-y-[2px] active:shadow-none text-sm border-2 border-rose-300 shadow-[0_2px_0_0_#fda4af]"
+                      className="flex items-center gap-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-4 py-3 rounded-2xl font-black transition-all active:translate-y-[2px] active:shadow-none text-sm border-2 border-yellow-400 shadow-[0_2px_0_0_#fde047]"
                       title="若發現此題答案或敘述有誤，請點此回報"
                     >
-                      <AlertTriangle size={18} /> <span className="hidden sm:inline">回報問題</span>
+                      <AlertTriangle size={18} className="text-yellow-600" /> <span className="hidden sm:inline">問題回報</span>
                     </button>
 
                     {settings.mode === 'timeChallenge' || settings.mode === 'normalTest' ? (
@@ -857,17 +971,15 @@
                         <Timer size={20} className="text-slate-400" /> 錯題加強中
                       </div>
                     )}
-                    <button onClick={endGame} className="hidden md:flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-500 px-5 py-3 rounded-2xl font-black transition-colors text-sm border-2 border-slate-200 shadow-[0_2px_0_0_#e2e8f0] active:translate-y-[2px] active:shadow-none">
+                    <button onClick={() => endGame(true)} className="hidden md:flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-500 px-5 py-3 rounded-2xl font-black transition-colors text-sm border-2 border-slate-200 shadow-[0_2px_0_0_#e2e8f0] active:translate-y-[2px] active:shadow-none">
                       提早結束
                     </button>
                   </div>
                 </div>
 
                 <div className="flex-1 flex flex-col gap-4 md:gap-6 items-center justify-start md:justify-center w-full min-h-0">
-                  {/* 🎮 題目區：高對比色塊 */}
                   <div ref={containerRef} className="w-full bg-blue-500 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_0_0_#1d4ed8] border-4 border-blue-600 flex flex-col items-center justify-center relative overflow-hidden flex-1 min-h-[140px] md:min-h-[220px] px-8 py-6">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl opacity-20"></div>
-                    
                     <h2 ref={textRef} className="text-4xl md:text-8xl font-black tracking-widest text-white leading-tight text-center relative z-10 drop-shadow-md whitespace-nowrap origin-center transition-transform duration-200">
                       {questions[currentIndex].question}
                     </h2>
@@ -875,18 +987,14 @@
 
                   <div className="w-full grid grid-cols-2 gap-4 md:gap-6 animate-fade-in-up shrink-0">
                     {currentOptions.map((opt, idx) => {
-                      // 🎮 選項 3D 按鈕樣式
                       let btnClass = "bg-white border-2 border-slate-300 shadow-[0_6px_0_0_#cbd5e1] hover:-translate-y-1 hover:shadow-[0_8px_0_0_#cbd5e1] hover:bg-sky-50 active:translate-y-[6px] active:shadow-none text-slate-700";
                       
                       if (selectedOption !== null) {
                         if (opt === questions[currentIndex].answer) {
-                          // ✅ 答對：Duolingo 綠
                           btnClass = "bg-emerald-400 border-2 border-emerald-600 shadow-[0_6px_0_0_#059669] text-white scale-105 z-10"; 
                         } else if (opt === selectedOption && feedback === 'incorrect') {
-                          // ❌ 答錯點擊：西瓜紅，失去厚度陷下去
                           btnClass = "bg-rose-500 border-2 border-rose-600 shadow-none translate-y-[6px] text-white opacity-90"; 
                         } else {
-                          // 🔘 未選：灰階陷入
                           btnClass = "bg-slate-100 border-2 border-slate-300 shadow-none translate-y-[6px] text-slate-400 opacity-60"; 
                         }
                       }
@@ -912,60 +1020,62 @@
             {/* --- 測驗結果畫面 --- */}
             {gameState === 'result' && (
               <div className="p-6 md:p-10 max-w-5xl mx-auto w-full animate-fade-in pb-24 md:pb-10">
-                <div className="text-center mb-12 relative">
-                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] bg-yellow-400 text-yellow-900 shadow-[0_8px_0_0_#ca8a04] border-4 border-yellow-500 mb-6 relative">
-                    <div className="absolute top-1 right-1 w-6 h-6 bg-white/40 rounded-full blur-sm"></div>
-                    <Award size={56} className="fill-yellow-100" />
+                
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-8 relative">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-[1.5rem] bg-yellow-400 text-yellow-900 shadow-[0_6px_0_0_#ca8a04] border-4 border-yellow-500 relative shrink-0">
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-white/40 rounded-full blur-sm"></div>
+                    <Award size={48} className="fill-yellow-100" />
                   </div>
-                  <h2 className="text-5xl md:text-6xl font-black text-slate-800 tracking-tight mb-3">特訓完成！ 🎉</h2>
-                  <p className="text-slate-500 font-bold text-xl">快來看看你的戰力分析吧！</p>
+                  <div className="text-center md:text-left">
+                    <h2 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight mb-2">測驗結果</h2>
+                    <p className="text-slate-500 font-bold text-lg">快來看看你的戰力分析吧！</p>
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
-                  <div className="bg-white rounded-[2rem] p-6 border-2 border-slate-200 shadow-[0_6px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1">
-                    <p className="text-slate-400 font-black text-sm mb-2 uppercase tracking-wider">總作答數</p>
-                    <p className="text-6xl font-black text-slate-700">{score.correct + score.incorrect}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                  <div className="bg-white rounded-[1.5rem] p-4 border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1">
+                    <p className="text-slate-400 font-black text-xs mb-1 uppercase tracking-wider">總作答數</p>
+                    <p className="text-4xl font-black text-slate-700">{score.correct + score.incorrect}</p>
                   </div>
-                  {/* 重點卡片：答對題數 */}
-                  <div className="bg-emerald-400 p-6 rounded-[2rem] border-2 border-emerald-600 shadow-[0_8px_0_0_#059669] flex flex-col items-center justify-center text-white col-span-2 md:col-span-1 transform md:-translate-y-4">
-                    <p className="font-black text-emerald-100 text-sm mb-2 uppercase tracking-wider">正確題數</p>
-                    <p className="text-7xl font-black">{score.correct}</p>
+                  <div className="bg-emerald-400 p-4 rounded-[1.5rem] border-2 border-emerald-600 shadow-[0_6px_0_0_#059669] flex flex-col items-center justify-center text-white col-span-2 md:col-span-1 transform md:-translate-y-2">
+                    <p className="font-black text-emerald-100 text-xs mb-1 uppercase tracking-wider">正確題數</p>
+                    <p className="text-5xl font-black">{score.correct}</p>
                   </div>
-                  <div className="bg-white rounded-[2rem] p-6 border-2 border-slate-200 shadow-[0_6px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1">
-                    <p className="text-slate-400 font-black text-sm mb-2 uppercase tracking-wider">總耗時</p>
-                    <p className="text-5xl font-black text-slate-700">{formatTime(timeSpent)}</p>
+                  <div className="bg-white rounded-[1.5rem] p-4 border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1">
+                    <p className="text-slate-400 font-black text-xs mb-1 uppercase tracking-wider">總耗時</p>
+                    <p className="text-3xl font-black text-slate-700">{formatTime(timeSpent)}</p>
                   </div>
-                  <div className="bg-white rounded-[2rem] p-6 border-2 border-slate-200 shadow-[0_6px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1 relative overflow-hidden">
-                    <div className="absolute right-0 bottom-0 w-20 h-20 bg-sky-100 rounded-tl-[3rem] -z-10"></div>
-                    <p className="text-slate-400 font-black text-sm mb-2 uppercase tracking-wider">準確率</p>
-                    <p className="text-5xl font-black text-sky-500">
+                  <div className="bg-white rounded-[1.5rem] p-4 border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] flex flex-col items-center justify-center col-span-2 md:col-span-1 relative overflow-hidden">
+                    <div className="absolute right-0 bottom-0 w-16 h-16 bg-sky-100 rounded-tl-[2rem] -z-10"></div>
+                    <p className="text-slate-400 font-black text-xs mb-1 uppercase tracking-wider">準確率</p>
+                    <p className="text-4xl font-black text-sky-500">
                       {acc}%
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-sky-100 rounded-[2rem] p-6 mb-12 text-center border-2 border-sky-300 shadow-[0_6px_0_0_#bae6fd] animate-fade-in-up">
-                  <p className="text-2xl md:text-3xl font-black text-sky-700">
+                <div className="bg-sky-100 rounded-[1.5rem] p-5 mb-10 text-center border-2 border-sky-300 shadow-[0_4px_0_0_#bae6fd] animate-fade-in-up">
+                  <p className="text-xl md:text-2xl font-black text-sky-700">
                     {getEncouragement(acc)}
                   </p>
                 </div>
 
                 {score.wrongList.length > 0 && (
-                  <div className="bg-white rounded-[2rem] p-6 md:p-8 border-2 border-slate-200 shadow-[0_6px_0_0_#e2e8f0] mb-10">
-                    <h3 className="text-2xl font-black text-slate-700 mb-8 flex items-center gap-3">
-                      <div className="bg-rose-100 text-rose-600 p-2.5 rounded-[1rem]"><Archive size={28} /></div> 錯題檢討清單
+                  <div className="bg-white rounded-[2rem] p-6 md:p-8 border-2 border-slate-200 shadow-[0_6px_0_0_#e2e8f0] mb-8">
+                    <h3 className="text-xl font-black text-slate-700 mb-6 flex items-center gap-3">
+                      <div className="bg-rose-100 text-rose-600 p-2.5 rounded-[1rem]"><Archive size={24} /></div> 錯題檢討清單
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {score.wrongList.map((q, i) => (
-                        <div key={i} className="bg-slate-50 rounded-[1.5rem] p-5 border-2 border-slate-200 flex items-center justify-between shadow-[0_4px_0_0_#cbd5e1] hover:-translate-y-1 hover:shadow-[0_6px_0_0_#cbd5e1] transition-all group">
+                        <div key={i} className="bg-slate-50 rounded-[1.5rem] p-4 border-2 border-slate-200 flex items-center justify-between shadow-[0_4px_0_0_#cbd5e1] hover:-translate-y-1 hover:shadow-[0_6px_0_0_#cbd5e1] transition-all group">
                           <div>
-                            <div className="flex gap-2 mb-3">
+                            <div className="flex gap-2 mb-2">
                               <span className="text-xs font-black text-indigo-600 bg-indigo-100 px-3 py-1 rounded-xl border border-indigo-200">{q.scope}</span>
                               <span className={`text-xs font-black px-3 py-1 rounded-xl border ${getTypeColor(q.type)}`}>{q.type}</span>
                             </div>
-                            <span className="text-2xl font-black text-slate-700">{q.question}</span>
+                            <span className="text-xl font-black text-slate-700">{q.question}</span>
                           </div>
-                          <div className="min-w-[4rem] h-16 px-4 rounded-2xl bg-white border-2 border-rose-200 shadow-[0_4px_0_0_#fecaca] flex items-center justify-center text-rose-500 font-black text-3xl group-hover:scale-110 transition-transform">
+                          <div className="min-w-[4rem] h-14 px-3 rounded-2xl bg-white border-2 border-rose-200 shadow-[0_4px_0_0_#fecaca] flex items-center justify-center text-rose-500 font-black text-2xl group-hover:scale-110 transition-transform">
                             {q.answer}
                           </div>
                         </div>
@@ -974,12 +1084,12 @@
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-5 justify-center mt-10">
-                  <button onClick={handleReturnToMenu} className="flex items-center justify-center gap-3 bg-white text-slate-600 px-10 py-5 rounded-[2rem] font-black text-xl hover:bg-slate-50 transition-all border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] active:translate-y-[6px] active:shadow-none">
-                    <Home size={24} /> 回到儀表板
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                  <button onClick={handleReturnToMenu} className="flex items-center justify-center gap-3 bg-white text-slate-600 px-8 py-4 rounded-[1.5rem] font-black text-lg hover:bg-slate-50 transition-all border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none">
+                    <Home size={20} /> 回到儀表板
                   </button>
-                  <button onClick={() => setShowNameModal(true)} className="flex items-center justify-center gap-3 bg-sky-500 text-white px-10 py-5 rounded-[2rem] font-black text-xl hover:bg-sky-400 border-2 border-sky-600 shadow-[0_6px_0_0_#0284c7] transition-all active:translate-y-[6px] active:shadow-none">
-                    <RotateCcw size={24} /> 再挑戰一次
+                  <button onClick={() => setShowNameModal(true)} className="flex items-center justify-center gap-3 bg-sky-500 text-white px-8 py-4 rounded-[1.5rem] font-black text-lg hover:bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] transition-all active:translate-y-[4px] active:shadow-none">
+                    <RotateCcw size={20} /> 再挑戰一次
                   </button>
                 </div>
               </div>
@@ -1011,8 +1121,8 @@
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-base font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-4 py-2.5 rounded-xl shrink-0">題目類型</span>
                     <button onClick={() => setStudyType('all')} className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_4px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>全部</button>
-                    <button onClick={() => setStudyType('字音')} className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字音' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_4px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字音</button>
-                    <button onClick={() => setStudyType('字形')} className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字形' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_4px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字形</button>
+                    <button onClick={() => setStudyType('字音')} className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_4px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字音</button>
+                    <button onClick={() => setStudyType('字形')} className={`py-2.5 px-5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_4px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字形</button>
                   </div>
                 </div>
 
@@ -1020,21 +1130,36 @@
                   {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
                     const isReported = q.isCloudReported || reportedList.includes(q.question);
                     return (
-                      <div key={idx} className={`bg-white rounded-[2rem] p-6 border-2 ${isReported ? 'border-rose-300 shadow-[0_6px_0_0_#fda4af] bg-rose-50/50' : 'border-slate-200 shadow-[0_6px_0_0_#e2e8f0]'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_8px_0_0_#cbd5e1] transition-all group relative`}>
+                      <div key={idx} className={`bg-white rounded-[2rem] p-6 border-2 ${isReported ? 'border-rose-300 shadow-[0_6px_0_0_#fda4af] bg-rose-50/50' : 'border-slate-200 shadow-[0_6px_0_0_#e2e8f0]'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_8px_0_0_#cbd5e1] transition-all group relative min-h-[220px]`}>
+                        
+                        {/* 🚀 修正：問題回報按鈕移至 -right-3 */}
+                        {!isReported && (
+                          <button 
+                            onClick={() => setStudyReportModal({ isOpen: true, data: q, name: userName, content: '' })}
+                            className="absolute -top-3 -right-3 w-10 h-10 bg-sky-100 text-sky-600 rounded-full border-2 border-sky-300 shadow-[0_4px_0_0_#7dd3fc] flex items-center justify-center font-black text-xl hover:-translate-y-1 hover:shadow-[0_6px_0_0_#7dd3fc] active:translate-y-[4px] active:shadow-none z-10 transition-all"
+                            title="回報題目錯誤"
+                          >
+                            ?
+                          </button>
+                        )}
+
                         {isReported && (
                           <div className="absolute -top-4 -right-3 bg-rose-500 text-white text-xs font-black px-4 py-2 rounded-full shadow-md flex items-center gap-1.5 z-10 border-2 border-white animate-pulse">
                             <AlertTriangle size={16} /> 疑似有誤
                           </div>
                         )}
-                        <div className="mb-5">
-                          <div className="flex gap-2 mb-4 flex-wrap">
-                            <span className="text-xs font-black text-indigo-700 bg-indigo-100 px-3 py-1.5 rounded-xl border-2 border-indigo-200">{q.scope}</span>
-                            <span className={`text-xs font-black px-3 py-1.5 rounded-xl border-2 ${getTypeColor(q.type)}`}>{q.type}</span>
-                            <span className="text-xs font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border-2 border-slate-200">第 {q.id} 題</span>
-                          </div>
-                          <span className={`text-2xl font-black block mb-2 ${isReported ? 'text-slate-400 line-through decoration-rose-400 decoration-4' : 'text-slate-800'}`}>{q.question}</span>
+                        
+                        <div className="flex gap-2 mb-2 flex-wrap shrink-0">
+                          <span className="text-xs font-black text-indigo-700 bg-indigo-100 px-3 py-1.5 rounded-xl border-2 border-indigo-200">{q.scope}</span>
+                          <span className={`text-xs font-black px-3 py-1.5 rounded-xl border-2 ${getTypeColor(q.type)}`}>{q.type}</span>
+                          <span className="text-xs font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border-2 border-slate-200">第 {q.id} 題</span>
                         </div>
-                        <div className={`w-full h-16 rounded-[1.5rem] flex items-center justify-center font-black text-2xl border-2 ${isReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-[0_4px_0_0_#e2e8f0]' : 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-[0_4px_0_0_#6ee7b7]'}`}>
+                        
+                        <div className="flex-1 flex items-center justify-center w-full py-4">
+                          <span className={`text-2xl md:text-3xl text-center font-black ${isReported ? 'text-slate-400 line-through decoration-rose-400 decoration-4' : 'text-slate-800'}`}>{q.question}</span>
+                        </div>
+
+                        <div className={`w-full h-16 shrink-0 rounded-[1.5rem] flex items-center justify-center font-black text-2xl border-2 ${isReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-[0_4px_0_0_#e2e8f0]' : 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-[0_4px_0_0_#6ee7b7]'}`}>
                           {q.answer}
                         </div>
                       </div>
@@ -1052,7 +1177,7 @@
               const mistakesArray = Object.values(localMistakes || {}).filter(q => q && q.question);
               const availableScopes = [...new Set(questionBank.map(q => String(q.scope || '未分類').trim()))].filter(s => s !== '錯題集' && s !== '未分類');
               const filteredMistakes = mistakesArray
-                .filter(q => !reportedList.includes(q.question)) // 嚴格排除絕對標準 reportedList
+                .filter(q => !reportedList.includes(q.question)) 
                 .filter(q => mistakeFilterScope === 'all' || String(q.scope || '未分類').trim() === mistakeFilterScope)
                 .filter(q => mistakeFilterType === 'all' || String(q.type || '未分類').trim() === mistakeFilterType)
                 .sort((a, b) => b.count - a.count);
@@ -1087,8 +1212,8 @@
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-base font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-4 py-2.5 rounded-xl shrink-0">測驗題型</span>
                     <button onClick={() => setMistakeFilterType('all')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_4px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>全部</button>
-                    <button onClick={() => setMistakeFilterType('字音')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字音' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_4px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字音</button>
-                    <button onClick={() => setMistakeFilterType('字形')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字形' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_4px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字形</button>
+                    <button onClick={() => setMistakeFilterType('字音')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_4px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字音</button>
+                    <button onClick={() => setMistakeFilterType('字形')} className={`px-5 py-2.5 rounded-xl font-black text-base transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_4px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_4px_0_0_#cbd5e1]'}`}>字形</button>
                   </div>
                 </div>
 
@@ -1126,6 +1251,130 @@
               </div>
               );
             })()}
+
+            {/* 🚀 新增：排行榜畫面 */}
+            {gameState === 'leaderboard' && (
+              <div className="p-6 md:p-10 max-w-6xl mx-auto w-full animate-fade-in pb-24">
+                <header className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div>
+                    <h2 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight flex items-center gap-4">
+                      <div className="bg-amber-100 text-amber-600 p-3 rounded-[1rem]"><Trophy size={32} /></div> 特訓排行榜 🏆
+                    </h2>
+                    <p className="text-slate-500 font-bold text-lg mt-3">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
+                  </div>
+                  <div className="flex items-center gap-4 bg-white px-8 py-5 rounded-[2rem] border-2 border-amber-200 shadow-[0_6px_0_0_#fde68a] self-start md:self-auto shrink-0">
+                     <span className="text-base font-black text-slate-500">上榜人數</span>
+                     <div className="flex items-baseline gap-1">
+                       <span className="text-5xl font-black text-amber-500">{filteredAndSortedLeaderboard.length}</span>
+                       <span className="text-lg font-bold text-amber-400">人</span>
+                     </div>
+                  </div>
+                </header>
+
+                <div className="bg-white p-6 rounded-[2rem] shadow-[0_6px_0_0_#e2e8f0] border-2 border-slate-200 mb-10 flex flex-col md:flex-row gap-5">
+                  <div className="flex-1 flex flex-col gap-2">
+                    <label className="text-sm font-black text-slate-500 pl-1">題型</label>
+                    <select 
+                      value={lbFilter.type} 
+                      onChange={e => setLbFilter({...lbFilter, type: e.target.value})}
+                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-black text-base shadow-inner cursor-pointer"
+                    >
+                      <option value="all">全部題型</option>
+                      <option value="字音">字音</option>
+                      <option value="字形">字形</option>
+                      <option value="字音+字形">字音+字形</option>
+                    </select>
+                  </div>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <label className="text-sm font-black text-slate-500 pl-1">測驗模式</label>
+                    <select 
+                      value={lbFilter.mode} 
+                      onChange={e => setLbFilter({...lbFilter, mode: e.target.value})}
+                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-black text-base shadow-inner cursor-pointer"
+                    >
+                      <option value="all">全部模式</option>
+                      <option value="計時挑戰">計時挑戰</option>
+                      <option value="一般測驗">一般測驗</option>
+                    </select>
+                  </div>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <label className="text-sm font-black text-slate-500 pl-1">題目範圍</label>
+                    <select 
+                      value={lbFilter.scope} 
+                      onChange={e => setLbFilter({...lbFilter, scope: e.target.value})}
+                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-black text-base shadow-inner cursor-pointer"
+                    >
+                      <option value="all">全部範圍</option>
+                      <option value="單一年度">單一年度</option>
+                      <option value="多年度">多年度</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {filteredAndSortedLeaderboard.map((item, idx) => {
+                    let rankStyle = "bg-white border-slate-200 shadow-[0_4px_0_0_#e2e8f0]";
+                    let rankBadge = "bg-slate-100 text-slate-500 border-slate-200";
+                    let rankIcon = null;
+
+                    if (idx === 0) {
+                      rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-100 border-yellow-400 shadow-[0_6px_0_0_#facc15] scale-[1.02] z-10";
+                      rankBadge = "bg-yellow-400 text-white border-yellow-500 shadow-sm";
+                      rankIcon = <Trophy size={20} className="ml-1" />;
+                    } else if (idx === 1) {
+                      rankStyle = "bg-gradient-to-r from-slate-50 to-gray-100 border-slate-300 shadow-[0_4px_0_0_#94a3b8]";
+                      rankBadge = "bg-slate-300 text-white border-slate-400 shadow-sm";
+                    } else if (idx === 2) {
+                      rankStyle = "bg-gradient-to-r from-orange-50 to-amber-50 border-orange-300 shadow-[0_4px_0_0_#fdba74]";
+                      rankBadge = "bg-orange-300 text-white border-orange-400 shadow-sm";
+                    }
+
+                    return (
+                      <div key={idx} className={`rounded-[2rem] p-4 md:p-6 border-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all hover:-translate-y-1 hover:shadow-lg ${rankStyle}`}>
+                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+                          <div className={`w-12 h-12 md:w-16 md:h-16 shrink-0 rounded-[1rem] flex items-center justify-center font-black text-xl md:text-3xl border-2 ${rankBadge}`}>
+                            {idx + 1} {rankIcon}
+                          </div>
+                          <div className="flex-1 overflow-hidden">
+                            <h3 className="text-xl md:text-2xl font-black text-slate-800 truncate">{item.userName || '神秘挑戰者'}</h3>
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                              <span className="text-[10px] md:text-xs font-black text-indigo-600 bg-indigo-100/80 px-2 py-1 rounded-lg border border-indigo-200">{item.mode}</span>
+                              <span className={`text-[10px] md:text-xs font-black px-2 py-1 rounded-lg border ${getTypeColor(item.type).replace('shadow-sm', '')}`}>{item.type}</span>
+                              <span className="text-[10px] md:text-xs font-black text-slate-500 bg-slate-100/80 px-2 py-1 rounded-lg border border-slate-200 truncate max-w-[120px]">{item.scope}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-2 md:gap-4 w-full md:w-auto shrink-0 bg-white/50 p-2 md:p-3 rounded-2xl border border-white/60">
+                          <div className="flex flex-col items-center text-center px-1">
+                            <span className="text-[10px] font-black text-slate-400 uppercase">總題數</span>
+                            <span className="text-lg md:text-xl font-black text-slate-700">{item.totalQuestions}</span>
+                          </div>
+                          <div className="flex flex-col items-center text-center px-1 border-l-2 border-slate-200/50">
+                            <span className="text-[10px] font-black text-slate-400 uppercase">正確</span>
+                            <span className="text-lg md:text-xl font-black text-emerald-500">{item.correctCount}</span>
+                          </div>
+                          <div className="flex flex-col items-center text-center px-1 border-l-2 border-slate-200/50">
+                            <span className="text-[10px] font-black text-slate-400 uppercase">耗時</span>
+                            <span className="text-lg md:text-xl font-black text-slate-700">{item.timeSpent}</span>
+                          </div>
+                          <div className="flex flex-col items-center text-center px-1 border-l-2 border-slate-200/50">
+                            <span className="text-[10px] font-black text-slate-400 uppercase">準確率</span>
+                            <span className="text-lg md:text-xl font-black text-sky-500">{item.accuracy}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {filteredAndSortedLeaderboard.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                      <Trophy size={64} className="mb-5 opacity-20" />
+                      <p className="font-black text-2xl">目前還沒有符合的戰績，快去挑戰吧！</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
           </main>
 
@@ -1166,7 +1415,7 @@
                   <ul 
                     className="h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar pt-[68px] pb-[68px]"
                     onScroll={(e) => {
-                        const itemHeight = 56; // adjusted for h-14
+                        const itemHeight = 56; 
                         const index = Math.round(e.target.scrollTop / itemHeight);
                         if(index >= 0 && index < 10) setCustomTime(index + 1);
                     }}
@@ -1317,8 +1566,53 @@
             </div>
           )}
 
-          {/* 7. 全域頁尾版權宣告 (深色高對比 + 膠囊白底) */}
-          <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/70 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
+          {/* 7. 報錯 Modal */}
+          {studyReportModal.isOpen && (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                <h3 className="text-2xl font-black text-slate-800 mb-4 flex items-center gap-3">
+                  <div className="bg-sky-100 text-sky-600 p-2.5 rounded-[1rem] border-2 border-sky-200"><AlertTriangle size={24} /></div>
+                  回報題目疑慮
+                </h3>
+                
+                <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 mb-5 text-center">
+                  <p className="text-sm font-bold text-slate-400 mb-1">您正在回報的題目：</p>
+                  <p className="text-xl font-black text-slate-700">{studyReportModal.data?.question}</p>
+                </div>
+
+                <div className="flex flex-col gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-black text-slate-500 mb-2 pl-1">真實姓名</label>
+                    <input 
+                      type="text" 
+                      value={studyReportModal.name}
+                      onChange={(e) => setStudyReportModal(s => ({ ...s, name: e.target.value }))}
+                      placeholder="請輸入您的姓名"
+                      className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl px-5 py-3 text-slate-800 font-bold text-lg transition-colors shadow-inner"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-black text-slate-500 mb-2 pl-1">問題回報內容</label>
+                    <textarea 
+                      value={studyReportModal.content}
+                      onChange={(e) => setStudyReportModal(s => ({ ...s, content: e.target.value }))}
+                      placeholder="這題哪裡有錯呢？（例如：答案應該是 ㄨㄢ 不是 ㄨㄢˇ）"
+                      rows="3"
+                      className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl px-5 py-3 text-slate-800 font-bold text-base transition-colors shadow-inner resize-none"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button onClick={() => setStudyReportModal({isOpen: false, data: null, name: userName, content: ''})} className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none text-lg">取消</button>
+                  <button onClick={executeStudyReport} className="flex-[2] py-4 rounded-2xl font-black text-white bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-[0_4px_0_0_#0284c7] active:translate-y-[4px] active:shadow-none text-lg">送出回報</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 8. 全域頁尾版權宣告 (深色高對比 + 膠囊白底) */}
+          <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
             大榮老師製作 © 2026 | Version 3.1 (v.3.1)
           </div>
 
