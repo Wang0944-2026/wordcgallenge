@@ -292,7 +292,10 @@
             if (q.sheet === '排行榜') {
               parsedLeaderboard.push(q);
             } else if (q['有問題的題目']) {
-              cloudReportedSet.add(String(q['有問題的題目']).trim());
+              // 🚀 修正 1：加入年度範圍與題號作為複合鍵，賦予題目絕對專屬身分證
+              const repScope = String(q['年度範圍'] || q.scope || '').trim();
+              const repId = String(q['題號'] || q.id || q.questionNumber || '').trim();
+              cloudReportedSet.add(`${repScope}_${repId}_${String(q['有問題的題目']).trim()}`);
             }
           });
 
@@ -328,22 +331,22 @@
                 const strictId = String(q['題號'] || q['C'] || q.id || q.questionNumber || '').trim();
                 const finalId = strictId || String(scopeCounters[qScope]);
                 
-                const isRowReportedLocal = Object.values(q).some(val => 
-                  String(val || '').toLowerCase().includes('mistake')
-                );
-
-                const isMistakeReportedLocal = Object.values(q).some(val => 
-                  String(val || '').toLowerCase().includes('wrong')
-                );
+                // 🚀 修正 2：年度退回使用工作表名稱 (qScope)
+                const finalYear = qScope;
+                
+                const isRowReportedLocal = String(q.errorReport || '').toLowerCase().includes('mistake');
+                const isMistakeReportedLocal = String(q.mistakeReport || '').toLowerCase().includes('wrong');
 
                 newParsedQuestions.push({
                   id: finalId, 
                   scope: qScope, 
+                  year: finalYear,
                   type: String(q.type || '未分類').trim(), 
                   answer: qAnswer, 
                   question: qQuestion,
                   wrongOptions: [q.wrong1, q.wrong2, q.wrong3].filter(Boolean),
-                  isCloudReported: isRowReportedLocal || cloudReportedSet.has(qQuestion),
+                  // 🚀 修正 3：精確核對「範圍+題號+題目」複合鍵，實現絕對 1 對 1 判定
+                  isCloudReported: isRowReportedLocal || cloudReportedSet.has(`${qScope}_${finalId}_${qQuestion}`),
                   isMistakeReported: isMistakeReportedLocal
                 });
               }
@@ -353,8 +356,9 @@
           setLeaderboardData(parsedLeaderboard);
 
           if (newParsedQuestions.length > 0) {
-            const cloudReportedQs = newParsedQuestions.filter(q => q.isCloudReported).map(q => q.question);
-            const cloudMistakeReportedQs = newParsedQuestions.filter(q => q.isMistakeReported).map(q => q.question);
+            // 🚀 修正 4：本地快取同樣升級為複合鍵
+            const cloudReportedQs = newParsedQuestions.filter(q => q.isCloudReported).map(q => `${q.scope}_${q.id}_${q.question}`);
+            const cloudMistakeReportedQs = newParsedQuestions.filter(q => q.isMistakeReported).map(q => `${q.scope}_${q.id}_${q.question}`);
             
             const newDataHash = JSON.stringify({ 
                 questions: newParsedQuestions, 
@@ -418,11 +422,12 @@
         }
 
         let filtered = [];
+        // 🚀 修正 5：過濾題目時，同步比對複合鍵
         if (settings.mode === 'mistakePractice') {
-          filtered = Object.values(localMistakes).filter(q => !reportedList.includes(q.question));
+          filtered = Object.values(localMistakes).filter(q => !reportedList.includes(`${q.scope}_${q.id}_${q.question}`));
           if (settings.type !== 'all') filtered = filtered.filter(q => q.type === settings.type);
         } else {
-          filtered = questionBank.filter(q => !reportedList.includes(q.question)); 
+          filtered = questionBank.filter(q => !reportedList.includes(`${q.scope}_${q.id}_${q.question}`)); 
           filtered = filtered.filter(q => settings.scope.includes(q.scope));
           if (settings.type !== 'all') {
             filtered = filtered.filter(q => q.type === settings.type);
@@ -456,7 +461,9 @@
       const executeReportError = () => {
          const currentQ = confirmModal.data;
          
-         const newReported = [...new Set([...reportedList, currentQ.question])];
+         // 🚀 修正 6：寫入本地 localStorage 時使用複合鍵
+         const reportKey = `${currentQ.scope}_${currentQ.id}_${currentQ.question}`;
+         const newReported = [...new Set([...reportedList, reportKey])];
          setReportedList(newReported);
          localStorage.setItem('REPORTED_DB', JSON.stringify(newReported));
 
@@ -501,12 +508,14 @@
          localStorage.setItem('USER_NAME', reportModal.name.trim());
          setUserName(reportModal.name.trim());
 
+         // 🚀 修正 7：寫入本地 localStorage 時使用複合鍵
+         const reportKey = `${currentQ.scope}_${currentQ.id}_${currentQ.question}`;
          if (reportModal.source === 'mistake') {
-             const newReportedMistakes = [...new Set([...reportedMistakesList, currentQ.question])];
+             const newReportedMistakes = [...new Set([...reportedMistakesList, reportKey])];
              setReportedMistakesList(newReportedMistakes);
              localStorage.setItem('REPORTED_MISTAKES_DB', JSON.stringify(newReportedMistakes));
          } else {
-             const newReported = [...new Set([...reportedList, currentQ.question])];
+             const newReported = [...new Set([...reportedList, reportKey])];
              setReportedList(newReported);
              localStorage.setItem('REPORTED_DB', JSON.stringify(newReported));
          }
@@ -1137,7 +1146,8 @@
                 <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-5 px-4 -mx-4 md:pt-6 md:px-5 md:-mx-5">
                   <div className="w-full grid gap-4 md:gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
-                      const isReported = q.isCloudReported || reportedList.includes(q.question);
+                      // 🚀 修正 8：自學區字卡的亮燈判斷改用複合鍵
+                      const isReported = q.isCloudReported || reportedList.includes(`${q.scope}_${q.id}_${q.question}`);
                       return (
                         <div key={idx} className={`min-w-0 w-full bg-white rounded-2xl p-4 md:p-5 border-2 ${isReported ? 'border-rose-300 shadow-sm bg-rose-50/50' : 'border-slate-200 shadow-sm'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-md transition-all group relative min-h-[160px] md:min-h-[180px]`}>
                           
@@ -1158,9 +1168,10 @@
                           )}
                           
                           <div className="flex gap-2 mb-2 flex-nowrap overflow-x-auto hide-scrollbar w-full shrink-0">
-                            <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 whitespace-nowrap shrink-0">{q.scope}</span>
-                            <span className={`text-[10px] font-black px-2 py-1 rounded-lg border whitespace-nowrap shrink-0 ${getTypeColor(q.type).replace('shadow-sm', '')}`}>{q.type}</span>
-                            <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">第 {q.id} 題</span>
+                            {/* 🚀 修正 9：自學區字卡的標籤徹底恢復為工作表名稱 q.scope */}
+                            <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200 whitespace-nowrap shrink-0">{q.scope}</span>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap shrink-0 ${getTypeColor(q.type).replace('shadow-sm', '')}`}>{q.type}</span>
+                            <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap shrink-0">第 {q.id} 題</span>
                           </div>
                           
                           <div className="flex-1 flex items-center w-full py-2 md:py-3 overflow-x-auto hide-scrollbar">
@@ -1232,11 +1243,11 @@
 
                 {/* 🚀 修正 1：加大外部滑動框的上下左右 Padding，賦予足夠的安全顯示空間 */}
                 <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-5 px-4 -mx-4 md:pt-6 md:px-5 md:-mx-5">
-                  {/* 🚀 修正：改用 Grid 動態 auto-fill 佈局，根據頁面寬度自動調整卡片列數，壓縮空白 */}
                   <div className="w-full grid gap-4 md:gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
                     {filteredMistakes.map((q, idx) => {
-                      const bankQ = questionBank.find(bq => bq.question === q.question);
-                      const isMistakeReported = (bankQ && bankQ.isMistakeReported) || reportedMistakesList.includes(q.question);
+                      // 🚀 修正 10：錯題集字卡的找尋與亮燈判斷改用複合鍵
+                      const bankQ = questionBank.find(bq => bq.question === q.question && bq.scope === q.scope && bq.id === q.id);
+                      const isMistakeReported = (bankQ && bankQ.isMistakeReported) || reportedMistakesList.includes(`${q.scope}_${q.id}_${q.question}`);
 
                       return (
                         /* 🚀 修正：移除卡片上的 overflow-hidden，並加上 min-w-0 w-full 以貼合網格 */
@@ -1263,6 +1274,7 @@
 
                           <div className="relative z-10 flex-1 pl-1 md:pl-2">
                             <div className="flex gap-2 mb-2 items-center flex-wrap">
+                              {/* 🚀 修正 11：錯題集字卡的標籤徹底恢復為工作表名稱 q.scope */}
                               {q.scope && q.scope !== '錯題集' && q.scope !== '未分類' && (
                                 <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200">{String(q.scope).trim()}</span>
                               )}
