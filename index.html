@@ -922,11 +922,19 @@
             <div className="bg-white rounded-[2rem] p-8 md:p-12 max-w-md w-full shadow-2xl animate-fade-in-up flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] relative">
               {/* 🚀 已經將此處的齒輪按鈕移除，防止學生誤觸設定！ */}
               
-              <div className="w-24 h-24 bg-sky-100 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner border-2 border-sky-200 mt-4">
-                <span className="text-4xl font-black text-sky-600">岐</span>
+              <div className="w-24 h-24 mb-6 mt-4 flex items-center justify-center shrink-0">
+                <img 
+                  src="https://drive.google.com/thumbnail?id=1gyziBxjBBTP7PzNf_tRqbRO6yr3pIWo7&sz=w200" 
+                  alt="上岐校徽" 
+                  className="w-full h-full object-contain drop-shadow-md"
+                  onError={(e) => {
+                    e.target.onerror = null; 
+                    e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e0e7ff' rx='20'/%3E%3Ctext x='50' y='65' font-size='45' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%234f46e5'%3E岐%3C/text%3E%3C/svg%3E";
+                  }}
+                />
               </div>
-              <h1 className="text-3xl font-black text-slate-800 mb-2">上岐特訓系統</h1>
-              <p className="text-slate-500 font-bold mb-10 text-center">請使用您的專屬 Google 帳號登入，以存取個人錯題庫與學習紀錄。</p>
+              <h1 className="text-3xl font-black text-slate-800 mb-2">字音字形特訓平台</h1>
+              <p className="text-slate-500 font-bold mb-10 text-center">請使用您的上岐專屬 Google 帳號登入<br className="hidden md:block"/>(ke1234@cnc.km.edu.tw)，以存取個人錯題庫與學習紀錄。</p>
               
               {googleClientId ? (
                  <div id="google-login-btn" className="w-full flex justify-center h-12"></div>
