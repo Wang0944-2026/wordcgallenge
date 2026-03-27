@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>上岐字音字形特訓</title>
   
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -35,7 +34,6 @@
     }
   </script>
 
-  <!-- 自訂輔助 CSS -->
   <style>
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     ::-webkit-scrollbar { width: 8px; }
@@ -46,14 +44,17 @@
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     * { -webkit-tap-highlight-color: transparent; }
     body { font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    /* 排行榜專用滾動條 */
+    .custom-scrollbar::-webkit-scrollbar { display: block; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
   </style>
 
-  <!-- React & ReactDOM (UMD) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
-  <!-- Babel Standalone (瀏覽器端編譯 JSX) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="bg-sky-50 overflow-hidden m-0 p-0 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
   
@@ -62,6 +63,47 @@
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback, useMemo } = React;
     
+    // 安全的 LocalStorage 讀寫器
+    const safeStorage = {
+      get: (key, defaultValue) => {
+        try {
+          const item = localStorage.getItem(key);
+          if (!item) return defaultValue;
+          try { return JSON.parse(item); } catch (e) { return item; }
+        } catch (e) { return defaultValue; }
+      },
+      set: (key, value) => {
+        try {
+          const valString = typeof value === 'object' ? JSON.stringify(value) : String(value);
+          localStorage.setItem(key, valString);
+        } catch (e) {}
+      },
+      remove: (key) => {
+        try { localStorage.removeItem(key); } catch (e) {}
+      }
+    };
+
+    const initArrayState = (key) => {
+      const data = safeStorage.get(key, []);
+      return Array.isArray(data) ? data : [];
+    };
+    const initObjectState = (key) => {
+      const data = safeStorage.get(key, {});
+      return (typeof data === 'object' && data !== null && !Array.isArray(data)) ? data : {};
+    };
+
+    // 解析 Google JWT Token
+    const decodeJwt = (token) => {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) { return {}; }
+    };
+
     const IconWrapper = ({ size = 24, className = "", children, ...props }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
         {children}
@@ -87,14 +129,11 @@
     const Archive = (p) => <IconWrapper {...p}><rect width="20" height="5" x="2" y="4" rx="2"/><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></IconWrapper>;
     const AlertTriangle = (p) => <IconWrapper {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconWrapper>;
     const Trophy = (p) => <IconWrapper {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconWrapper>;
+    const LogOut = (p) => <IconWrapper {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></IconWrapper>;
 
-    const MOCK_QUESTIONS = [
-      { id: 1, scope: '第一課', type: '字音', question: '「豌」豆苗', answer: 'ㄨㄢ', wrongOptions: ['ㄨㄢˇ', 'ㄨㄢˋ', 'ㄨㄤ'], isCloudReported: false },
-      { id: 2, scope: '第一課', type: '字音', question: '「瞭」望臺', answer: 'ㄌㄧㄠˇ', wrongOptions: ['ㄌㄧㄠˋ', 'ㄌㄧㄠ', 'ㄌㄧㄠˊ'], isCloudReported: false },
-      { id: 3, scope: '第二課', type: '字形', question: '打擂「ㄊㄞˊ」', answer: '臺', wrongOptions: ['台', '擡', '苔'], isCloudReported: true },
-    ];
-
+    // 🚀 核心變數寫死區塊
     const GOOGLE_SCRIPT_API_URL = "https://script.google.com/macros/s/AKfycbxDdp-HTmjumR_kzqJZlAf9LvV5OGiTPj9NaIw1YAv9c9SJVzQKEGUG0V8rhr2-aP98/exec"; 
+    const GOOGLE_CLIENT_ID_DEFAULT = "125576550248-kuaglrvubq98iop3jmvfe4v4vuiu4pro.apps.googleusercontent.com"; 
 
     const getTypeColor = (type) => {
       const t = String(type || '').trim();
@@ -141,19 +180,27 @@
     }
 
     function App() {
-      const [gameState, setGameState] = useState('menu'); 
+      // 使用者身分狀態
+      const [userEmail, setUserEmail] = useState(() => safeStorage.get('USER_EMAIL', ''));
+      const [userName, setUserName] = useState(() => safeStorage.get('USER_NAME', ''));
+      
+      const [gameState, setGameState] = useState(userEmail ? 'menu' : 'login'); 
+
       const [questionBank, setQuestionBank] = useState([]);
       const [leaderboardData, setLeaderboardData] = useState([]);
-      
       const [isDbLoading, setIsDbLoading] = useState(false);
       const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
       const [dbStatus, setDbStatus] = useState({ type: 'info', msg: '系統準備中' });
 
       const dataHashRef = useRef('');
 
-      const [apiUrl, setApiUrl] = useState(() => localStorage.getItem('CUSTOM_API_URL') || GOOGLE_SCRIPT_API_URL);
-      const [showApiModal, setShowApiModal] = useState(false);
+      // 🚀 將初始狀態綁定到剛剛寫死的常數
+      const [apiUrl, setApiUrl] = useState(() => safeStorage.get('CUSTOM_API_URL', GOOGLE_SCRIPT_API_URL));
+      const [googleClientId, setGoogleClientId] = useState(() => safeStorage.get('GOOGLE_CLIENT_ID', GOOGLE_CLIENT_ID_DEFAULT));
+      
+      const [showSettingsModal, setShowSettingsModal] = useState(false);
       const [inputApiUrl, setInputApiUrl] = useState('');
+      const [inputClientId, setInputClientId] = useState('');
 
       const [settings, setSettings] = useState({ mode: '', scope: [], type: 'all' });
       const [questions, setQuestions] = useState([]);
@@ -169,10 +216,9 @@
       const [selectedOption, setSelectedOption] = useState(null);
       const [feedback, setFeedback] = useState(null);
 
-      const [localMistakes, setLocalMistakes] = useState(() => JSON.parse(localStorage.getItem('MISTAKES_DB')) || {});
-      const [reportedList, setReportedList] = useState(() => JSON.parse(localStorage.getItem('REPORTED_DB')) || []);
-      
-      const [reportedMistakesList, setReportedMistakesList] = useState(() => JSON.parse(localStorage.getItem('REPORTED_MISTAKES_DB')) || []);
+      const [localMistakes, setLocalMistakes] = useState(() => initObjectState('MISTAKES_DB'));
+      const [reportedList, setReportedList] = useState(() => initArrayState('REPORTED_DB'));
+      const [reportedMistakesList, setReportedMistakesList] = useState(() => initArrayState('REPORTED_MISTAKES_DB'));
 
       const [studyScope, setStudyScope] = useState('');
       const [studyType, setStudyType] = useState('all');
@@ -185,103 +231,156 @@
       const [mistakeFilterScope, setMistakeFilterScope] = useState('all');
       const [mistakeFilterType, setMistakeFilterType] = useState('all');
 
-      const [userName, setUserName] = useState(() => localStorage.getItem('USER_NAME') || '');
-      const [showNameModal, setShowNameModal] = useState(false);
       const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', data: null });
-      const [reportModal, setReportModal] = useState({ isOpen: false, data: null, name: userName, content: '', source: 'study' });
+      const [reportModal, setReportModal] = useState({ isOpen: false, data: null, content: '', source: 'study' });
       const [alertMsg, setAlertMsg] = useState('');
 
       const containerRef = useRef(null);
       const textRef = useRef(null);
 
+      // 初始化 Google 登入按鈕
+      useEffect(() => {
+        if (gameState === 'login' && googleClientId && window.google) {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: (response) => {
+              const payload = decodeJwt(response.credential);
+              if (payload.email) {
+                safeStorage.set('USER_EMAIL', payload.email);
+                safeStorage.set('USER_NAME', payload.name);
+                setUserEmail(payload.email);
+                setUserName(payload.name);
+                setGameState('menu'); 
+              }
+            }
+          });
+          window.google.accounts.id.renderButton(
+            document.getElementById("google-login-btn"),
+            { theme: "outline", size: "large", text: "continue_with", shape: "pill", width: 280 }
+          );
+        }
+      }, [gameState, googleClientId]);
+
+      const handleLogout = () => {
+        safeStorage.remove('USER_EMAIL');
+        safeStorage.remove('USER_NAME');
+        setUserEmail('');
+        setUserName('');
+        setQuestionBank([]); 
+        setGameState('login');
+      };
+
       useEffect(() => {
         if (gameState === 'result' && !score.synced) {
-          
-          if (score.wrongList.length > 0) {
-            setLocalMistakes(prev => {
-              const newMistakes = { ...prev };
-              score.wrongList.forEach(q => {
-                const key = q.question; 
-                if (newMistakes[key]) {
-                  newMistakes[key].count += 1;
-                } else {
-                  newMistakes[key] = { ...q, count: 1 };
-                }
-              });
-              localStorage.setItem('MISTAKES_DB', JSON.stringify(newMistakes));
-              return newMistakes;
-            });
+          setScore(prev => ({ ...prev, synced: true }));
 
-            const uploadMistakes = score.wrongList.map(q => ({
-              scope: q.scope,
-              type: q.type,
-              question: q.question,
-              answer: q.answer
-            }));
-
+          const syncToServer = async () => {
             const cleanApiUrl = (apiUrl || '').trim();
-            if (cleanApiUrl) {
-              fetch(cleanApiUrl, {
+            if (!cleanApiUrl) return;
+
+            // 1. 同步錯題
+            if (score.wrongList.length > 0) {
+              setLocalMistakes(prev => {
+                const newMistakes = { ...prev };
+                score.wrongList.forEach(q => {
+                  const key = `${q.scope}_${q.id}_${q.question}`; 
+                  if (newMistakes[key]) {
+                    newMistakes[key].count += 1;
+                  } else {
+                    newMistakes[key] = { ...q, count: 1 };
+                  }
+                });
+                safeStorage.set('MISTAKES_DB', newMistakes);
+                return newMistakes;
+              });
+
+              const uploadMistakes = score.wrongList.map(q => ({
+                scope: q.scope,
+                type: q.type,
+                question: q.question,
+                answer: q.answer
+              }));
+
+              try {
+                await fetch(cleanApiUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                  body: JSON.stringify({ 
+                    action: 'logMistakes', 
+                    userName: userName, 
+                    userEmail: userEmail,
+                    deviceName: getDeviceName(), 
+                    mistakes: uploadMistakes, 
+                    recordTime: getNowString() 
+                  })
+                });
+              } catch (e) { console.warn('雲端錯題同步失敗', e); }
+            }
+
+            // 2. 同步排行榜
+            const accuracyVal = (score.correct + score.incorrect) === 0 ? 0 : Math.round((score.correct / (score.correct + score.incorrect)) * 100);
+            const leaderboardPayload = {
+              action: 'saveLeaderboard',
+              isEndedEarly: isEarlyEnd ? '是' : '否', 
+              recordTime: getNowString(),
+              userName: userName || '未具名',
+              userEmail: userEmail,
+              mode: settings.mode === 'timeChallenge' ? '計時挑戰' : settings.mode === 'normalTest' ? '一般測驗' : '錯題加強',
+              type: settings.type === 'all' ? '字音+字形' : settings.type,
+              scope: settings.scope.length > 0 ? settings.scope.join(', ') : '全部範圍',
+              totalQuestions: score.correct + score.incorrect,
+              correctCount: score.correct,
+              timeSpent: formatTime(timeSpent),
+              accuracy: accuracyVal + '%',
+              deviceName: getDeviceName()
+            };
+
+            try {
+              await fetch(cleanApiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'logMistakes', userName: userName, deviceName: getDeviceName(), mistakes: uploadMistakes, recordTime: getNowString() })
-              }).catch(e => console.warn('雲端錯題同步失敗', e));
-            }
-          }
-
-          const accuracyVal = (score.correct + score.incorrect) === 0 ? 0 : Math.round((score.correct / (score.correct + score.incorrect)) * 100);
-          const leaderboardPayload = {
-            action: 'saveLeaderboard',
-            isEndedEarly: isEarlyEnd ? '是' : '否',
-            recordTime: getNowString(),
-            userName: userName || '未具名',
-            mode: settings.mode === 'timeChallenge' ? '計時挑戰' : settings.mode === 'normalTest' ? '一般測驗' : '錯題加強',
-            type: settings.type === 'all' ? '字音+字形' : settings.type,
-            scope: settings.scope.length > 0 ? settings.scope.join(', ') : '全部範圍',
-            totalQuestions: score.correct + score.incorrect,
-            correctCount: score.correct,
-            timeSpent: formatTime(timeSpent),
-            accuracy: accuracyVal + '%',
-            deviceName: getDeviceName()
+                body: JSON.stringify(leaderboardPayload)
+              });
+            } catch (e) { console.warn('排行榜同步失敗', e); }
           };
 
-          const cleanApiUrl = (apiUrl || '').trim();
-          if (cleanApiUrl) {
-            fetch(cleanApiUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(leaderboardPayload)
-            }).catch(e => console.warn('排行榜同步失敗', e));
-          }
-
-          setScore(prev => ({ ...prev, synced: true }));
+          syncToServer();
         }
-      }, [gameState, score.synced, score.wrongList, apiUrl, userName, isEarlyEnd, settings, score.correct, score.incorrect, timeSpent]);
+      }, [gameState, score.synced, score.wrongList, apiUrl, userName, userEmail, isEarlyEnd, settings, score.correct, score.incorrect, timeSpent]);
 
       const fetchQuestions = useCallback(async (isBackground = false) => {
+        if (!userEmail) return;
+
         if (!isBackground) {
           setIsDbLoading(true);
-          setDbStatus({ type: 'info', msg: '同步雲端 API 資料中...' });
+          setDbStatus({ type: 'info', msg: '驗證帳號並同步資料中...' });
         }
         
         try {
           const cleanApiUrl = (apiUrl || '').trim();
           if (!cleanApiUrl) throw new Error("無網址");
           
-          const fetchUrl = cleanApiUrl.includes('?') ? `${cleanApiUrl}&t=${Date.now()}` : `${cleanApiUrl}?t=${Date.now()}`;
+          const fetchUrl = `${cleanApiUrl}?email=${encodeURIComponent(userEmail)}&t=${Date.now()}`;
           const response = await fetch(fetchUrl);
           
           if (!response.ok) throw new Error(`請求失敗，狀態碼：${response.status}`);
           
           const textData = await response.text();
-          let jsonData;
+          let jsonResponse;
           try {
-            jsonData = JSON.parse(textData);
+            jsonResponse = JSON.parse(textData);
           } catch (parseError) {
-            console.error("API 格式錯誤，回傳內容為：", textData.substring(0, 150));
             throw new Error("資料格式錯誤 (非 JSON)");
           }
-          
+
+          if (jsonResponse.status === 'unauthorized') {
+             setDbStatus({ type: 'error', msg: '未授權' });
+             setAlertMsg(jsonResponse.msg || '您的帳號無權限使用此系統。');
+             handleLogout(); 
+             return;
+          }
+
+          const jsonData = jsonResponse.data || [];
           const newParsedQuestions = [];
           const cloudMistakes = {};
           const cloudReportedSet = new Set();
@@ -292,7 +391,6 @@
             if (q.sheet === '排行榜') {
               parsedLeaderboard.push(q);
             } else if (q['有問題的題目']) {
-              // 🚀 修正 1：加入年度範圍與題號作為複合鍵，賦予題目絕對專屬身分證
               const repScope = String(q['年度範圍'] || q.scope || '').trim();
               const repId = String(q['題號'] || q.id || q.questionNumber || '').trim();
               cloudReportedSet.add(`${repScope}_${repId}_${String(q['有問題的題目']).trim()}`);
@@ -331,7 +429,6 @@
                 const strictId = String(q['題號'] || q['C'] || q.id || q.questionNumber || '').trim();
                 const finalId = strictId || String(scopeCounters[qScope]);
                 
-                // 🚀 修正 2：年度退回使用工作表名稱 (qScope)
                 const finalYear = qScope;
                 
                 const isRowReportedLocal = String(q.errorReport || '').toLowerCase().includes('mistake');
@@ -345,7 +442,6 @@
                   answer: qAnswer, 
                   question: qQuestion,
                   wrongOptions: [q.wrong1, q.wrong2, q.wrong3].filter(Boolean),
-                  // 🚀 修正 3：精確核對「範圍+題號+題目」複合鍵，實現絕對 1 對 1 判定
                   isCloudReported: isRowReportedLocal || cloudReportedSet.has(`${qScope}_${finalId}_${qQuestion}`),
                   isMistakeReported: isMistakeReportedLocal
                 });
@@ -356,7 +452,6 @@
           setLeaderboardData(parsedLeaderboard);
 
           if (newParsedQuestions.length > 0) {
-            // 🚀 修正 4：本地快取同樣升級為複合鍵
             const cloudReportedQs = newParsedQuestions.filter(q => q.isCloudReported).map(q => `${q.scope}_${q.id}_${q.question}`);
             const cloudMistakeReportedQs = newParsedQuestions.filter(q => q.isMistakeReported).map(q => `${q.scope}_${q.id}_${q.question}`);
             
@@ -380,13 +475,13 @@
                 if (!isBackground) setDbStatus({ type: 'success', msg: `已載入 ${newParsedQuestions.length} 題` });
 
                 setLocalMistakes(cloudMistakes);
-                localStorage.setItem('MISTAKES_DB', JSON.stringify(cloudMistakes));
+                safeStorage.set('MISTAKES_DB', cloudMistakes);
 
                 setReportedList(cloudReportedQs);
-                localStorage.setItem('REPORTED_DB', JSON.stringify(cloudReportedQs));
+                safeStorage.set('REPORTED_DB', cloudReportedQs);
 
                 setReportedMistakesList(cloudMistakeReportedQs);
-                localStorage.setItem('REPORTED_MISTAKES_DB', JSON.stringify(cloudMistakeReportedQs));
+                safeStorage.set('REPORTED_MISTAKES_DB', cloudMistakeReportedQs);
 
                 setStudyScope(prev => {
                   const scopes = [...new Set(newParsedQuestions.map(q => q.scope))];
@@ -403,7 +498,7 @@
         } finally {
           if (!isBackground) setIsDbLoading(false);
         }
-      }, [apiUrl]);
+      }, [apiUrl, userEmail]);
 
       useEffect(() => {
         fetchQuestions(false);
@@ -422,7 +517,6 @@
         }
 
         let filtered = [];
-        // 🚀 修正 5：過濾題目時，同步比對複合鍵
         if (settings.mode === 'mistakePractice') {
           filtered = Object.values(localMistakes).filter(q => !reportedList.includes(`${q.scope}_${q.id}_${q.question}`));
           if (settings.type !== 'all') filtered = filtered.filter(q => q.type === settings.type);
@@ -459,13 +553,13 @@
       };
 
       const executeReportError = () => {
+         if (!confirmModal.data) return; 
          const currentQ = confirmModal.data;
-         
-         // 🚀 修正 6：寫入本地 localStorage 時使用複合鍵
          const reportKey = `${currentQ.scope}_${currentQ.id}_${currentQ.question}`;
+         
          const newReported = [...new Set([...reportedList, reportKey])];
          setReportedList(newReported);
-         localStorage.setItem('REPORTED_DB', JSON.stringify(newReported));
+         safeStorage.set('REPORTED_DB', newReported);
 
          const cleanApiUrl = (apiUrl || '').trim();
          if (cleanApiUrl) {
@@ -476,13 +570,14 @@
                   action: 'reportError',
                   reportType: 'study',
                   userName: userName,
+                  userEmail: userEmail,
                   deviceName: getDeviceName(),
                   recordTime: getNowString(),
                   question: currentQ.question,
                   scope: currentQ.scope,
                   type: currentQ.type,
                   questionNumber: currentQ.id,
-                  reportContent: `(由 ${userName || '神秘挑戰者'} 測驗時回報)`
+                  reportContent: `mistake (由 ${userName || '神秘挑戰者'} 測驗時回報)`
               })
            }).catch(e => console.warn('回報錯誤失敗', e));
          }
@@ -499,32 +594,30 @@
       };
 
       const executeGeneralReport = () => {
-         if (!reportModal.name.trim() || !reportModal.content.trim()) {
-           setAlertMsg("請完整填寫「真實姓名」與「問題回報內容」喔！");
+         if (!reportModal.content.trim()) {
+           setAlertMsg("請完整填寫「問題回報內容」喔！");
            return;
          }
 
+         if (!reportModal.data) return; 
          const currentQ = reportModal.data;
-         localStorage.setItem('USER_NAME', reportModal.name.trim());
-         setUserName(reportModal.name.trim());
 
-         // 🚀 修正 7：寫入本地 localStorage 時使用複合鍵
          const reportKey = `${currentQ.scope}_${currentQ.id}_${currentQ.question}`;
          if (reportModal.source === 'mistake') {
              const newReportedMistakes = [...new Set([...reportedMistakesList, reportKey])];
              setReportedMistakesList(newReportedMistakes);
-             localStorage.setItem('REPORTED_MISTAKES_DB', JSON.stringify(newReportedMistakes));
+             safeStorage.set('REPORTED_MISTAKES_DB', newReportedMistakes);
          } else {
              const newReported = [...new Set([...reportedList, reportKey])];
              setReportedList(newReported);
-             localStorage.setItem('REPORTED_DB', JSON.stringify(newReported));
+             safeStorage.set('REPORTED_DB', newReported);
          }
 
          const cleanApiUrl = (apiUrl || '').trim();
          if (cleanApiUrl) {
            const reportText = reportModal.source === 'mistake' 
-               ? `wrong ${reportModal.content.trim()} (由 ${reportModal.name.trim()} 回報)`
-               : `mistake ${reportModal.content.trim()} (由 ${reportModal.name.trim()} 回報)`;
+               ? `wrong ${reportModal.content.trim()} (由 ${userName} 回報)`
+               : `mistake ${reportModal.content.trim()} (由 ${userName} 回報)`;
 
            fetch(cleanApiUrl, {
               method: 'POST',
@@ -532,7 +625,8 @@
               body: JSON.stringify({
                   action: 'reportError',
                   reportType: reportModal.source,
-                  userName: reportModal.name.trim(),
+                  userName: userName,
+                  userEmail: userEmail,
                   deviceName: getDeviceName(),
                   recordTime: getNowString(),
                   question: currentQ.question,
@@ -544,7 +638,7 @@
            }).catch(e => console.warn('回報錯誤失敗', e));
          }
 
-         setReportModal({ isOpen: false, data: null, name: reportModal.name, content: '', source: 'study' });
+         setReportModal({ isOpen: false, data: null, content: '', source: 'study' });
          setAlertMsg("感謝您的回報！系統已為該題作上記號並傳送給老師。");
       };
 
@@ -681,7 +775,10 @@
 
       const filteredAndSortedLeaderboard = useMemo(() => {
         return leaderboardData
-          .filter(item => item.isEndedEarly !== '是' && item.isEndedEarly !== 'TRUE')
+          .filter(item => {
+             const earlyStatus = String(item.isEndedEarly || '').trim().toUpperCase();
+             return earlyStatus !== '是' && earlyStatus !== 'TRUE';
+          })
           .filter(item => lbFilter.type === 'all' || item.type === lbFilter.type)
           .filter(item => lbFilter.mode === 'all' || item.mode === lbFilter.mode)
           .filter(item => {
@@ -698,7 +795,7 @@
 
              const timeToSec = (t) => {
                  if (!t) return 99999;
-                 const [m, s] = t.split(':').map(Number);
+                 const [m, s] = String(t).split(':').map(Number);
                  return (m || 0) * 60 + (s || 0);
              };
              const timeA = timeToSec(a.timeSpent);
@@ -711,7 +808,7 @@
           });
       }, [leaderboardData, lbFilter]);
 
-      const Sidebar = () => (
+      const renderSidebar = () => (
         <aside className={`hidden md:flex flex-col bg-white border-r-2 border-slate-200 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.05)] z-20 transition-all duration-500 ease-in-out ${isSidebarCollapsed ? 'w-24 items-center px-4 py-6' : 'w-72 p-6'}`}>
           <div className={`flex items-center gap-3 mb-12 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
             <div className="shrink-0 w-14 h-14 flex items-center justify-center relative">
@@ -753,31 +850,47 @@
           </nav>
 
           {!isSidebarCollapsed && (
-            <div className="mt-auto bg-slate-50 p-5 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] relative overflow-hidden shrink-0">
-              <div className="relative z-10">
+            <div className="mt-auto bg-slate-50 p-4 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] relative overflow-hidden shrink-0 flex flex-col gap-3">
+              <div>
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2 text-slate-600 font-black text-sm">
                     {(isDbLoading || isBackgroundSyncing) ? <RefreshCw className="animate-spin w-5 h-5 text-sky-500" /> : <CloudDownload className="w-5 h-5 text-emerald-500" />} 題庫連線
                   </div>
+                  {/* 🚀 保留給老師用的齒輪按鈕 */}
                   <button 
-                    onClick={() => { setInputApiUrl(apiUrl); setShowApiModal(true); }} 
+                    onClick={() => { setInputApiUrl(apiUrl); setInputClientId(googleClientId); setShowSettingsModal(true); }} 
                     className="text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 p-2 rounded-xl transition-all active:scale-90" 
-                    title="更改 API 網址"
+                    title="系統設定"
                   >
                     <Settings size={18} />
                   </button>
                 </div>
-                <p className="text-xs font-bold text-slate-400 mb-3 truncate">{dbStatus.msg}</p>
+                <p className="text-xs font-bold text-slate-400 mb-2 truncate">{dbStatus.msg}</p>
                 <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
                   <div className="bg-emerald-400 h-full rounded-full w-full"></div>
                 </div>
+              </div>
+              
+              <div className="pt-3 border-t-2 border-slate-200/60 flex items-center justify-between">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-black shrink-0">
+                    {userName.charAt(0) || 'U'}
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-black text-slate-700 truncate">{userName}</p>
+                    <p className="text-[10px] font-bold text-slate-400 truncate">{userEmail}</p>
+                  </div>
+                </div>
+                <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors" title="登出">
+                  <LogOut size={16} />
+                </button>
               </div>
             </div>
           )}
         </aside>
       );
 
-      const MobileNav = () => (
+      const renderMobileNav = () => (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-slate-200 pb-safe px-4 py-2 flex justify-between items-center z-50">
           <button onClick={handleReturnToMenu} className={`flex flex-col items-center gap-1 p-2 flex-1 active:scale-95 transition-transform ${gameState === 'menu' ? 'text-sky-500' : 'text-slate-400'}`}>
             <LayoutDashboard size={24} />
@@ -798,6 +911,125 @@
         </div>
       );
 
+      if (gameState === 'login') {
+        return (
+          <div className="flex h-[100dvh] w-full font-sans relative bg-sky-50 items-center justify-center p-4">
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+              <div className="absolute top-[10%] left-[5%] w-32 h-32 bg-yellow-200/40 rounded-full blur-xl animate-bounce-soft"></div>
+              <div className="absolute bottom-[20%] right-[10%] w-40 h-40 bg-sky-200/40 rounded-full blur-xl animate-bounce-soft" style={{ animationDelay: '1s' }}></div>
+            </div>
+            
+            <div className="bg-white rounded-[2rem] p-8 md:p-12 max-w-md w-full shadow-2xl animate-fade-in-up flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] relative">
+              {/* 🚀 已經將此處的齒輪按鈕移除，防止學生誤觸設定！ */}
+              
+              <div className="w-24 h-24 bg-sky-100 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner border-2 border-sky-200 mt-4">
+                <span className="text-4xl font-black text-sky-600">岐</span>
+              </div>
+              <h1 className="text-3xl font-black text-slate-800 mb-2">上岐特訓系統</h1>
+              <p className="text-slate-500 font-bold mb-10 text-center">請使用您的專屬 Google 帳號登入，以存取個人錯題庫與學習紀錄。</p>
+              
+              {googleClientId ? (
+                 <div id="google-login-btn" className="w-full flex justify-center h-12"></div>
+              ) : (
+                 <div className="w-full text-center">
+                   <div className="bg-amber-50 border-2 border-amber-200 text-amber-700 p-4 rounded-2xl text-sm font-bold mb-4 shadow-inner">
+                     系統設定異常，請聯繫管理員。
+                   </div>
+                 </div>
+              )}
+            </div>
+
+            {showSettingsModal && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full animate-fade-in-up border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                  <h3 className="text-2xl md:text-3xl font-black text-slate-800 mb-4 flex items-center gap-3">
+                    <div className="bg-slate-100 text-slate-600 p-2.5 rounded-[1rem] border-2 border-slate-200"><Settings size={24} /></div>
+                    系統管理員設定
+                  </h3>
+                  
+                  <div className="space-y-4 mb-8">
+                    <div>
+                      <label className="block text-sm font-black text-slate-600 mb-2 pl-1">後端 API 網址 (Google Apps Script)</label>
+                      <input 
+                        type="text" 
+                        value={inputApiUrl}
+                        onChange={(e) => setInputApiUrl(e.target.value)}
+                        placeholder="https://script.google.com/macros/s/.../exec"
+                        className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-mono text-sm transition-colors shadow-inner"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-black text-slate-600 mb-2 pl-1">Google Client ID (用於登入)</label>
+                      <input 
+                        type="text" 
+                        value={inputClientId}
+                        onChange={(e) => setInputClientId(e.target.value)}
+                        placeholder="123456789-xxxx.apps.googleusercontent.com"
+                        className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-mono text-sm transition-colors shadow-inner"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-end gap-3">
+                    <button 
+                      onClick={() => {
+                        setInputApiUrl(GOOGLE_SCRIPT_API_URL);
+                        setApiUrl(GOOGLE_SCRIPT_API_URL);
+                        safeStorage.remove('CUSTOM_API_URL');
+                        setInputClientId(GOOGLE_CLIENT_ID_DEFAULT);
+                        setGoogleClientId(GOOGLE_CLIENT_ID_DEFAULT);
+                        safeStorage.remove('GOOGLE_CLIENT_ID');
+                        setShowSettingsModal(false);
+                      }} 
+                      className="px-5 py-3 rounded-xl font-black text-rose-500 hover:bg-rose-50 transition-colors mr-auto"
+                    >
+                      恢復預設
+                    </button>
+                    <button 
+                      onClick={() => setShowSettingsModal(false)} 
+                      className="px-5 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm"
+                    >
+                      取消
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if(inputApiUrl.trim()){
+                          setApiUrl(inputApiUrl.trim());
+                          safeStorage.set('CUSTOM_API_URL', inputApiUrl.trim());
+                        }
+                        if(inputClientId.trim()){
+                          setGoogleClientId(inputClientId.trim());
+                          safeStorage.set('GOOGLE_CLIENT_ID', inputClientId.trim());
+                        }
+                        setShowSettingsModal(false);
+                      }} 
+                      className="px-6 py-3 rounded-xl font-black text-white bg-slate-800 hover:bg-slate-700 transition-colors border-2 border-slate-900 shadow-sm"
+                    >
+                      儲存設定
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {alertMsg && (
+              <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up text-center flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                  <div className="w-20 h-20 bg-rose-100 text-rose-500 rounded-[1.5rem] border-2 border-rose-200 flex items-center justify-center mb-6 shadow-[0_4px_0_0_#fda4af]">
+                    <XCircle size={40} />
+                  </div>
+                  <h3 className="text-3xl font-black text-slate-800 mb-3">系統提示</h3>
+                  <p className="text-slate-500 font-bold mb-8 leading-relaxed text-lg">{alertMsg}</p>
+                  <button onClick={() => setAlertMsg('')} className="w-full py-4 rounded-2xl font-black text-white text-xl bg-rose-500 hover:bg-rose-400 transition-colors border-2 border-rose-700 shadow-[0_6px_0_0_#be123c] active:translate-y-[6px] active:shadow-none">
+                    我知道了
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       return (
         <div className="flex h-[100dvh] w-full font-sans relative bg-sky-50">
           
@@ -807,7 +1039,7 @@
             <div className="absolute top-[40%] right-[30%] w-24 h-24 bg-pink-200/40 rounded-full blur-xl animate-bounce-soft" style={{ animationDelay: '0.5s' }}></div>
           </div>
 
-          <Sidebar />
+          {renderSidebar()}
 
           <main className="flex-1 flex flex-col h-full overflow-hidden relative">
             
@@ -934,13 +1166,7 @@
 
                     <div className="w-full md:w-auto mt-1 md:mt-0 shrink-0">
                       <button 
-                        onClick={() => {
-                          if (settings.mode !== 'mistakePractice' && settings.scope.length === 0) {
-                            setAlertMsg("請先選擇至少一個「題目範圍」才能開始測驗喔！");
-                            return;
-                          }
-                          setShowNameModal(true);
-                        }} 
+                        onClick={startGame} 
                         disabled={isDbLoading} 
                         className={`w-full md:w-auto flex items-center justify-center gap-2 bg-emerald-500 border-2 border-emerald-700 shadow-[0_6px_0_0_#047857] hover:-translate-y-1 hover:shadow-[0_8px_0_0_#047857] hover:bg-emerald-400 active:translate-y-[6px] active:shadow-none text-white px-8 py-3 md:py-4 rounded-2xl text-xl font-black transition-all ${isDbLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
@@ -1105,7 +1331,7 @@
                   <button onClick={handleReturnToMenu} className="flex items-center justify-center gap-2 bg-white text-slate-600 px-6 py-3 rounded-xl font-black text-base hover:bg-slate-50 transition-all border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none">
                     <Home size={18} /> 回到儀表板
                   </button>
-                  <button onClick={() => setShowNameModal(true)} className="flex items-center justify-center gap-2 bg-sky-500 text-white px-6 py-3 rounded-xl font-black text-base hover:bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] transition-all active:translate-y-[4px] active:shadow-none">
+                  <button onClick={startGame} className="flex items-center justify-center gap-2 bg-sky-500 text-white px-6 py-3 rounded-xl font-black text-base hover:bg-sky-400 border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7] transition-all active:translate-y-[4px] active:shadow-none">
                     <RotateCcw size={18} /> 再挑戰一次
                   </button>
                 </div>
@@ -1146,14 +1372,13 @@
                 <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-5 px-4 -mx-4 md:pt-6 md:px-5 md:-mx-5">
                   <div className="w-full grid gap-4 md:gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
-                      // 🚀 修正 8：自學區字卡的亮燈判斷改用複合鍵
                       const isReported = q.isCloudReported || reportedList.includes(`${q.scope}_${q.id}_${q.question}`);
                       return (
                         <div key={idx} className={`min-w-0 w-full bg-white rounded-2xl p-4 md:p-5 border-2 ${isReported ? 'border-rose-300 shadow-sm bg-rose-50/50' : 'border-slate-200 shadow-sm'} flex flex-col justify-between hover:-translate-y-1 hover:shadow-md transition-all group relative min-h-[160px] md:min-h-[180px]`}>
                           
                           {!isReported && (
                             <button 
-                              onClick={() => setReportModal({ isOpen: true, data: q, name: userName, content: '', source: 'study' })}
+                              onClick={() => setReportModal({ isOpen: true, data: q, content: '', source: 'study' })}
                               className="absolute -top-3 -right-3 w-8 h-8 bg-sky-100 text-sky-600 rounded-full border-2 border-sky-300 shadow-sm flex items-center justify-center font-black text-lg hover:-translate-y-0.5 hover:shadow-md active:translate-y-[2px] active:shadow-none z-10 transition-all"
                               title="回報題目錯誤"
                             >
@@ -1168,7 +1393,6 @@
                           )}
                           
                           <div className="flex gap-2 mb-2 flex-nowrap overflow-x-auto hide-scrollbar w-full shrink-0">
-                            {/* 🚀 修正 9：自學區字卡的標籤徹底恢復為工作表名稱 q.scope */}
                             <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200 whitespace-nowrap shrink-0">{q.scope}</span>
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap shrink-0 ${getTypeColor(q.type).replace('shadow-sm', '')}`}>{q.type}</span>
                             <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap shrink-0">第 {q.id} 題</span>
@@ -1201,7 +1425,7 @@
               const mistakesArray = Object.values(localMistakes || {}).filter(q => q && q.question);
               const availableScopes = [...new Set(questionBank.map(q => String(q.scope || '未分類').trim()))].filter(s => s !== '錯題集' && s !== '未分類');
               const filteredMistakes = mistakesArray
-                .filter(q => !reportedList.includes(q.question)) 
+                .filter(q => !reportedList.includes(`${q.scope}_${q.id}_${q.question}`)) 
                 .filter(q => mistakeFilterScope === 'all' || String(q.scope || '未分類').trim() === mistakeFilterScope)
                 .filter(q => mistakeFilterType === 'all' || String(q.type || '未分類').trim() === mistakeFilterType)
                 .sort((a, b) => b.count - a.count);
@@ -1241,24 +1465,20 @@
                   </div>
                 </div>
 
-                {/* 🚀 修正 1：加大外部滑動框的上下左右 Padding，賦予足夠的安全顯示空間 */}
                 <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-5 px-4 -mx-4 md:pt-6 md:px-5 md:-mx-5">
                   <div className="w-full grid gap-4 md:gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
                     {filteredMistakes.map((q, idx) => {
-                      // 🚀 修正 10：錯題集字卡的找尋與亮燈判斷改用複合鍵
                       const bankQ = questionBank.find(bq => bq.question === q.question && bq.scope === q.scope && bq.id === q.id);
                       const isMistakeReported = (bankQ && bankQ.isMistakeReported) || reportedMistakesList.includes(`${q.scope}_${q.id}_${q.question}`);
 
                       return (
-                        /* 🚀 修正：移除卡片上的 overflow-hidden，並加上 min-w-0 w-full 以貼合網格 */
                         <div key={idx} className={`min-w-0 w-full bg-white rounded-2xl p-3 md:p-4 border-2 flex items-center justify-between relative group hover:-translate-y-1 hover:shadow-md transition-all ${isMistakeReported ? 'border-slate-300 shadow-sm bg-slate-50' : 'border-slate-200 shadow-sm'}`}>
                           
-                          {/* 🚀 修正 3：為背景漸層單獨加上 rounded-r-2xl，避免失去 overflow-hidden 後溢出邊角 */}
                           <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-rose-50 to-transparent z-0 rounded-r-2xl"></div>
                           
                           {!isMistakeReported && (
                             <button 
-                              onClick={() => setReportModal({ isOpen: true, data: q, name: userName, content: '', source: 'mistake' })}
+                              onClick={() => setReportModal({ isOpen: true, data: q, content: '', source: 'mistake' })}
                               className="absolute -top-3 -right-3 w-8 h-8 bg-sky-100 text-sky-600 rounded-full border-2 border-sky-300 shadow-sm flex items-center justify-center font-black text-lg hover:-translate-y-0.5 hover:shadow-md active:translate-y-[2px] active:shadow-none z-10 transition-all"
                               title="回報題目錯誤"
                             >
@@ -1274,7 +1494,6 @@
 
                           <div className="relative z-10 flex-1 pl-1 md:pl-2">
                             <div className="flex gap-2 mb-2 items-center flex-wrap">
-                              {/* 🚀 修正 11：錯題集字卡的標籤徹底恢復為工作表名稱 q.scope */}
                               {q.scope && q.scope !== '錯題集' && q.scope !== '未分類' && (
                                 <span className="text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200">{String(q.scope).trim()}</span>
                               )}
@@ -1381,8 +1600,8 @@
                         }
 
                         return (
-                          <li key={idx} className={`rounded-xl py-2 px-3 md:px-4 border-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md shrink-0 ${rankStyle}`}>
-                            <div className="flex items-center gap-3 w-full md:w-auto overflow-hidden">
+                          <li key={idx} className={`rounded-xl py-2 px-3 md:px-4 border-2 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 md:gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md shrink-0 ${rankStyle}`}>
+                            <div className="flex items-center gap-3 w-full xl:w-auto overflow-hidden">
                               <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-lg flex items-center justify-center font-black text-lg md:text-xl border-2 ${rankBadge}`}>
                                 {idx + 1} {rankIcon}
                               </div>
@@ -1396,22 +1615,27 @@
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-4 gap-1 w-full md:w-[280px] lg:w-[320px] shrink-0 bg-white/60 p-2 md:py-2 md:px-3 rounded-lg border border-slate-200/60 items-center">
-                              <div className="flex flex-col items-center justify-center text-center px-1">
-                                <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">作答</span>
-                                <span className="text-sm md:text-base font-black text-slate-700 whitespace-nowrap">{item.totalQuestions}</span>
+                            <div className="flex flex-col w-full xl:w-auto shrink-0 gap-1 md:gap-1.5 items-start xl:items-end">
+                              <div className="grid grid-cols-4 gap-1 w-full md:w-[280px] lg:w-[320px] shrink-0 bg-white/60 p-2 md:py-2 md:px-3 rounded-lg border border-slate-200/60 items-center">
+                                <div className="flex flex-col items-center justify-center text-center px-1">
+                                  <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">作答</span>
+                                  <span className="text-sm md:text-base font-black text-slate-700 whitespace-nowrap">{item.totalQuestions}</span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
+                                  <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">正確</span>
+                                  <span className="text-sm md:text-base font-black text-emerald-500 whitespace-nowrap">{item.correctCount}</span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
+                                  <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">耗時</span>
+                                  <span className="text-sm md:text-base font-black text-slate-700 whitespace-nowrap">{item.timeSpent}</span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
+                                  <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">準確率</span>
+                                  <span className="text-sm md:text-base font-black text-sky-500 whitespace-nowrap">{item.accuracy}</span>
+                                </div>
                               </div>
-                              <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
-                                <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">正確</span>
-                                <span className="text-sm md:text-base font-black text-emerald-500 whitespace-nowrap">{item.correctCount}</span>
-                              </div>
-                              <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
-                                <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">耗時</span>
-                                <span className="text-sm md:text-base font-black text-slate-700 whitespace-nowrap">{item.timeSpent}</span>
-                              </div>
-                              <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
-                                <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">準確率</span>
-                                <span className="text-sm md:text-base font-black text-sky-500 whitespace-nowrap">{item.accuracy}</span>
+                              <div className="text-[10px] font-black text-slate-400/80 px-1 tracking-wider">
+                                [{item.recordTime}]
                               </div>
                             </div>
                           </li>
@@ -1431,7 +1655,8 @@
 
           </main>
 
-          <MobileNav />
+          {/* 手機版導覽列 */}
+          {renderMobileNav()}
 
           {/* 回報問題確認彈窗 (測驗專用) */}
           {confirmModal.isOpen && confirmModal.type === 'report' && (
@@ -1453,7 +1678,7 @@
             </div>
           )}
 
-          {/* 🚀 共用問題回報視窗 (支援自學區與錯題集) */}
+          {/* 共用問題回報視窗 (支援自學區與錯題集) */}
           {reportModal.isOpen && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
@@ -1469,16 +1694,6 @@
 
                 <div className="flex flex-col gap-4 mb-6">
                   <div>
-                    <label className="block text-sm font-black text-slate-500 mb-2 pl-1">真實姓名</label>
-                    <input 
-                      type="text" 
-                      value={reportModal.name}
-                      onChange={(e) => setReportModal(s => ({ ...s, name: e.target.value }))}
-                      placeholder="請輸入您的姓名"
-                      className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl px-5 py-3 text-slate-800 font-bold text-lg transition-colors shadow-inner"
-                    />
-                  </div>
-                  <div>
                     <label className="block text-sm font-black text-slate-500 mb-2 pl-1">問題回報內容</label>
                     <textarea 
                       value={reportModal.content}
@@ -1491,7 +1706,7 @@
                 </div>
 
                 <div className="flex gap-4">
-                  <button onClick={() => setReportModal({isOpen: false, data: null, name: userName, content: '', source: 'study'})} className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none text-lg">取消</button>
+                  <button onClick={() => setReportModal({isOpen: false, data: null, content: '', source: 'study'})} className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none text-lg">取消</button>
                   <button onClick={executeGeneralReport} className="flex-[2] py-4 rounded-2xl font-black text-white bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-[0_4px_0_0_#0284c7] active:translate-y-[4px] active:shadow-none text-lg">送出回報</button>
                 </div>
               </div>
@@ -1555,102 +1770,9 @@
             </div>
           )}
 
-          {/* API 設定 Modal */}
-          {showApiModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-lg w-full animate-fade-in-up border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <h3 className="text-3xl font-black text-slate-800 mb-4 flex items-center gap-3">
-                  <div className="bg-sky-100 text-sky-600 p-3 rounded-[1rem] border-2 border-sky-200"><Link size={28} /></div>
-                  雲端題庫設定
-                </h3>
-                <p className="text-slate-500 mb-5 font-bold leading-relaxed text-sm">
-                  請輸入您的 Google Apps Script 網址。系統將自動記憶並更新題庫。
-                </p>
-                <input 
-                  type="text" 
-                  value={inputApiUrl}
-                  onChange={(e) => setInputApiUrl(e.target.value)}
-                  placeholder="https://script.google.com/macros/s/.../exec"
-                  className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl px-5 py-5 text-slate-700 font-mono text-base md:text-sm transition-colors mb-8 shadow-inner"
-                />
-                <div className="flex flex-wrap items-center justify-end gap-4">
-                  <button 
-                    onClick={() => {
-                      setInputApiUrl(GOOGLE_SCRIPT_API_URL);
-                      setApiUrl(GOOGLE_SCRIPT_API_URL);
-                      localStorage.removeItem('CUSTOM_API_URL');
-                      setShowApiModal(false);
-                    }} 
-                    className="px-6 py-4 rounded-2xl font-black text-rose-500 hover:bg-rose-50 transition-colors mr-auto border-2 border-transparent active:scale-95"
-                  >
-                    恢復預設
-                  </button>
-                  <button 
-                    onClick={() => setShowApiModal(false)} 
-                    className="px-6 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none"
-                  >
-                    取消
-                  </button>
-                  <button 
-                    onClick={() => {
-                      if(inputApiUrl.trim()){
-                        setApiUrl(inputApiUrl.trim());
-                        localStorage.setItem('CUSTOM_API_URL', inputApiUrl.trim());
-                      }
-                      setShowApiModal(false);
-                    }} 
-                    className="px-8 py-4 rounded-2xl font-black text-white bg-sky-500 hover:bg-sky-400 transition-colors border-2 border-sky-700 shadow-[0_4px_0_0_#0284c7] active:translate-y-[4px] active:shadow-none"
-                  >
-                    儲存並載入
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 建立名稱 Modal */}
-          {showNameModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up flex flex-col border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                <h3 className="text-3xl font-black text-slate-800 mb-4 flex items-center gap-3">
-                  <div className="bg-emerald-100 text-emerald-600 p-3 rounded-[1rem] border-2 border-emerald-200"><PenTool size={28} /></div>
-                  建立使用者名稱
-                </h3>
-                <p className="text-slate-500 font-bold mb-8 text-lg">輸入您的姓名或暱稱，系統將會記錄您的錯題與學習進度喔！</p>
-                <input 
-                  type="text" 
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder="例如：王小明"
-                  className="w-full bg-slate-50 border-4 border-slate-200 focus:border-emerald-400 outline-none rounded-2xl px-5 py-5 text-slate-800 font-black text-xl transition-colors mb-8 shadow-inner text-center"
-                  autoFocus
-                />
-                <div className="flex gap-4">
-                  <button onClick={() => setShowNameModal(false)} className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none text-lg">
-                    取消
-                  </button>
-                  <button 
-                    onClick={() => {
-                      if(!userName.trim()) {
-                        setAlertMsg("請輸入使用者名稱！");
-                        return;
-                      }
-                      localStorage.setItem('USER_NAME', userName.trim());
-                      setShowNameModal(false);
-                      startGame();
-                    }} 
-                    className="flex-[2] py-4 rounded-2xl font-black text-white bg-emerald-500 hover:bg-emerald-400 transition-colors border-2 border-emerald-700 shadow-[0_4px_0_0_#047857] active:translate-y-[4px] active:shadow-none text-lg"
-                  >
-                    確認並開始
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* 全局提示訊息 Alert */}
           {alertMsg && (
-            <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full animate-fade-in-up text-center flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
                 <div className="w-20 h-20 bg-rose-100 text-rose-500 rounded-[1.5rem] border-2 border-rose-200 flex items-center justify-center mb-6 shadow-[0_4px_0_0_#fda4af]">
                   <XCircle size={40} />
@@ -1664,7 +1786,7 @@
             </div>
           )}
 
-          {/* 全域頁尾版權宣告 (深色高對比 + 膠囊白底) */}
+          {/* 全域頁尾版權宣告 */}
           <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
             大榮老師製作 © 2026 | Version 3.1 (v.3.1)
           </div>
