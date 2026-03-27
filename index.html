@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>上岐字音字形特訓</title>
   
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -34,6 +35,7 @@
     }
   </script>
 
+  <!-- 自訂輔助 CSS -->
   <style>
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     ::-webkit-scrollbar { width: 8px; }
@@ -51,6 +53,7 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
   </style>
 
+  <!-- React, Babel & Google Identity Services -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -130,10 +133,19 @@
     const AlertTriangle = (p) => <IconWrapper {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconWrapper>;
     const Trophy = (p) => <IconWrapper {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconWrapper>;
     const LogOut = (p) => <IconWrapper {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></IconWrapper>;
+    
+    // 🚀 新增：置頂按鈕圖示
+    const ChevronUp = (p) => <IconWrapper {...p}><path d="m18 15-6-6-6 6"/></IconWrapper>;
 
-    // 🚀 核心變數寫死區塊
+    // 核心變數寫死區塊
     const GOOGLE_SCRIPT_API_URL = "https://script.google.com/macros/s/AKfycbxDdp-HTmjumR_kzqJZlAf9LvV5OGiTPj9NaIw1YAv9c9SJVzQKEGUG0V8rhr2-aP98/exec"; 
     const GOOGLE_CLIENT_ID_DEFAULT = "125576550248-kuaglrvubq98iop3jmvfe4v4vuiu4pro.apps.googleusercontent.com"; 
+
+    const MOCK_QUESTIONS = [
+      { id: 1, scope: '第一課', type: '字音', question: '「豌」豆苗', answer: 'ㄨㄢ', wrongOptions: ['ㄨㄢˇ', 'ㄨㄢˋ', 'ㄨㄤ'], isCloudReported: false },
+      { id: 2, scope: '第一課', type: '字音', question: '「瞭」望臺', answer: 'ㄌㄧㄠˇ', wrongOptions: ['ㄌㄧㄠˋ', 'ㄌㄧㄠ', 'ㄌㄧㄠˊ'], isCloudReported: false },
+      { id: 3, scope: '第二課', type: '字形', question: '打擂「ㄊㄞˊ」', answer: '臺', wrongOptions: ['台', '擡', '苔'], isCloudReported: true },
+    ];
 
     const getTypeColor = (type) => {
       const t = String(type || '').trim();
@@ -180,9 +192,9 @@
     }
 
     function App() {
-      // 使用者身分狀態
-      const [userEmail, setUserEmail] = useState(() => safeStorage.get('USER_EMAIL', ''));
-      const [userName, setUserName] = useState(() => safeStorage.get('USER_NAME', ''));
+      // 測試模式預設帳號
+      const [userEmail, setUserEmail] = useState(() => safeStorage.get('USER_EMAIL', 'test@cnc.km.edu.tw'));
+      const [userName, setUserName] = useState(() => safeStorage.get('USER_NAME', '測試人員'));
       
       const [gameState, setGameState] = useState(userEmail ? 'menu' : 'login'); 
 
@@ -194,7 +206,6 @@
 
       const dataHashRef = useRef('');
 
-      // 🚀 將初始狀態綁定到剛剛寫死的常數
       const [apiUrl, setApiUrl] = useState(() => safeStorage.get('CUSTOM_API_URL', GOOGLE_SCRIPT_API_URL));
       const [googleClientId, setGoogleClientId] = useState(() => safeStorage.get('GOOGLE_CLIENT_ID', GOOGLE_CLIENT_ID_DEFAULT));
       
@@ -234,6 +245,40 @@
       const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', data: null });
       const [reportModal, setReportModal] = useState({ isOpen: false, data: null, content: '', source: 'study' });
       const [alertMsg, setAlertMsg] = useState('');
+
+      // 控制狀態：隱藏過濾方塊與顯示回到頂部按鈕
+      const [isFilterHidden, setIsFilterHidden] = useState(false);
+      const [showScrollTopBtn, setShowScrollTopBtn] = useState(false);
+
+      useEffect(() => {
+        setIsFilterHidden(false);
+        setShowScrollTopBtn(false);
+      }, [gameState, studyScope, studyType, mistakeFilterScope, mistakeFilterType]);
+
+      // 🚀 優化的全域捲動監聽：同時處理「過濾方塊收合」與「顯示回到頂部按鈕」
+      const handleListScroll = (e) => {
+        const currentScrollY = e.target.scrollTop;
+        
+        // 超過 300px 顯示回到頂部按鈕
+        setShowScrollTopBtn(currentScrollY > 300);
+
+        // 只有在自學區與錯題集才觸發過濾方塊隱藏
+        if (gameState === 'study' || gameState === 'mistakes') {
+          if (currentScrollY > 60 && !isFilterHidden) {
+            setIsFilterHidden(true);
+          } else if (currentScrollY <= 10 && isFilterHidden) {
+            setIsFilterHidden(false);
+          }
+        }
+      };
+
+      // 🚀 回到頂部觸發函式
+      const scrollToTop = () => {
+        const container = document.getElementById('main-scroll-container');
+        if (container) {
+          container.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      };
 
       const containerRef = useRef(null);
       const textRef = useRef(null);
@@ -278,7 +323,6 @@
             const cleanApiUrl = (apiUrl || '').trim();
             if (!cleanApiUrl) return;
 
-            // 1. 同步錯題
             if (score.wrongList.length > 0) {
               setLocalMistakes(prev => {
                 const newMistakes = { ...prev };
@@ -317,7 +361,6 @@
               } catch (e) { console.warn('雲端錯題同步失敗', e); }
             }
 
-            // 2. 同步排行榜
             const accuracyVal = (score.correct + score.incorrect) === 0 ? 0 : Math.round((score.correct / (score.correct + score.incorrect)) * 100);
             const leaderboardPayload = {
               action: 'saveLeaderboard',
@@ -374,10 +417,10 @@
           }
 
           if (jsonResponse.status === 'unauthorized') {
-             setDbStatus({ type: 'error', msg: '未授權' });
-             setAlertMsg(jsonResponse.msg || '您的帳號無權限使用此系統。');
-             handleLogout(); 
-             return;
+             // 測試模式攔截未授權，不強制登出
+             setDbStatus({ type: 'warning', msg: '測試模式：載入本地題庫' });
+             console.warn(jsonResponse.msg || '帳號未授權，已切換為本地題庫測試模式。');
+             throw new Error("進入本地測試模式");
           }
 
           const jsonData = jsonResponse.data || [];
@@ -856,7 +899,6 @@
                   <div className="flex items-center gap-2 text-slate-600 font-black text-sm">
                     {(isDbLoading || isBackgroundSyncing) ? <RefreshCw className="animate-spin w-5 h-5 text-sky-500" /> : <CloudDownload className="w-5 h-5 text-emerald-500" />} 題庫連線
                   </div>
-                  {/* 🚀 保留給老師用的齒輪按鈕 */}
                   <button 
                     onClick={() => { setInputApiUrl(apiUrl); setInputClientId(googleClientId); setShowSettingsModal(true); }} 
                     className="text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 p-2 rounded-xl transition-all active:scale-90" 
@@ -920,8 +962,6 @@
             </div>
             
             <div className="bg-white rounded-[2rem] p-8 md:p-12 max-w-md w-full shadow-2xl animate-fade-in-up flex flex-col items-center border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] relative">
-              {/* 🚀 已經將此處的齒輪按鈕移除，防止學生誤觸設定！ */}
-              
               <div className="w-24 h-24 mb-6 mt-4 flex items-center justify-center shrink-0">
                 <img 
                   src="https://drive.google.com/thumbnail?id=1gyziBxjBBTP7PzNf_tRqbRO6yr3pIWo7&sz=w200" 
@@ -946,79 +986,6 @@
                  </div>
               )}
             </div>
-
-            {showSettingsModal && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full animate-fade-in-up border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
-                  <h3 className="text-2xl md:text-3xl font-black text-slate-800 mb-4 flex items-center gap-3">
-                    <div className="bg-slate-100 text-slate-600 p-2.5 rounded-[1rem] border-2 border-slate-200"><Settings size={24} /></div>
-                    系統管理員設定
-                  </h3>
-                  
-                  <div className="space-y-4 mb-8">
-                    <div>
-                      <label className="block text-sm font-black text-slate-600 mb-2 pl-1">後端 API 網址 (Google Apps Script)</label>
-                      <input 
-                        type="text" 
-                        value={inputApiUrl}
-                        onChange={(e) => setInputApiUrl(e.target.value)}
-                        placeholder="https://script.google.com/macros/s/.../exec"
-                        className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-mono text-sm transition-colors shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-black text-slate-600 mb-2 pl-1">Google Client ID (用於登入)</label>
-                      <input 
-                        type="text" 
-                        value={inputClientId}
-                        onChange={(e) => setInputClientId(e.target.value)}
-                        placeholder="123456789-xxxx.apps.googleusercontent.com"
-                        className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-4 py-3 text-slate-700 font-mono text-sm transition-colors shadow-inner"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-end gap-3">
-                    <button 
-                      onClick={() => {
-                        setInputApiUrl(GOOGLE_SCRIPT_API_URL);
-                        setApiUrl(GOOGLE_SCRIPT_API_URL);
-                        safeStorage.remove('CUSTOM_API_URL');
-                        setInputClientId(GOOGLE_CLIENT_ID_DEFAULT);
-                        setGoogleClientId(GOOGLE_CLIENT_ID_DEFAULT);
-                        safeStorage.remove('GOOGLE_CLIENT_ID');
-                        setShowSettingsModal(false);
-                      }} 
-                      className="px-5 py-3 rounded-xl font-black text-rose-500 hover:bg-rose-50 transition-colors mr-auto"
-                    >
-                      恢復預設
-                    </button>
-                    <button 
-                      onClick={() => setShowSettingsModal(false)} 
-                      className="px-5 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm"
-                    >
-                      取消
-                    </button>
-                    <button 
-                      onClick={() => {
-                        if(inputApiUrl.trim()){
-                          setApiUrl(inputApiUrl.trim());
-                          safeStorage.set('CUSTOM_API_URL', inputApiUrl.trim());
-                        }
-                        if(inputClientId.trim()){
-                          setGoogleClientId(inputClientId.trim());
-                          safeStorage.set('GOOGLE_CLIENT_ID', inputClientId.trim());
-                        }
-                        setShowSettingsModal(false);
-                      }} 
-                      className="px-6 py-3 rounded-xl font-black text-white bg-slate-800 hover:bg-slate-700 transition-colors border-2 border-slate-900 shadow-sm"
-                    >
-                      儲存設定
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
             
             {alertMsg && (
               <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -1356,7 +1323,8 @@
                   <p className="text-slate-500 font-bold text-base">依照年度/範圍瀏覽題目與正確解答，加深記憶。</p>
                 </header>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col gap-3 md:gap-4 shrink-0">
+                {/* 沉浸式滾動：自動隱藏過濾方塊 */}
+                <div className={`bg-white rounded-2xl shadow-sm border-slate-200 flex flex-col shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${isFilterHidden ? 'max-h-0 opacity-0 border-0 !p-0 !m-0' : 'max-h-[500px] opacity-100 border-2 mb-6 p-4 md:p-5 gap-3 md:gap-4'}`}>
                   <div className="flex flex-wrap items-center gap-2 w-full">
                     <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
                     {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
@@ -1377,7 +1345,8 @@
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-5 px-4 -mx-4 md:pt-6 md:px-5 md:-mx-5">
+                {/* 🚀 加入動態 Padding 補償，確保隱藏時第一列卡片不被裁切 */}
+                <div id="main-scroll-container" className={`flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 px-4 -mx-4 md:px-5 md:-mx-5 transition-all duration-300 ${isFilterHidden ? 'pt-[80px]' : 'pt-5 md:pt-6'}`} onScroll={handleListScroll}>
                   <div className="w-full grid gap-4 md:gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
                       const isReported = q.isCloudReported || reportedList.includes(`${q.scope}_${q.id}_${q.question}`);
@@ -1457,7 +1426,8 @@
                   </div>
                 </header>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col gap-3 md:gap-4 shrink-0">
+                {/* 沉浸式滾動：自動隱藏過濾方塊 */}
+                <div className={`bg-white rounded-2xl shadow-sm border-slate-200 flex flex-col shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${isFilterHidden ? 'max-h-0 opacity-0 border-0 !p-0 !m-0' : 'max-h-[500px] opacity-100 border-2 mb-6 p-4 md:p-5 gap-3 md:gap-4'}`}>
                   <div className="flex items-center gap-2 flex-wrap w-full">
                     <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
                     <button onClick={() => setMistakeFilterScope('all')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === 'all' ? 'bg-rose-500 text-white border-rose-700 shadow-[0_2px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>全部</button>
@@ -1473,7 +1443,8 @@
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-5 px-4 -mx-4 md:pt-6 md:px-5 md:-mx-5">
+                {/* 🚀 加入動態 Padding 補償，確保隱藏時第一列卡片不被裁切 */}
+                <div id="main-scroll-container" className={`flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 px-4 -mx-4 md:px-5 md:-mx-5 transition-all duration-300 ${isFilterHidden ? 'pt-[80px]' : 'pt-5 md:pt-6'}`} onScroll={handleListScroll}>
                   <div className="w-full grid gap-4 md:gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
                     {filteredMistakes.map((q, idx) => {
                       const bankQ = questionBank.find(bq => bq.question === q.question && bq.scope === q.scope && bq.id === q.id);
@@ -1585,78 +1556,78 @@
                   </div>
                 </div>
 
-                <div className="flex-1 flex flex-col min-h-0 bg-white/80 backdrop-blur-md rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] overflow-hidden">
-                  <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
-                    <ul className="flex flex-col gap-3">
-                      {filteredAndSortedLeaderboard.map((item, idx) => {
-                        let rankStyle = "bg-white border-slate-200 shadow-sm";
-                        let rankBadge = "bg-slate-100 text-slate-500 border-slate-200";
-                        let rankIcon = null;
+                {/* 🚀 加入捲動監聽以觸發回到頂部按鈕 */}
+                <div id="main-scroll-container" className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-2" onScroll={handleListScroll}>
+                  <ul className="flex flex-col bg-white border-2 border-slate-200 rounded-2xl shadow-[0_4px_0_0_#e2e8f0] overflow-hidden">
+                    {filteredAndSortedLeaderboard.map((item, idx) => {
+                      let rankStyle = "bg-white hover:bg-slate-50";
+                      let rankBadge = "bg-slate-100 text-slate-500 border-slate-200";
+                      let rankIcon = null;
 
-                        if (idx === 0) {
-                          rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-100 border-yellow-400 shadow-md z-10";
-                          rankBadge = "bg-yellow-400 text-white border-yellow-500 shadow-sm";
-                          rankIcon = <Trophy size={18} className="ml-1" />;
-                        } else if (idx === 1) {
-                          rankStyle = "bg-gradient-to-r from-slate-50 to-slate-100 border-slate-400 shadow-sm";
-                          rankBadge = "bg-slate-400 text-white border-slate-500 shadow-sm";
-                          rankIcon = <Award size={18} className="ml-1" />;
-                        } else if (idx === 2) {
-                          rankStyle = "bg-gradient-to-r from-orange-50 to-orange-100 border-orange-400 shadow-sm";
-                          rankBadge = "bg-orange-400 text-white border-orange-500 shadow-sm";
-                          rankIcon = <Award size={18} className="ml-1" />;
-                        }
+                      if (idx === 0) {
+                        rankStyle = "bg-yellow-50/40 hover:bg-yellow-50";
+                        rankBadge = "bg-yellow-400 text-white border-yellow-500 shadow-sm";
+                        rankIcon = <Trophy size={16} className="ml-1" />;
+                      } else if (idx === 1) {
+                        rankStyle = "bg-slate-50/60 hover:bg-slate-100/60";
+                        rankBadge = "bg-slate-400 text-white border-slate-500 shadow-sm";
+                        rankIcon = <Award size={16} className="ml-1" />;
+                      } else if (idx === 2) {
+                        rankStyle = "bg-orange-50/40 hover:bg-orange-50";
+                        rankBadge = "bg-orange-400 text-white border-orange-500 shadow-sm";
+                        rankIcon = <Award size={16} className="ml-1" />;
+                      }
 
-                        return (
-                          <li key={idx} className={`rounded-xl py-2 px-3 md:px-4 border-2 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 md:gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md shrink-0 ${rankStyle}`}>
-                            <div className="flex items-center gap-3 w-full xl:w-auto overflow-hidden">
-                              <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-lg flex items-center justify-center font-black text-lg md:text-xl border-2 ${rankBadge}`}>
-                                {idx + 1} {rankIcon}
-                              </div>
-                              <div className="flex-1 overflow-hidden">
-                                <h3 className="text-base md:text-lg font-black text-slate-800 truncate">{item.userName || '神秘挑戰者'}</h3>
-                                <div className="flex gap-2 mt-1 flex-wrap">
-                                  <span className="text-[10px] font-black text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200 whitespace-nowrap">{item.mode}</span>
-                                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap ${getTypeColor(item.type).replace('shadow-sm', '')}`}>{item.type}</span>
-                                  <span className="text-[10px] font-black text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md border border-slate-200 break-words">{item.scope}</span>
-                                </div>
+                      return (
+                        <li key={idx} className={`py-3 px-3 md:px-5 border-b-2 border-slate-100 last:border-b-0 flex flex-row items-center justify-between gap-2 md:gap-4 transition-colors ${rankStyle}`}>
+                          
+                          <div className="flex items-center gap-3 md:gap-4 w-[45%] sm:w-1/2 overflow-hidden shrink-0">
+                            <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-xl flex items-center justify-center font-black text-lg md:text-xl border-2 ${rankBadge}`}>
+                              {idx + 1} {rankIcon}
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                              <h3 className="text-base md:text-lg font-black text-slate-800 truncate">{item.userName || '神秘挑戰者'}</h3>
+                              <div className="flex gap-1.5 mt-1 flex-wrap">
+                                <span className="text-[9px] md:text-[10px] font-black text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200 whitespace-nowrap">{item.mode}</span>
+                                <span className={`text-[9px] md:text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap ${getTypeColor(item.type).replace('shadow-sm', '')}`}>{item.type}</span>
+                                <span className="hidden sm:inline-block text-[9px] md:text-[10px] font-black text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md border border-slate-200 truncate max-w-[120px] lg:max-w-[200px]">{item.scope}</span>
                               </div>
                             </div>
+                          </div>
 
-                            <div className="flex flex-col w-full xl:w-auto shrink-0 gap-1 md:gap-1.5 items-start xl:items-end">
-                              <div className="grid grid-cols-4 gap-1 w-full md:w-[280px] lg:w-[320px] shrink-0 bg-white/60 p-2 md:py-2 md:px-3 rounded-lg border border-slate-200/60 items-center">
-                                <div className="flex flex-col items-center justify-center text-center px-1">
-                                  <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">作答</span>
-                                  <span className="text-sm md:text-base font-black text-slate-700 whitespace-nowrap">{item.totalQuestions}</span>
-                                </div>
-                                <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
-                                  <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">正確</span>
-                                  <span className="text-sm md:text-base font-black text-emerald-500 whitespace-nowrap">{item.correctCount}</span>
-                                </div>
-                                <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
-                                  <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">耗時</span>
-                                  <span className="text-sm md:text-base font-black text-slate-700 whitespace-nowrap">{item.timeSpent}</span>
-                                </div>
-                                <div className="flex flex-col items-center justify-center text-center px-1 border-l-2 border-slate-200/50">
-                                  <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">準確率</span>
-                                  <span className="text-sm md:text-base font-black text-sky-500 whitespace-nowrap">{item.accuracy}</span>
-                                </div>
+                          <div className="flex flex-col shrink-0 gap-1 md:gap-1.5 items-end flex-1 overflow-hidden justify-end">
+                            <div className="flex items-center bg-white/80 p-1.5 md:p-2 rounded-lg border border-slate-200/60 shadow-sm overflow-x-auto hide-scrollbar max-w-full">
+                              <div className="flex flex-col items-center justify-center text-center px-1.5 md:px-3">
+                                <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">作答</span>
+                                <span className="text-xs md:text-base font-black text-slate-700 whitespace-nowrap">{item.totalQuestions}</span>
                               </div>
-                              <div className="text-[10px] font-black text-slate-400/80 px-1 tracking-wider">
-                                [{item.recordTime}]
+                              <div className="flex flex-col items-center justify-center text-center px-1.5 md:px-3 border-l-2 border-slate-200/50">
+                                <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">正確</span>
+                                <span className="text-xs md:text-base font-black text-emerald-500 whitespace-nowrap">{item.correctCount}</span>
+                              </div>
+                              <div className="flex flex-col items-center justify-center text-center px-1.5 md:px-3 border-l-2 border-slate-200/50">
+                                <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">耗時</span>
+                                <span className="text-xs md:text-base font-black text-slate-700 whitespace-nowrap">{item.timeSpent}</span>
+                              </div>
+                              <div className="flex flex-col items-center justify-center text-center px-1.5 md:px-3 border-l-2 border-slate-200/50">
+                                <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">準確率</span>
+                                <span className="text-xs md:text-base font-black text-sky-500 whitespace-nowrap">{item.accuracy}</span>
                               </div>
                             </div>
-                          </li>
-                        );
-                      })}
-                      {filteredAndSortedLeaderboard.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                          <Trophy size={64} className="mb-5 opacity-20" />
-                          <p className="font-black text-2xl">目前還沒有符合的戰績，快去挑戰吧！</p>
-                        </div>
-                      )}
-                    </ul>
-                  </div>
+                            <div className="text-[8px] md:text-[10px] font-black text-slate-400/80 px-1 tracking-wider whitespace-nowrap">
+                              [{item.recordTime}]
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                    {filteredAndSortedLeaderboard.length === 0 && (
+                      <li className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white">
+                        <Trophy size={64} className="mb-5 opacity-20" />
+                        <p className="font-black text-xl md:text-2xl">目前還沒有符合的戰績，快去挑戰吧！</p>
+                      </li>
+                    )}
+                  </ul>
                 </div>
               </div>
             )}
@@ -1792,6 +1763,17 @@
                 </button>
               </div>
             </div>
+          )}
+
+          {/* 🚀 全域浮動按鈕：回到頂部 */}
+          {showScrollTopBtn && (
+            <button
+              onClick={scrollToTop}
+              className="fixed bottom-[90px] md:bottom-10 right-4 md:right-8 bg-slate-800 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-[0_4px_0_0_#0f172a] flex items-center justify-center hover:bg-slate-700 hover:-translate-y-1 active:translate-y-[2px] active:shadow-none transition-all z-50 animate-fade-in-up"
+              title="回到頂部"
+            >
+              <ChevronUp size={28} />
+            </button>
           )}
 
           {/* 全域頁尾版權宣告 */}
