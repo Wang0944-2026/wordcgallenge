@@ -133,8 +133,6 @@
     const AlertTriangle = (p) => <IconWrapper {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconWrapper>;
     const Trophy = (p) => <IconWrapper {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconWrapper>;
     const LogOut = (p) => <IconWrapper {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></IconWrapper>;
-    
-    // 🚀 新增：置頂按鈕圖示
     const ChevronUp = (p) => <IconWrapper {...p}><path d="m18 15-6-6-6 6"/></IconWrapper>;
 
     // 核心變數寫死區塊
@@ -234,7 +232,8 @@
       const [studyScope, setStudyScope] = useState('');
       const [studyType, setStudyType] = useState('all');
 
-      const [lbFilter, setLbFilter] = useState({ type: 'all', mode: 'all', scope: 'all' });
+      // 🚀 更新 lbFilter 狀態，加入 specificYear 處理年度連動
+      const [lbFilter, setLbFilter] = useState({ type: 'all', mode: 'all', scope: 'all', specificYear: 'all' });
 
       const [showTimeModal, setShowTimeModal] = useState(false);
       const [showNormalModal, setShowNormalModal] = useState(false);
@@ -255,14 +254,10 @@
         setShowScrollTopBtn(false);
       }, [gameState, studyScope, studyType, mistakeFilterScope, mistakeFilterType]);
 
-      // 🚀 優化的全域捲動監聽：同時處理「過濾方塊收合」與「顯示回到頂部按鈕」
       const handleListScroll = (e) => {
         const currentScrollY = e.target.scrollTop;
-        
-        // 超過 300px 顯示回到頂部按鈕
         setShowScrollTopBtn(currentScrollY > 300);
 
-        // 只有在自學區與錯題集才觸發過濾方塊隱藏
         if (gameState === 'study' || gameState === 'mistakes') {
           if (currentScrollY > 60 && !isFilterHidden) {
             setIsFilterHidden(true);
@@ -272,7 +267,6 @@
         }
       };
 
-      // 🚀 回到頂部觸發函式
       const scrollToTop = () => {
         const container = document.getElementById('main-scroll-container');
         if (container) {
@@ -760,7 +754,7 @@
         if (accuracy >= 85) return "很棒的成績！再稍微留意一下細節就無敵了！ 👍";
         if (accuracy >= 80) return "表現不錯喔！已經超越大部分的人了！ 👏";
         if (accuracy >= 70) return "再接再厲！把錯題看熟，下次一定會更好！ 💪";
-        if (accuracy >= 60) return "及格了！還有很大的進步空間，繼續加油！ 🌱";
+        if (accuracy >= 60) return "及格了！及格邊緣，繼續加油！ 🌱";
         return "別氣餒！失敗是成功的養分，多練習幾次一定行！ 💡";
       };
 
@@ -822,12 +816,20 @@
              const earlyStatus = String(item.isEndedEarly || '').trim().toUpperCase();
              return earlyStatus !== '是' && earlyStatus !== 'TRUE';
           })
+          .filter(item => item.mode !== '錯題加強') // 🚀 新增：強制排除「錯題加強」的紀錄
           .filter(item => lbFilter.type === 'all' || item.type === lbFilter.type)
           .filter(item => lbFilter.mode === 'all' || item.mode === lbFilter.mode)
           .filter(item => {
              if (lbFilter.scope === 'all') return true;
              const isMulti = String(item.scope || '').includes(',') || String(item.scope || '') === '全部範圍';
-             if (lbFilter.scope === '單一年度') return !isMulti;
+             if (lbFilter.scope === '單一年度') {
+               if (isMulti) return false;
+               // 🚀 新增：若指定了特定年度，則精確比對
+               if (lbFilter.specificYear && lbFilter.specificYear !== 'all') {
+                 return String(item.scope || '').trim() === lbFilter.specificYear;
+               }
+               return true;
+             }
              if (lbFilter.scope === '多年度') return isMulti;
              return true;
           })
@@ -955,7 +957,7 @@
 
       if (gameState === 'login') {
         return (
-          <div className="flex h-[100dvh] w-full font-sans relative bg-sky-50 items-center justify-center p-4">
+          <div className="flex h-[100dvh] w-full font-sans relative bg-sky-50 items-center justify-center p-4 flex-col">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
               <div className="absolute top-[10%] left-[5%] w-32 h-32 bg-yellow-200/40 rounded-full blur-xl animate-bounce-soft"></div>
               <div className="absolute bottom-[20%] right-[10%] w-40 h-40 bg-sky-200/40 rounded-full blur-xl animate-bounce-soft" style={{ animationDelay: '1s' }}></div>
@@ -973,11 +975,11 @@
                   }}
                 />
               </div>
-              <h1 className="text-3xl font-black text-slate-800 mb-2">字音字形特訓平台</h1>
-              <p className="text-slate-500 font-bold mb-10 text-center">請使用您的上岐專屬 Google 帳號登入<br className="hidden md:block"/>(ke1234@cnc.km.edu.tw)，以存取個人錯題庫與學習紀錄。</p>
+              <h1 className="text-3xl font-black text-slate-800 mb-2 text-center">字音字形特訓平台</h1>
+              <p className="text-slate-500 font-bold mb-8 text-center leading-relaxed">請使用您的上岐專屬 Google 帳號登入<br className="hidden md:block"/>(ke1234@cnc.km.edu.tw)，以存取個人錯題庫與學習紀錄。</p>
               
               {googleClientId ? (
-                 <div id="google-login-btn" className="w-full flex justify-center h-12"></div>
+                 <div id="google-login-btn" className="w-full flex justify-center h-12 z-20"></div>
               ) : (
                  <div className="w-full text-center">
                    <div className="bg-amber-50 border-2 border-amber-200 text-amber-700 p-4 rounded-2xl text-sm font-bold mb-4 shadow-inner">
@@ -985,6 +987,26 @@
                    </div>
                  </div>
               )}
+              
+              {/* 開發者專用：繞過動態沙盒的略過登入按鈕 */}
+              <div className="mt-8 flex flex-col items-center w-full border-t-2 border-dashed border-slate-200 pt-6">
+                <div className="text-[10px] font-black text-slate-300 mb-3 uppercase tracking-widest bg-white px-2 -mt-9">開發者預覽通道</div>
+                <button 
+                  onClick={() => {
+                    const testEmail = 'test@cnc.km.edu.tw';
+                    const testName = '預覽測試員';
+                    safeStorage.set('USER_EMAIL', testEmail);
+                    safeStorage.set('USER_NAME', testName);
+                    setUserEmail(testEmail);
+                    setUserName(testName);
+                    setGameState('menu');
+                  }}
+                  className="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-400 font-black text-sm hover:bg-slate-50 hover:text-slate-600 hover:border-slate-300 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  title="點擊此處可在沙盒環境中繞過 Google 限制，直接進入系統"
+                >
+                  <Settings size={16} /> 略過 Google 驗證直接進入
+                </button>
+              </div>
             </div>
             
             {alertMsg && (
@@ -1116,7 +1138,7 @@
                   <div className="bg-white rounded-2xl p-4 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden shrink-0">
                     <div className="w-full md:w-auto">
                       <h3 className="text-lg font-black text-slate-700 mb-3 flex items-center gap-3">
-                        <div className="bg-purple-100 text-purple-600 p-2 rounded-xl"><Settings size={20} /></div> 題型
+                        <div className="bg-purple-100 text-purple-600 p-2 rounded-xl"><Settings size={20} /></div> 题型
                       </h3>
                       <div className="flex gap-2 md:gap-3 flex-wrap">
                         {[
@@ -1323,7 +1345,6 @@
                   <p className="text-slate-500 font-bold text-base">依照年度/範圍瀏覽題目與正確解答，加深記憶。</p>
                 </header>
 
-                {/* 沉浸式滾動：自動隱藏過濾方塊 */}
                 <div className={`bg-white rounded-2xl shadow-sm border-slate-200 flex flex-col shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${isFilterHidden ? 'max-h-0 opacity-0 border-0 !p-0 !m-0' : 'max-h-[500px] opacity-100 border-2 mb-6 p-4 md:p-5 gap-3 md:gap-4'}`}>
                   <div className="flex flex-wrap items-center gap-2 w-full">
                     <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
@@ -1345,7 +1366,6 @@
                   </div>
                 </div>
 
-                {/* 🚀 加入動態 Padding 補償，確保隱藏時第一列卡片不被裁切 */}
                 <div id="main-scroll-container" className={`flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 px-4 -mx-4 md:px-5 md:-mx-5 transition-all duration-300 ${isFilterHidden ? 'pt-[80px]' : 'pt-5 md:pt-6'}`} onScroll={handleListScroll}>
                   <div className="w-full grid gap-4 md:gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
@@ -1426,7 +1446,6 @@
                   </div>
                 </header>
 
-                {/* 沉浸式滾動：自動隱藏過濾方塊 */}
                 <div className={`bg-white rounded-2xl shadow-sm border-slate-200 flex flex-col shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${isFilterHidden ? 'max-h-0 opacity-0 border-0 !p-0 !m-0' : 'max-h-[500px] opacity-100 border-2 mb-6 p-4 md:p-5 gap-3 md:gap-4'}`}>
                   <div className="flex items-center gap-2 flex-wrap w-full">
                     <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
@@ -1443,7 +1462,6 @@
                   </div>
                 </div>
 
-                {/* 🚀 加入動態 Padding 補償，確保隱藏時第一列卡片不被裁切 */}
                 <div id="main-scroll-container" className={`flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 px-4 -mx-4 md:px-5 md:-mx-5 transition-all duration-300 ${isFilterHidden ? 'pt-[80px]' : 'pt-5 md:pt-6'}`} onScroll={handleListScroll}>
                   <div className="w-full grid gap-4 md:gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
                     {filteredMistakes.map((q, idx) => {
@@ -1516,8 +1534,8 @@
                   </div>
                 </header>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-col md:flex-row gap-3 md:gap-4 shrink-0">
-                  <div className="flex-1 flex flex-col gap-1.5">
+                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mb-6 flex flex-wrap gap-3 md:gap-4 shrink-0">
+                  <div className="flex-1 min-w-[120px] flex flex-col gap-1.5">
                     <label className="text-xs font-black text-slate-500 pl-1">題型</label>
                     <select 
                       value={lbFilter.type} 
@@ -1530,7 +1548,7 @@
                       <option value="字音+字形">字音+字形</option>
                     </select>
                   </div>
-                  <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="flex-1 min-w-[120px] flex flex-col gap-1.5">
                     <label className="text-xs font-black text-slate-500 pl-1">測驗模式</label>
                     <select 
                       value={lbFilter.mode} 
@@ -1542,11 +1560,11 @@
                       <option value="一般測驗">一般測驗</option>
                     </select>
                   </div>
-                  <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="flex-1 min-w-[120px] flex flex-col gap-1.5">
                     <label className="text-xs font-black text-slate-500 pl-1">題目範圍</label>
                     <select 
                       value={lbFilter.scope} 
-                      onChange={e => setLbFilter({...lbFilter, scope: e.target.value})}
+                      onChange={e => setLbFilter({...lbFilter, scope: e.target.value, specificYear: 'all'})}
                       className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
                     >
                       <option value="all">全部範圍</option>
@@ -1554,9 +1572,25 @@
                       <option value="多年度">多年度</option>
                     </select>
                   </div>
+                  
+                  {/* 🚀 依據選擇單一年度動態顯示此選單 */}
+                  {lbFilter.scope === '單一年度' && (
+                    <div className="flex-1 min-w-[120px] flex flex-col gap-1.5 animate-fade-in">
+                      <label className="text-xs font-black text-slate-500 pl-1">指定年度</label>
+                      <select 
+                        value={lbFilter.specificYear || 'all'} 
+                        onChange={e => setLbFilter({...lbFilter, specificYear: e.target.value})}
+                        className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
+                      >
+                        <option value="all">全部年度</option>
+                        {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
+                          <option key={idx} value={scopeName}>{scopeName}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
-                {/* 🚀 加入捲動監聽以觸發回到頂部按鈕 */}
                 <div id="main-scroll-container" className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-6 pt-2" onScroll={handleListScroll}>
                   <ul className="flex flex-col bg-white border-2 border-slate-200 rounded-2xl shadow-[0_4px_0_0_#e2e8f0] overflow-hidden">
                     {filteredAndSortedLeaderboard.map((item, idx) => {
