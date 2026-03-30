@@ -245,6 +245,7 @@
       const [reportModal, setReportModal] = useState({ isOpen: false, data: null, content: '', source: 'study' });
       const [alertMsg, setAlertMsg] = useState('');
 
+      // 狀態：顯示回到頂部按鈕 (已移除會導致跳動的 isFilterHidden 狀態與 JS 動畫邏輯)
       const [showScrollTopBtn, setShowScrollTopBtn] = useState(false);
       
       const [showDevModal, setShowDevModal] = useState(false);
@@ -254,6 +255,7 @@
         setShowScrollTopBtn(false);
       }, [gameState, studyScope, studyType, mistakeFilterScope, mistakeFilterType, mistakeFilterStudent, lbFilter]);
 
+      // 🚀 捲動監聽：僅負責觸發回到頂部按鈕，讓選單自然隨畫面滑動
       const handleListScroll = (e) => {
         const currentScrollY = e.target.scrollTop;
         setShowScrollTopBtn(currentScrollY > 300);
@@ -1381,46 +1383,48 @@
               </div>
             )}
 
-            {/* 🚀 自學區畫面：移除 isFilterHidden 恢復為全時可見，並移除 CSS 動態隱藏 */}
+            {/* 🚀 自學區畫面：原生滾動流 */}
             {gameState === 'study' && (
               <div className="w-full h-full flex flex-col animate-fade-in relative bg-sky-50">
-                <div className="shrink-0 px-4 pt-6 md:px-8 md:pt-8 xl:px-12 flex flex-col z-20 bg-sky-50/95 backdrop-blur-md pb-4">
-                  <header className="mb-4 md:mb-6 shrink-0">
-                    <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-3">
-                      <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl"><Library size={24} /></div> 自學區 📖
-                    </h2>
-                    <p className="text-slate-500 font-bold text-base">依照年度/範圍瀏覽題目與正確解答，加深記憶。</p>
+                {/* 固定標題區 */}
+                <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50/95 backdrop-blur-md pb-2 shadow-sm border-b border-slate-200/50">
+                  <header className="shrink-0 flex justify-between items-end">
+                    <div>
+                      <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight mb-1 flex items-center gap-3">
+                        <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl"><Library size={24} /></div> 自學區 📖
+                      </h2>
+                      <p className="text-slate-500 font-bold text-sm">依照年度/範圍瀏覽題目與正確解答，加深記憶。</p>
+                    </div>
                   </header>
                 </div>
 
-                {/* 🚀 真正的捲動區：包含選單區與字卡區 */}
-                <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4 md:pt-5" onScroll={handleListScroll}>
+                {/* 🚀 原生捲動區 (包含選單與卡片，往下捲自然隱藏選單，零延遲) */}
+                <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4" onScroll={handleListScroll}>
                   
-                  {/* 選單方塊，隨著頁面往下滾動會自然消失 */}
-                  <div className="shrink-0 mb-6">
-                    <div className="bg-white/95 backdrop-blur-sm p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-col gap-3 md:gap-4">
-                      <div className="flex flex-wrap items-center gap-2 w-full">
-                        <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
-                        {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
-                          <button 
-                            key={idx} 
-                            onClick={() => setStudyScope(scopeName)} 
-                            className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyScope === scopeName ? 'bg-indigo-500 text-white border-indigo-700 shadow-[0_2px_0_0_#4338ca]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}
-                          >
-                            {scopeName}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 w-full">
-                        <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">題目類型</span>
-                        <button onClick={() => setStudyType('all')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_2px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>全部</button>
-                        <button onClick={() => setStudyType('字音')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_2px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>字音</button>
-                        <button onClick={() => setStudyType('字形')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_2px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>字形</button>
-                      </div>
+                  {/* 過濾選單：與卡片一起滾動 */}
+                  <div className="mb-6 bg-white/95 p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-col gap-2 md:gap-3">
+                    <div className="flex flex-wrap items-center gap-2 w-full">
+                      <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
+                      {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
+                        <button 
+                          key={idx} 
+                          onClick={() => setStudyScope(scopeName)} 
+                          className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyScope === scopeName ? 'bg-indigo-500 text-white border-indigo-700 shadow-[0_2px_0_0_#4338ca]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}
+                        >
+                          {scopeName}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 w-full">
+                      <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">題目類型</span>
+                      <button onClick={() => setStudyType('all')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_2px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>全部</button>
+                      <button onClick={() => setStudyType('字音')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_2px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>字音</button>
+                      <button onClick={() => setStudyType('字形')} className={`py-1.5 px-3 md:px-4 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${studyType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_2px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-[0_2px_0_0_#cbd5e1]'}`}>字形</button>
                     </div>
                   </div>
 
-                  <div className="w-full grid gap-4 md:gap-5 pb-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                  {/* 🚀 卡片網格：加上 pt-4 防止 -top-3 絕對定位按鈕被裁切 */}
+                  <div className="w-full grid gap-4 md:gap-5 pb-8 pt-4 pr-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {questionBank.filter(q => q.scope === studyScope && (studyType === 'all' || q.type === studyType)).map((q, idx) => {
                       const isReported = q.isCloudReported || reportedList.includes(`${q.scope}_${q.id}_${q.question}`);
                       return (
@@ -1470,7 +1474,7 @@
               </div>
             )}
 
-            {/* 🚀 錯題集畫面：移除 isFilterHidden 恢復為全時可見，並移除 CSS 動態隱藏 */}
+            {/* 🚀 錯題集畫面：原生滾動流 */}
             {gameState === 'mistakes' && (() => {
               const isAdmin = userRole.indexOf('管理') > -1 || userRole.indexOf('教') > -1 || userRole.indexOf('師') > -1;
               
@@ -1500,62 +1504,67 @@
 
               return (
               <div className="w-full h-full flex flex-col animate-fade-in relative bg-sky-50">
-                <div className="shrink-0 px-4 pt-6 md:px-8 md:pt-8 xl:px-12 flex flex-col z-20 bg-sky-50/95 backdrop-blur-md pb-4">
-                  <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
-                    <div>
-                      <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                        <div className="bg-rose-100 text-rose-600 p-2 rounded-xl"><Archive size={24} /></div> 錯題集 📝
-                      </h2>
-                      <p className="text-slate-500 font-bold text-base mt-2">統計您歷次測驗中的錯題，找出最常犯錯的盲點。</p>
+                {/* 固定標題區 */}
+                <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50/95 backdrop-blur-md pb-2 shadow-sm border-b border-slate-200/50">
+                  <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+                      <div>
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                          <div className="bg-rose-100 text-rose-600 p-2 rounded-xl"><Archive size={24} /></div> 錯題集 📝
+                        </h2>
+                        <p className="text-slate-500 font-bold text-sm mt-1">統計您歷次測驗中的錯題，找出最常犯錯的盲點。</p>
+                      </div>
+                      
+                      {/* 🚀 教師專屬下拉選單移至標題列 */}
+                      {isAdmin && (
+                        <div className="flex items-center gap-2 bg-rose-50 border-2 border-rose-200 px-3 py-1.5 rounded-xl shadow-sm w-fit mt-2 md:mt-0">
+                          <span className="text-xs font-black text-rose-700 whitespace-nowrap">學生名單</span>
+                          <select 
+                            value={mistakeFilterStudent} 
+                            onChange={e => setMistakeFilterStudent(e.target.value)}
+                            className="bg-white border-2 border-slate-200 focus:border-rose-400 outline-none rounded-lg px-2 py-1 text-slate-700 font-black text-xs shadow-sm cursor-pointer max-w-[150px] md:max-w-[200px]"
+                          >
+                            <option value="all">▶ 全班總覽</option>
+                            {[...new Set(rawMistakes.map(m => m.userName))].filter(Boolean).map((name, idx) => (
+                              <option key={idx} value={name}>{name} 的紀錄</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
                     
-                    <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border-2 border-rose-200 shadow-sm self-start md:self-auto shrink-0">
-                       <span className="text-sm font-black text-slate-500">當前題數</span>
+                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border-2 border-rose-200 shadow-sm self-start md:self-auto shrink-0">
+                       <span className="text-xs font-black text-slate-500">當前題數</span>
                        <div className="flex items-baseline gap-1">
-                         <span className="text-4xl font-black text-rose-500">{filteredMistakes.length}</span>
-                         <span className="text-base font-bold text-rose-400">題</span>
+                         <span className="text-2xl font-black text-rose-500">{filteredMistakes.length}</span>
+                         <span className="text-sm font-bold text-rose-400">題</span>
                        </div>
                     </div>
                   </header>
                 </div>
 
-                <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4 md:pt-5" onScroll={handleListScroll}>
+                {/* 🚀 原生捲動區 */}
+                <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4" onScroll={handleListScroll}>
                   
-                  <div className="shrink-0 mb-6">
-                    <div className="bg-white/95 backdrop-blur-sm p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-col gap-3 md:gap-4">
-                      {isAdmin && (
-                        <div className="flex items-center gap-2 flex-wrap w-full bg-slate-50 p-2 rounded-xl border-2 border-slate-100 mb-1">
-                          <span className="text-sm font-black text-rose-700 bg-rose-100 border-2 border-rose-200 px-3 py-1.5 rounded-lg shrink-0">教師專用功能：學生名單</span>
-                          <select 
-                            value={mistakeFilterStudent} 
-                            onChange={e => setMistakeFilterStudent(e.target.value)}
-                            className="flex-1 min-w-[200px] bg-white border-2 border-slate-200 focus:border-rose-400 outline-none rounded-lg px-3 py-1.5 text-slate-700 font-black text-sm shadow-sm cursor-pointer"
-                          >
-                            <option value="all">▶ 全班總覽 (抓出全班最容易錯的題目)</option>
-                            {[...new Set(rawMistakes.map(m => m.userName))].filter(Boolean).map((name, idx) => (
-                              <option key={idx} value={name}>{name} 的個人錯題紀錄</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2 flex-wrap w-full">
-                        <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
-                        <button onClick={() => setMistakeFilterScope('all')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === 'all' ? 'bg-rose-500 text-white border-rose-700 shadow-[0_2px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>全部</button>
-                        {availableScopes.map(s => (
-                          <button key={s} onClick={() => setMistakeFilterScope(s)} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === s ? 'bg-rose-500 text-white border-rose-700 shadow-[0_2px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>{s}</button>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap w-full">
-                        <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">測驗題型</span>
-                        <button onClick={() => setMistakeFilterType('all')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_2px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>全部</button>
-                        <button onClick={() => setMistakeFilterType('字音')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_2px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>字音</button>
-                        <button onClick={() => setMistakeFilterType('字形')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_2px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>字形</button>
-                      </div>
+                  {/* 過濾選單 */}
+                  <div className="mb-6 bg-white/95 p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-col gap-2 md:gap-3">
+                    <div className="flex items-center gap-2 flex-wrap w-full">
+                      <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
+                      <button onClick={() => setMistakeFilterScope('all')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === 'all' ? 'bg-rose-500 text-white border-rose-700 shadow-[0_2px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>全部</button>
+                      {availableScopes.map(s => (
+                        <button key={s} onClick={() => setMistakeFilterScope(s)} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterScope === s ? 'bg-rose-500 text-white border-rose-700 shadow-[0_2px_0_0_#be123c]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>{s}</button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap w-full">
+                      <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">測驗題型</span>
+                      <button onClick={() => setMistakeFilterType('all')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === 'all' ? 'bg-amber-400 text-white border-amber-600 shadow-[0_2px_0_0_#d97706]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>全部</button>
+                      <button onClick={() => setMistakeFilterType('字音')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字音' ? 'bg-[#718ebf] text-white border-[#5b75a6] shadow-[0_2px_0_0_#5b75a6]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>字音</button>
+                      <button onClick={() => setMistakeFilterType('字形')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-black text-sm transition-all border-2 active:translate-y-[2px] active:shadow-none ${mistakeFilterType === '字形' ? 'bg-[#d28b8b] text-white border-[#b87474] shadow-[0_2px_0_0_#b87474]' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}>字形</button>
                     </div>
                   </div>
 
-                  <div className="w-full grid gap-4 md:gap-5 pb-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+                  {/* 卡片網格：加上 pt-4 防止右上角被裁切 */}
+                  <div className="w-full grid gap-4 md:gap-5 pb-8 pt-4 pr-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
                     {filteredMistakes.map((q, idx) => {
                       const bankQ = questionBank.find(bq => bq.question === q.question && bq.scope === q.scope && bq.id === q.id);
                       const isMistakeReported = (bankQ && bankQ.isMistakeReported) || reportedMistakesList.includes(`${q.scope}_${q.id}_${q.question}`);
@@ -1614,83 +1623,84 @@
               );
             })()}
 
-            {/* 🚀 排行榜畫面：移除 isFilterHidden 恢復為全時可見，並移除 CSS 動態隱藏 */}
+            {/* 🚀 排行榜畫面：原生滾動流 */}
             {gameState === 'leaderboard' && (
               <div className="w-full h-full flex flex-col animate-fade-in relative bg-sky-50">
-                <div className="shrink-0 px-4 pt-6 md:px-8 md:pt-8 xl:px-12 flex flex-col z-20 bg-sky-50/95 backdrop-blur-md pb-4">
-                  <header className="mb-6 flex flex-col md:flex-row md:items-start justify-between gap-4 shrink-0">
+                {/* 固定標題區 */}
+                <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50 pb-2 shadow-sm border-b border-slate-200/50">
+                  <header className="flex flex-col md:flex-row md:items-start justify-between gap-3 shrink-0">
                     <div>
-                      <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                      <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
                         <div className="bg-amber-100 text-amber-600 p-2 rounded-xl"><Trophy size={24} /></div> 特訓排行榜 🏆
                       </h2>
-                      <p className="text-slate-500 font-bold text-base mt-2">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
+                      <p className="text-slate-500 font-bold text-sm mt-1">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
                       
-                      <div className="mt-3 flex items-center gap-2 text-xs md:text-sm font-bold text-amber-700 bg-amber-50 border-2 border-amber-200 px-3 py-2 rounded-xl w-fit shadow-sm">
-                         <span className="flex items-center justify-center bg-amber-400 text-white rounded-full w-5 h-5 shrink-0">!</span>
-                         排名依據：答對題數優先 ➔ 其次比作答耗時 ➔ 最後比準確率
+                      <div className="mt-2 flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 border-2 border-amber-200 px-3 py-1.5 rounded-xl w-fit shadow-sm">
+                         <span className="flex items-center justify-center bg-amber-400 text-white rounded-full w-4 h-4 shrink-0">!</span>
+                         依據：答對題數 ➔ 作答耗時 ➔ 準確率
                       </div>
                     </div>
                   </header>
                 </div>
 
-                <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4 md:pt-5" onScroll={handleListScroll}>
+                {/* 原生捲動區 */}
+                <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4" onScroll={handleListScroll}>
                   
-                  <div className="shrink-0 mb-6">
-                    <div className="bg-white/95 backdrop-blur-sm p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-wrap gap-3 md:gap-4">
-                      <div className="flex-1 min-w-[120px] flex flex-col gap-1.5">
-                        <label className="text-xs font-black text-slate-500 pl-1">題型</label>
-                        <select 
-                          value={lbFilter.type} 
-                          onChange={e => setLbFilter({...lbFilter, type: e.target.value})}
-                          className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
-                        >
-                          <option value="all">全部題型</option>
-                          <option value="字音">字音</option>
-                          <option value="字形">字形</option>
-                          <option value="字音+字形">字音+字形</option>
-                        </select>
-                      </div>
-                      <div className="flex-1 min-w-[120px] flex flex-col gap-1.5">
-                        <label className="text-xs font-black text-slate-500 pl-1">測驗模式</label>
-                        <select 
-                          value={lbFilter.mode} 
-                          onChange={e => setLbFilter({...lbFilter, mode: e.target.value})}
-                          className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
-                        >
-                          <option value="all">全部模式</option>
-                          <option value="計時挑戰">計時挑戰</option>
-                          <option value="一般測驗">一般測驗</option>
-                        </select>
-                      </div>
-                      <div className="flex-1 min-w-[120px] flex flex-col gap-1.5">
-                        <label className="text-xs font-black text-slate-500 pl-1">題目範圍</label>
-                        <select 
-                          value={lbFilter.scope} 
-                          onChange={e => setLbFilter({...lbFilter, scope: e.target.value, specificYear: 'all'})}
-                          className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
-                        >
-                          <option value="all">全部範圍</option>
-                          <option value="單一年度">單一年度</option>
-                          <option value="多年度">多年度</option>
-                        </select>
-                      </div>
-                      
-                      {lbFilter.scope === '單一年度' && (
-                        <div className="flex-1 min-w-[120px] flex flex-col gap-1.5 animate-fade-in">
-                          <label className="text-xs font-black text-slate-500 pl-1">指定年度</label>
-                          <select 
-                            value={lbFilter.specificYear || 'all'} 
-                            onChange={e => setLbFilter({...lbFilter, specificYear: e.target.value})}
-                            className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-2 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
-                          >
-                            <option value="all">全部年度</option>
-                            {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
-                              <option key={idx} value={scopeName}>{scopeName}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
+                  {/* 過濾選單 */}
+                  <div className="mb-6 bg-white/95 p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-wrap gap-2 md:gap-3">
+                    <div className="flex-1 min-w-[120px] flex flex-col gap-1">
+                      <label className="text-xs font-black text-slate-500 pl-1">題型</label>
+                      <select 
+                        value={lbFilter.type} 
+                        onChange={e => setLbFilter({...lbFilter, type: e.target.value})}
+                        className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-1.5 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
+                      >
+                        <option value="all">全部題型</option>
+                        <option value="字音">字音</option>
+                        <option value="字形">字形</option>
+                        <option value="字音+字形">字音+字形</option>
+                      </select>
                     </div>
+                    <div className="flex-1 min-w-[120px] flex flex-col gap-1">
+                      <label className="text-xs font-black text-slate-500 pl-1">測驗模式</label>
+                      <select 
+                        value={lbFilter.mode} 
+                        onChange={e => setLbFilter({...lbFilter, mode: e.target.value})}
+                        className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-1.5 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
+                      >
+                        <option value="all">全部模式</option>
+                        <option value="計時挑戰">計時挑戰</option>
+                        <option value="一般測驗">一般測驗</option>
+                      </select>
+                    </div>
+                    <div className="flex-1 min-w-[120px] flex flex-col gap-1">
+                      <label className="text-xs font-black text-slate-500 pl-1">題目範圍</label>
+                      <select 
+                        value={lbFilter.scope} 
+                        onChange={e => setLbFilter({...lbFilter, scope: e.target.value, specificYear: 'all'})}
+                        className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-1.5 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
+                      >
+                        <option value="all">全部範圍</option>
+                        <option value="單一年度">單一年度</option>
+                        <option value="多年度">多年度</option>
+                      </select>
+                    </div>
+                    
+                    {lbFilter.scope === '單一年度' && (
+                      <div className="flex-1 min-w-[120px] flex flex-col gap-1 animate-fade-in">
+                        <label className="text-xs font-black text-slate-500 pl-1">指定年度</label>
+                        <select 
+                          value={lbFilter.specificYear || 'all'} 
+                          onChange={e => setLbFilter({...lbFilter, specificYear: e.target.value})}
+                          className="w-full bg-slate-50 border-2 border-slate-200 focus:border-sky-400 outline-none rounded-xl px-3 py-1.5 text-slate-700 font-black text-sm shadow-inner cursor-pointer"
+                        >
+                          <option value="all">全部年度</option>
+                          {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => (
+                            <option key={idx} value={scopeName}>{scopeName}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   <ul className="flex flex-col bg-white border-2 border-slate-200 rounded-2xl shadow-[0_4px_0_0_#e2e8f0] overflow-hidden mb-8">
@@ -1911,9 +1921,9 @@
             </button>
           )}
 
-          {/* 全域頁尾版權宣告 */}
+          {/* 🚀 全域頁尾版權宣告：更新為 v4.2.2 */}
           <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-            大榮老師製作 © 2026 | Version 4.2 (V4.2)
+            大榮老師製作 © 2026 | Version 4.2.2 (v4.2.2)
           </div>
 
         </div>
