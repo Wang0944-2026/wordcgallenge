@@ -248,11 +248,10 @@
       const [showDevModal, setShowDevModal] = useState(false);
       const [devPassword, setDevPassword] = useState('');
 
-      // 🚀 預熱冷啟動 (Warm-up Strategy)
+      // 預熱冷啟動 (Warm-up Strategy)
       useEffect(() => {
         const cleanApiUrl = (apiUrl || '').trim();
         if (cleanApiUrl && !userEmail) {
-          // 靜默發送 ping 喚醒 Google 伺服器，不阻擋後續流程
           fetch(`${cleanApiUrl}?action=ping`, { method: 'GET', mode: 'cors' }).catch(() => {});
         }
       }, [apiUrl, userEmail]);
@@ -830,13 +829,14 @@
              return true;
           })
           .sort((a, b) => {
+             // 🚀 核心優化：全面套用「綜合積分（答對數 × 準確率）」作為公平性依據
              const correctA = parseInt(a.correctCount) || 0;
              const correctB = parseInt(b.correctCount) || 0;
              const accA = parseFloat(a.accuracy) || 0;
              const accB = parseFloat(b.accuracy) || 0;
 
-             const scoreA = a.mode === '計時挑戰' ? correctA * (accA / 100) : correctA;
-             const scoreB = b.mode === '計時挑戰' ? correctB * (accB / 100) : correctB;
+             const scoreA = correctA * (accA / 100);
+             const scoreB = correctB * (accB / 100);
 
              if (scoreA !== scoreB) return scoreB - scoreA;
 
@@ -1387,7 +1387,7 @@
             {gameState === 'study' && (
               <div className="w-full h-full flex flex-col animate-fade-in relative bg-sky-50">
                 {/* 固定標題區 */}
-                <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50/95 backdrop-blur-md pb-2 shadow-sm border-b border-slate-200/50">
+                <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50 pb-2 shadow-sm border-b border-slate-200/50">
                   <header className="shrink-0 flex justify-between items-end">
                     <div>
                       <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight mb-1 flex items-center gap-3">
@@ -1400,6 +1400,7 @@
 
                 {/* 獨立捲動區 */}
                 <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4" onScroll={handleListScroll}>
+                  
                   <div className="shrink-0 mb-4">
                     <div className="bg-white/95 backdrop-blur-sm p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-col gap-2 md:gap-3">
                       <div className="flex flex-wrap items-center gap-2 w-full">
@@ -1619,7 +1620,7 @@
               );
             })()}
 
-            {/* 排行榜畫面 */}
+            {/* 🚀 排行榜畫面 */}
             {gameState === 'leaderboard' && (
               <div className="w-full h-full flex flex-col animate-fade-in relative bg-sky-50">
                 <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50 pb-2 shadow-sm border-b border-slate-200/50">
@@ -1630,15 +1631,9 @@
                       </h2>
                       <p className="text-slate-500 font-bold text-sm mt-1">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
                       
-                      <div className="mt-3 flex flex-col gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border-2 border-amber-200 px-3 py-2 rounded-xl w-fit shadow-sm">
-                        <div className="flex items-center gap-2">
-                           <span className="flex items-center justify-center bg-amber-400 text-white rounded-full w-4 h-4 shrink-0">!</span>
-                           <span><span className="text-amber-600 font-black">【一般測驗】</span>答對題數優先 ➔ 作答耗時 ➔ 準確率</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                           <span className="flex items-center justify-center bg-transparent w-4 h-4 shrink-0"></span>
-                           <span><span className="text-amber-600 font-black">【計時挑戰】</span>綜合積分 (答對數 × 準確率) ➔ 作答耗時</span>
-                        </div>
+                      <div className="mt-3 flex items-center gap-2 text-xs md:text-sm font-bold text-amber-700 bg-amber-50 border-2 border-amber-200 px-3 py-2 rounded-xl w-fit shadow-sm">
+                         <span className="flex items-center justify-center bg-amber-400 text-white rounded-full w-5 h-5 shrink-0">!</span>
+                         排名依據：綜合積分 (答對數 × 準確率) ➔ 作答耗時 ➔ 準確率
                       </div>
                     </div>
                   </header>
@@ -1979,9 +1974,9 @@
             </button>
           )}
 
-          {/* 🚀 全域頁尾版權宣告：推進至 v4.2.7 */}
+          {/* 🚀 全域頁尾版權宣告：推進至 v4.2.8 */}
           <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-            大榮老師製作 © 2026 | Version 4.2.7 (v4.2.7)
+            大榮老師製作 © 2026 | Version 4.2.8 (v4.2.8)
           </div>
 
         </div>
