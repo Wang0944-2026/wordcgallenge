@@ -244,7 +244,7 @@
       const [reportModal, setReportModal] = useState({ isOpen: false, data: null, content: '', source: 'study' });
       const [alertMsg, setAlertMsg] = useState('');
 
-      // 🚀 重新補回狀態：控制過濾選單是否隱藏，以及回到頂部按鈕
+      // 🚀 補回狀態：修復 ReferenceError，用於控制沉浸式選單摺疊
       const [isFilterHidden, setIsFilterHidden] = useState(false);
       const [showScrollTopBtn, setShowScrollTopBtn] = useState(false);
       
@@ -264,7 +264,7 @@
         setShowScrollTopBtn(false);
       }, [gameState, studyScope, studyType, mistakeFilterScope, mistakeFilterType, mistakeFilterStudent, lbFilter]);
 
-      // 🚀 重新補回沉浸式滾動的判斷邏輯
+      // 🚀 捲動監聽：同時處理回到頂部與選單隱藏邏輯
       const handleListScroll = (e) => {
         const currentScrollY = e.target.scrollTop;
         setShowScrollTopBtn(currentScrollY > 300);
@@ -819,7 +819,6 @@
         setIsSidebarCollapsed(false);
       };
 
-      // 🚀 排行榜：統一全模式皆使用「綜合積分法」排序
       const filteredAndSortedLeaderboard = useMemo(() => {
         const isAdminOrTeacher = userRole.indexOf('管理') > -1 || userRole.indexOf('教') > -1 || userRole.indexOf('師') > -1;
 
@@ -829,14 +828,12 @@
              return earlyStatus !== '是' && earlyStatus !== 'TRUE';
           })
           .filter(item => {
-             // 錯題加強的隱私保護：非管理者只能看自己
              if (item.mode === '錯題加強' && !isAdminOrTeacher) {
                  if (item.userEmail.toLowerCase() !== userEmail.toLowerCase() && userEmail !== 'test@cnc.km.edu.tw') {
                      return false;
                  }
              }
 
-             // 教師/管理者的「指定學生」過濾器（套用於所有測驗模式）
              if (isAdminOrTeacher && lbFilter.student && lbFilter.student !== 'all') {
                  if (item.userName !== lbFilter.student) {
                      return false;
@@ -866,7 +863,6 @@
              const accA = parseFloat(a.accuracy) || 0;
              const accB = parseFloat(b.accuracy) || 0;
 
-             // 🚀 核心：所有模式統一使用「綜合積分（答對數 × 準確率）」排序
              const scoreA = correctA * (accA / 100);
              const scoreB = correctB * (accB / 100);
 
@@ -1652,7 +1648,7 @@
               );
             })()}
 
-            {/* 🚀 排行榜畫面：統一排序邏輯與 UI 說明 */}
+            {/* 🚀 排行榜畫面 */}
             {gameState === 'leaderboard' && (
               <div className="w-full h-full flex flex-col animate-fade-in relative bg-sky-50">
                 <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50 pb-2 shadow-sm border-b border-slate-200/50">
@@ -1663,6 +1659,7 @@
                       </h2>
                       <p className="text-slate-500 font-bold text-sm mt-1">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
                       
+                      {/* 🚀 統一標示排名依據 */}
                       <div className="mt-2 flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 border-2 border-amber-200 px-3 py-1.5 rounded-xl w-fit shadow-sm">
                          <span className="flex items-center justify-center bg-amber-400 text-white rounded-full w-4 h-4 shrink-0">!</span>
                          排名依據：綜合積分 (答對數 × 準確率) ➔ 作答耗時 ➔ 準確率
@@ -2024,9 +2021,9 @@
             </button>
           )}
 
-          {/* 全域頁尾版權宣告：推進至 v4.2.11 */}
+          {/* 🚀 全域頁尾版權宣告：推至 v4.3.1 */}
           <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-            大榮老師製作 © 2026 | Version 4.2.11 (v4.2.11)
+            大榮老師製作 © 2026 | Version 4.3.1 (v4.3.1)
           </div>
 
         </div>
