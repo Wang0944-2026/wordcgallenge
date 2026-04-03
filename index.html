@@ -136,6 +136,7 @@
     const ChevronUp = (p) => <IconWrapper {...p}><path d="m18 15-6-6-6 6"/></IconWrapper>;
 
     const GOOGLE_SCRIPT_API_URL = "https://script.google.com/macros/s/AKfycbxDdp-HTmjumR_kzqJZlAf9LvV5OGiTPj9NaIw1YAv9c9SJVzQKEGUG0V8rhr2-aP98/exec"; 
+    // Client ID 鎖死在程式碼中
     const GOOGLE_CLIENT_ID_DEFAULT = "125576550248-kuaglrvubq98iop3jmvfe4v4vuiu4pro.apps.googleusercontent.com"; 
 
     const MOCK_QUESTIONS = [
@@ -230,7 +231,7 @@
       const [studyScope, setStudyScope] = useState('');
       const [studyType, setStudyType] = useState('all');
 
-      const [lbFilter, setLbFilter] = useState({ type: 'all', mode: 'all', scope: 'all', specificYear: 'all' });
+      const [lbFilter, setLbFilter] = useState({ type: 'all', mode: 'all', scope: 'all', specificYear: 'all', student: 'all' });
 
       const [showTimeModal, setShowTimeModal] = useState(false);
       const [showNormalModal, setShowNormalModal] = useState(false);
@@ -243,6 +244,8 @@
       const [reportModal, setReportModal] = useState({ isOpen: false, data: null, content: '', source: 'study' });
       const [alertMsg, setAlertMsg] = useState('');
 
+      // 🚀 重新補回狀態：控制過濾選單是否隱藏，以及回到頂部按鈕
+      const [isFilterHidden, setIsFilterHidden] = useState(false);
       const [showScrollTopBtn, setShowScrollTopBtn] = useState(false);
       
       const [showDevModal, setShowDevModal] = useState(false);
@@ -257,12 +260,22 @@
       }, [apiUrl, userEmail]);
 
       useEffect(() => {
+        setIsFilterHidden(false);
         setShowScrollTopBtn(false);
       }, [gameState, studyScope, studyType, mistakeFilterScope, mistakeFilterType, mistakeFilterStudent, lbFilter]);
 
+      // 🚀 重新補回沉浸式滾動的判斷邏輯
       const handleListScroll = (e) => {
         const currentScrollY = e.target.scrollTop;
         setShowScrollTopBtn(currentScrollY > 300);
+
+        if (['study', 'mistakes', 'leaderboard'].includes(gameState)) {
+          if (currentScrollY > 60 && !isFilterHidden) {
+            setIsFilterHidden(true);
+          } else if (currentScrollY <= 10 && isFilterHidden) {
+            setIsFilterHidden(false);
+          }
+        }
       };
 
       const scrollToTop = () => {
@@ -744,7 +757,7 @@
       const acc = (score.correct + score.incorrect) === 0 ? 0 : Math.round((score.correct / (score.correct + score.incorrect)) * 100);
 
       const getEncouragement = (accuracy) => {
-        if (accuracy === 100) return "太神啦！完美全對，你這個字音字形大師！ 🎉";
+        if (accuracy === 100) return "太神啦！完美全對，這個字音字形大師！ 🎉";
         if (accuracy >= 95) return "差一點點就完美了！實力非常堅強喔！ 🔥";
         if (accuracy >= 90) return "表現極佳！基礎很扎實，繼續保持！ ⭐";
         if (accuracy >= 85) return "很棒的成績！再稍微留意一下細節就無敵了！ 👍";
@@ -806,13 +819,32 @@
         setIsSidebarCollapsed(false);
       };
 
+      // 🚀 排行榜：統一全模式皆使用「綜合積分法」排序
       const filteredAndSortedLeaderboard = useMemo(() => {
+        const isAdminOrTeacher = userRole.indexOf('管理') > -1 || userRole.indexOf('教') > -1 || userRole.indexOf('師') > -1;
+
         return leaderboardData
           .filter(item => {
              const earlyStatus = String(item.isEndedEarly || '').trim().toUpperCase();
              return earlyStatus !== '是' && earlyStatus !== 'TRUE';
           })
-          .filter(item => item.mode !== '錯題加強') 
+          .filter(item => {
+             // 錯題加強的隱私保護：非管理者只能看自己
+             if (item.mode === '錯題加強' && !isAdminOrTeacher) {
+                 if (item.userEmail.toLowerCase() !== userEmail.toLowerCase() && userEmail !== 'test@cnc.km.edu.tw') {
+                     return false;
+                 }
+             }
+
+             // 教師/管理者的「指定學生」過濾器（套用於所有測驗模式）
+             if (isAdminOrTeacher && lbFilter.student && lbFilter.student !== 'all') {
+                 if (item.userName !== lbFilter.student) {
+                     return false;
+                 }
+             }
+
+             return true; 
+          })
           .filter(item => lbFilter.type === 'all' || item.type === lbFilter.type)
           .filter(item => lbFilter.mode === 'all' || item.mode === lbFilter.mode)
           .filter(item => {
@@ -829,12 +861,12 @@
              return true;
           })
           .sort((a, b) => {
-             // 🚀 核心優化：全面套用「綜合積分（答對數 × 準確率）」作為公平性依據
              const correctA = parseInt(a.correctCount) || 0;
              const correctB = parseInt(b.correctCount) || 0;
              const accA = parseFloat(a.accuracy) || 0;
              const accB = parseFloat(b.accuracy) || 0;
 
+             // 🚀 核心：所有模式統一使用「綜合積分（答對數 × 準確率）」排序
              const scoreA = correctA * (accA / 100);
              const scoreB = correctB * (accB / 100);
 
@@ -851,7 +883,7 @@
 
              return accB - accA;
           });
-      }, [leaderboardData, lbFilter]);
+      }, [leaderboardData, lbFilter, userRole, userEmail]);
 
       const renderSidebar = () => (
         <aside className={`hidden md:flex flex-col bg-white border-r-2 border-slate-200 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.05)] z-20 transition-all duration-500 ease-in-out ${isSidebarCollapsed ? 'w-24 items-center px-4 py-6' : 'w-72 p-6'}`}>
@@ -901,13 +933,15 @@
                   <div className="flex items-center gap-2 text-slate-600 font-black text-sm">
                     {(isDbLoading || isBackgroundSyncing) ? <RefreshCw className="animate-spin w-5 h-5 text-sky-500" /> : <CloudDownload className="w-5 h-5 text-emerald-500" />} 題庫連線
                   </div>
-                  <button 
-                    onClick={() => { setInputApiUrl(apiUrl); setShowSettingsModal(true); }} 
-                    className="text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 p-2 rounded-xl transition-all active:scale-90" 
-                    title="系統設定"
-                  >
-                    <Settings size={18} />
-                  </button>
+                  {userRole.indexOf('管理') > -1 && (
+                    <button 
+                      onClick={() => { setInputApiUrl(apiUrl); setShowSettingsModal(true); }} 
+                      className="text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 p-2 rounded-xl transition-all active:scale-90" 
+                      title="系統設定"
+                    >
+                      <Settings size={18} />
+                    </button>
+                  )}
                 </div>
                 <p className="text-xs font-bold text-slate-400 mb-2 truncate">{dbStatus.msg}</p>
                 <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
@@ -1383,10 +1417,9 @@
               </div>
             )}
 
-            {/* 自學區畫面 */}
+            {/* 🚀 自學區畫面 */}
             {gameState === 'study' && (
               <div className="w-full h-full flex flex-col animate-fade-in relative bg-sky-50">
-                {/* 固定標題區 */}
                 <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50 pb-2 shadow-sm border-b border-slate-200/50">
                   <header className="shrink-0 flex justify-between items-end">
                     <div>
@@ -1398,10 +1431,9 @@
                   </header>
                 </div>
 
-                {/* 獨立捲動區 */}
                 <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4" onScroll={handleListScroll}>
                   
-                  <div className="shrink-0 mb-4">
+                  <div className={`transition-all duration-500 ease-in-out overflow-hidden shrink-0 ${isFilterHidden ? 'max-h-0 opacity-0 mb-0' : 'max-h-[500px] opacity-100 mb-4'}`}>
                     <div className="bg-white/95 backdrop-blur-sm p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-col gap-2 md:gap-3">
                       <div className="flex flex-wrap items-center gap-2 w-full">
                         <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
@@ -1474,7 +1506,7 @@
               </div>
             )}
 
-            {/* 錯題集畫面 */}
+            {/* 🚀 錯題集畫面 */}
             {gameState === 'mistakes' && (() => {
               const isAdmin = userRole.indexOf('管理') > -1 || userRole.indexOf('教') > -1 || userRole.indexOf('師') > -1;
               
@@ -1543,7 +1575,7 @@
 
                 <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4" onScroll={handleListScroll}>
                   
-                  <div className="shrink-0 mb-4">
+                  <div className={`transition-all duration-500 ease-in-out overflow-hidden shrink-0 ${isFilterHidden ? 'max-h-0 opacity-0 mb-0' : 'max-h-[500px] opacity-100 mb-4'}`}>
                     <div className="bg-white/95 backdrop-blur-sm p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-col gap-2 md:gap-3">
                       <div className="flex items-center gap-2 flex-wrap w-full">
                         <span className="text-sm font-black text-slate-700 bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-lg shrink-0">年度範圍</span>
@@ -1620,7 +1652,7 @@
               );
             })()}
 
-            {/* 🚀 排行榜畫面 */}
+            {/* 🚀 排行榜畫面：統一排序邏輯與 UI 說明 */}
             {gameState === 'leaderboard' && (
               <div className="w-full h-full flex flex-col animate-fade-in relative bg-sky-50">
                 <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-6 xl:px-12 flex flex-col z-20 bg-sky-50 pb-2 shadow-sm border-b border-slate-200/50">
@@ -1631,8 +1663,8 @@
                       </h2>
                       <p className="text-slate-500 font-bold text-sm mt-1">來看看大家的神猛戰績，挑戰成為字音字形大師吧！</p>
                       
-                      <div className="mt-3 flex items-center gap-2 text-xs md:text-sm font-bold text-amber-700 bg-amber-50 border-2 border-amber-200 px-3 py-2 rounded-xl w-fit shadow-sm">
-                         <span className="flex items-center justify-center bg-amber-400 text-white rounded-full w-5 h-5 shrink-0">!</span>
+                      <div className="mt-2 flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 border-2 border-amber-200 px-3 py-1.5 rounded-xl w-fit shadow-sm">
+                         <span className="flex items-center justify-center bg-amber-400 text-white rounded-full w-4 h-4 shrink-0">!</span>
                          排名依據：綜合積分 (答對數 × 準確率) ➔ 作答耗時 ➔ 準確率
                       </div>
                     </div>
@@ -1641,7 +1673,7 @@
 
                 <div id="main-scroll-container" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 md:px-8 xl:px-12 pb-[90px] md:pb-8 pt-4" onScroll={handleListScroll}>
                   
-                  <div className="shrink-0 mb-4">
+                  <div className={`transition-all duration-500 ease-in-out overflow-hidden shrink-0 ${isFilterHidden ? 'max-h-0 opacity-0 mb-0' : 'max-h-[500px] opacity-100 mb-4'}`}>
                     <div className="bg-white/95 backdrop-blur-sm p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 flex flex-wrap gap-2 md:gap-3">
                       <div className="flex-1 min-w-[120px] flex flex-col gap-1">
                         <label className="text-xs font-black text-slate-500 pl-1">題型</label>
@@ -1666,6 +1698,7 @@
                           <option value="all">全部模式</option>
                           <option value="計時挑戰">計時挑戰</option>
                           <option value="一般測驗">一般測驗</option>
+                          <option value="錯題加強">錯題加強</option>
                         </select>
                       </div>
                       <div className="flex-1 min-w-[120px] flex flex-col gap-1">
@@ -1696,10 +1729,27 @@
                           </select>
                         </div>
                       )}
+
+                      {/* 教師專用的學生成績過濾器 (適用於所有模式) */}
+                      {(userRole.indexOf('管理') > -1 || userRole.indexOf('教') > -1 || userRole.indexOf('師') > -1) && (
+                        <div className="flex-1 min-w-[120px] flex flex-col gap-1 animate-fade-in">
+                          <label className="text-xs font-black text-rose-500 pl-1">指定學生 (教師專用)</label>
+                          <select 
+                            value={lbFilter.student || 'all'} 
+                            onChange={e => setLbFilter({...lbFilter, student: e.target.value})}
+                            className="w-full bg-rose-50 border-2 border-rose-200 focus:border-rose-400 outline-none rounded-xl px-3 py-1.5 text-rose-700 font-black text-sm shadow-inner cursor-pointer"
+                          >
+                            <option value="all">全部學生</option>
+                            {[...new Set(leaderboardData.map(i => i.userName))].filter(Boolean).map((name, idx) => (
+                              <option key={idx} value={name}>{name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <ul className="flex flex-col bg-white border-2 border-slate-200 rounded-2xl shadow-[0_4px_0_0_#e2e8f0] overflow-hidden mb-8">
+                  <ul className="flex flex-col bg-white border-2 border-slate-200 rounded-2xl shadow-[0_4px_0_0_#e2e8f0] overflow-hidden mb-8 transition-all duration-500 ease-in-out">
                     {filteredAndSortedLeaderboard.map((item, idx) => {
                       let rankStyle = "bg-white hover:bg-slate-50";
                       let rankBadge = "bg-slate-100 text-slate-500 border-slate-200";
@@ -1974,9 +2024,9 @@
             </button>
           )}
 
-          {/* 🚀 全域頁尾版權宣告：推進至 v4.2.8 */}
+          {/* 全域頁尾版權宣告：推進至 v4.2.11 */}
           <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-            大榮老師製作 © 2026 | Version 4.2.8 (v4.2.8)
+            大榮老師製作 © 2026 | Version 4.2.11 (v4.2.11)
           </div>
 
         </div>
