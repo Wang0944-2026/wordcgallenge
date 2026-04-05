@@ -137,6 +137,13 @@
     const Search = (p) => <IconWrapper {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></IconWrapper>;
     const ExternalLink = (p) => <IconWrapper {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></IconWrapper>;
 
+    // 🚀 新增：共用的全域版本宣告元件
+    const VersionBadge = () => (
+      <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
+        大榮老師製作 © 2026 | Version 4.4.4 (v4.4.4)
+      </div>
+    );
+
     const GOOGLE_SCRIPT_API_URL = "https://script.google.com/macros/s/AKfycbxDdp-HTmjumR_kzqJZlAf9LvV5OGiTPj9NaIw1YAv9c9SJVzQKEGUG0V8rhr2-aP98/exec"; 
     // Client ID 鎖死在程式碼中
     const GOOGLE_CLIENT_ID_DEFAULT = "125576550248-kuaglrvubq98iop3jmvfe4v4vuiu4pro.apps.googleusercontent.com"; 
@@ -1107,9 +1114,8 @@
               </div>
             )}
 
-            <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-              大榮老師製作 © 2026 | Version 4.3.11 (v4.3.11)
-            </div>
+            {/* 🚀 統一替換為共用版本元件 */}
+            <VersionBadge />
           </div>
         );
       }
@@ -1495,7 +1501,7 @@
                             </div>
                           </div>
 
-                          {/* 🚀 UI 優化：將查閱字義按鈕改為字典 Memoji 並懸浮於答案區塊右上角 */}
+                          {/* 🚀 UI 優化：將查閱字義按鈕改為單純的 📖 懸浮圖案 (移除外框) */}
                           <div className="w-full mt-auto shrink-0 relative pt-1 pr-1">
                             <div className={`w-full h-12 md:h-14 rounded-xl flex items-center justify-center px-4 border-2 relative overflow-hidden ${isReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-sm' : 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm'}`}>
                                <span className="whitespace-nowrap font-black text-xl">{q.answer}</span>
@@ -1504,7 +1510,7 @@
                             {!isReported && (
                                <button 
                                   onClick={() => setMeaningModal({ isOpen: true, data: q })} 
-                                  className="absolute -top-2 -right-2 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full border-2 border-emerald-200 shadow-md flex items-center justify-center text-lg md:text-xl hover:-translate-y-0.5 hover:shadow-lg hover:border-emerald-400 active:translate-y-[2px] active:shadow-none z-10 transition-all"
+                                  className="absolute -top-3 -right-3 text-3xl md:text-4xl drop-shadow-sm hover:-translate-y-1 hover:drop-shadow-md active:translate-y-[2px] z-10 transition-transform cursor-pointer"
                                   title="查閱詞義與造句"
                                >
                                   📖
@@ -1611,8 +1617,11 @@
 
                   <div className="w-full grid gap-4 md:gap-5 pb-8 pt-4 pr-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
                     {filteredMistakes.map((q, idx) => {
-                      const bankQ = questionBank.find(bq => bq.question === q.question && bq.scope === q.scope && bq.id === q.id);
-                      const isMistakeReported = (bankQ && bankQ.isMistakeReported) || reportedMistakesList.includes(`${q.scope}_${q.id}_${q.question}`);
+                      // 🚀 修正：錯題集沒有存 id，移除 id 比對，改用 scope 和 question 精準定位
+                      const bankQ = questionBank.find(bq => bq.question === q.question && bq.scope === q.scope);
+                      // 🚀 修正：若 q.id 不存在，借用 bankQ.id 來確保回報狀態能正確被判斷
+                      const targetId = q.id || (bankQ ? bankQ.id : '');
+                      const isMistakeReported = (bankQ && bankQ.isMistakeReported) || reportedMistakesList.includes(`${q.scope}_${targetId}_${q.question}`);
 
                       return (
                         <div key={idx} className={`min-w-0 w-full bg-white rounded-2xl p-3 md:p-4 border-2 flex items-center justify-between relative group hover:-translate-y-1 hover:shadow-md transition-all ${isMistakeReported ? 'border-slate-300 shadow-sm bg-slate-50' : 'border-slate-200 shadow-sm'}`}>
@@ -1649,10 +1658,24 @@
                             </div>
                             <span className={`text-xl font-black ${isMistakeReported ? 'text-slate-400' : 'text-slate-800'}`}>{q.question}</span>
                           </div>
-                          <div className={`ml-3 w-24 shrink-0 whitespace-nowrap py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center font-black relative z-10 gap-0.5 ${isMistakeReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-sm' : 'bg-white text-emerald-600 border-emerald-300 shadow-sm'}`}>
-                            <span className={`text-[10px] tracking-widest uppercase ${isMistakeReported ? 'text-slate-400' : 'text-emerald-500'}`}>答案</span>
-                            <span className="text-xl leading-snug text-center">{q.answer}</span>
+                          
+                          {/* 🚀 錯題集專屬：答案框外左側(向下對齊)的 📖 單純圖案按鈕 */}
+                          <div className="flex items-end gap-2 ml-1 md:ml-2 shrink-0 relative z-10">
+                            {!isMistakeReported && bankQ && (
+                               <button 
+                                  onClick={() => setMeaningModal({ isOpen: true, data: bankQ })} 
+                                  className="text-3xl md:text-4xl drop-shadow-sm hover:-translate-y-1 hover:drop-shadow-md active:translate-y-[2px] transition-transform mb-1 cursor-pointer"
+                                  title="查閱詞義與造句"
+                               >
+                                  📖
+                               </button>
+                            )}
+                            <div className={`w-20 md:w-24 shrink-0 whitespace-nowrap py-2 px-1 md:px-2 rounded-xl border-2 flex flex-col items-center justify-center font-black gap-0.5 ${isMistakeReported ? 'bg-slate-100 text-slate-400 border-slate-200 shadow-sm' : 'bg-white text-emerald-600 border-emerald-300 shadow-sm'}`}>
+                              <span className={`text-[10px] tracking-widest uppercase ${isMistakeReported ? 'text-slate-400' : 'text-emerald-500'}`}>答案</span>
+                              <span className="text-xl leading-snug text-center">{q.answer}</span>
+                            </div>
                           </div>
+
                         </div>
                       );
                     })}
@@ -2098,10 +2121,8 @@
             </button>
           )}
 
-          {/* 全域頁尾版權宣告：推至 v4.3.11 */}
-          <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-            大榮老師製作 © 2026 | Version 4.3.11 (v4.3.11)
-          </div>
+          {/* 🚀 統一替換為共用版本元件 */}
+          <VersionBadge />
 
         </div>
       );
