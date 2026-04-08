@@ -140,7 +140,7 @@
     // 🚀 新增：共用的全域版本宣告元件
     const VersionBadge = () => (
       <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-        大榮老師製作 © 2026 | Version 4.4.4 (v4.4.4)
+        大榮老師製作 © 2026 | Version 4.4.7 (v4.4.7)
       </div>
     );
 
@@ -261,6 +261,15 @@
 
       // 🚀 簡化後的本地字典狀態
       const [meaningModal, setMeaningModal] = useState({ isOpen: false, data: null, isLoading: false, content: '' });
+
+      // 🚀 預先計算個人錯題資料與範圍，供練功區「錯題加強」模式使用
+      const myMistakes = useMemo(() => {
+        return rawMistakes.filter(m => m.userEmail.toLowerCase() === userEmail.toLowerCase() || userEmail === 'test@cnc.km.edu.tw');
+      }, [rawMistakes, userEmail]);
+
+      const myMistakeScopes = useMemo(() => {
+        return [...new Set(myMistakes.map(m => m.scope))].filter(Boolean);
+      }, [myMistakes]);
 
       useEffect(() => {
         const cleanApiUrl = (apiUrl || '').trim();
@@ -570,12 +579,27 @@
           return;
         }
 
+        // 🚀 新增防呆：若完全沒有錯題紀錄，直接阻擋
+        if (settings.mode === 'mistakePractice' && myMistakeScopes.length === 0) {
+          setAlertMsg("您目前沒有錯題紀錄，快去一般測驗區挑戰看看吧！");
+          return;
+        }
+
+        // 🚀 新增防呆：強制要求使用者必須選擇至少一個題目範圍
+        if (settings.scope.length === 0) {
+          setAlertMsg("請先選擇要測驗的「題目範圍」喔！");
+          return;
+        }
+
         let filtered = [];
         if (settings.mode === 'mistakePractice') {
-          const myMistakes = rawMistakes.filter(m => m.userEmail.toLowerCase() === userEmail.toLowerCase() || userEmail === 'test@cnc.km.edu.tw');
           const aggregated = {};
           myMistakes.forEach(m => aggregated[m.question] = m);
           filtered = Object.values(aggregated).filter(q => !reportedList.includes(`${q.scope}_${q.id}_${q.question}`));
+          
+          // 🚀 錯題加強模式：加入題目範圍篩選
+          filtered = filtered.filter(q => settings.scope.includes(q.scope));
+          
           if (settings.type !== 'all') filtered = filtered.filter(q => q.type === settings.type);
         } else {
           filtered = questionBank.filter(q => !reportedList.includes(`${q.scope}_${q.id}_${q.question}`)); 
@@ -602,7 +626,7 @@
         
         if (settings.mode === 'timeChallenge') setTimeLeft(customTime * 60);
         else if (settings.mode === 'normalTest') setTimeLeft(600);
-        else if (settings.mode === 'mistakePractice') setTimeLeft(420); 
+        else if (settings.mode === 'mistakePractice') setTimeLeft(420); // 🚀 錯題加強模式：一律 7 分鐘 (420 秒)
         else setTimeLeft(0); 
         
         setTimeSpent(0);
@@ -1178,14 +1202,19 @@
                     </div>
 
                     <div className="bg-white rounded-2xl p-4 md:p-5 shadow-[0_4px_0_0_#e2e8f0] border-2 border-slate-200 relative overflow-hidden flex flex-col group flex-1 min-h-[200px] lg:min-h-0 shrink-0 lg:shrink lg:w-2/3">
-                      {settings.mode !== 'mistakePractice' && (() => {
+                      {/* 🚀 範圍全選按鈕動態切換：根據模式選擇使用所有範圍或錯題範圍 */}
+                      {(() => {
                         const availableScopes = [...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集');
-                        const isAllSelected = availableScopes.length > 0 && settings.scope.length === availableScopes.length;
+                        const scopesToUse = settings.mode === 'mistakePractice' ? myMistakeScopes : availableScopes;
+                        const isAllSelected = scopesToUse.length > 0 && settings.scope.length === scopesToUse.length;
+                        
+                        if (scopesToUse.length === 0 && settings.mode === 'mistakePractice') return null; // 沒錯題時隱藏按鈕
+                        
                         return (
                           <button 
                             onClick={() => {
                               if (isAllSelected) setSettings(s => ({ ...s, scope: [] }));
-                              else setSettings(s => ({ ...s, scope: availableScopes }));
+                              else setSettings(s => ({ ...s, scope: scopesToUse }));
                             }} 
                             className={`absolute top-4 right-4 text-xs py-1.5 px-3 md:px-4 rounded-xl font-black transition-all active:translate-y-[2px] active:shadow-none border-2 z-20 ${isAllSelected ? 'bg-emerald-200 text-emerald-800 border-emerald-400 shadow-[0_2px_0_0_#34d399]' : 'bg-white text-slate-500 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
                           >
@@ -1199,11 +1228,48 @@
                       </h3>
                       
                       {settings.mode === 'mistakePractice' ? (
-                        <div className="flex flex-col items-center justify-center flex-1 bg-slate-50 rounded-2xl border-4 border-dashed border-slate-200 relative z-10 min-h-0">
-                          <Archive size={32} className="text-slate-300 mb-2" />
-                          <p className="font-black text-slate-500 text-lg">已鎖定為「錯題集」</p>
-                          <p className="text-xs font-bold text-slate-400 mt-1">系統將為您安排專屬的弱點強化特訓！</p>
-                        </div>
+                        myMistakeScopes.length > 0 ? (
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 flex-1 overflow-y-auto pr-2 min-h-0 content-start pb-2">
+                            {/* 🚀 UI 優化：顯示所有範圍，但將沒有錯題的範圍反灰並設為無法點擊 */}
+                            {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => {
+                              const hasMistake = myMistakeScopes.includes(scopeName);
+                              const isSelected = settings.scope.includes(scopeName);
+                              
+                              if (!hasMistake) {
+                                return (
+                                  <button 
+                                    key={idx} 
+                                    disabled
+                                    className="py-3 px-2 rounded-xl font-black text-sm border-2 bg-slate-100 text-slate-400 border-slate-200 opacity-60 cursor-not-allowed"
+                                  >
+                                    {scopeName}
+                                  </button>
+                                );
+                              }
+
+                              return (
+                                <button 
+                                  key={idx} 
+                                  onClick={() => {
+                                    setSettings(s => {
+                                      const newScope = s.scope.includes(scopeName) ? s.scope.filter(sn => sn !== scopeName) : [...s.scope, scopeName];
+                                      return { ...s, scope: newScope };
+                                    });
+                                  }} 
+                                  className={`py-3 px-2 rounded-xl font-black transition-all text-sm border-2 active:translate-y-[4px] active:shadow-none ${isSelected ? 'bg-emerald-400 text-white border-emerald-600 shadow-[0_4px_0_0_#059669]' : 'bg-white text-slate-600 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50'}`}
+                                >
+                                  {scopeName}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center flex-1 bg-slate-50 rounded-2xl border-4 border-dashed border-slate-200 relative z-10 min-h-0">
+                            <Archive size={32} className="text-slate-300 mb-2" />
+                            <p className="font-black text-slate-500 text-lg">目前沒有錯題紀錄</p>
+                            <p className="text-xs font-bold text-slate-400 mt-1">去測驗區挑戰看看吧！</p>
+                          </div>
+                        )
                       ) : (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 flex-1 overflow-y-auto pr-2 min-h-0 content-start pb-2">
                           {[...new Set(questionBank.map(q => q.scope))].filter(s => s !== '錯題集').map((scopeName, idx) => {
