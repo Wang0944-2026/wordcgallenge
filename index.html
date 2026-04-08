@@ -136,11 +136,14 @@
     const ChevronUp = (p) => <IconWrapper {...p}><path d="m18 15-6-6-6 6"/></IconWrapper>;
     const Search = (p) => <IconWrapper {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></IconWrapper>;
     const ExternalLink = (p) => <IconWrapper {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></IconWrapper>;
+    // 🚀 新增：眼睛顯示與隱藏圖示
+    const Eye = (p) => <IconWrapper {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></IconWrapper>;
+    const EyeOff = (p) => <IconWrapper {...p}><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></IconWrapper>;
 
-    // 🚀 新增：共用的全域版本宣告元件
+    // 🚀 修正：嚴格落實「逢十進位」規則，將版本號校正為 v4.5.0
     const VersionBadge = () => (
       <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-        大榮老師製作 © 2026 | Version 4.4.10 (v4.4.10)
+        大榮老師製作 © 2026 | Version 4.5.0 (v4.5.0)
       </div>
     );
 
@@ -258,7 +261,8 @@
       
       const [showDevModal, setShowDevModal] = useState(false);
       const [devPassword, setDevPassword] = useState('');
-      const [isVerifyingPwd, setIsVerifyingPwd] = useState(false); // 🚀 新增驗證狀態
+      const [showDevPwd, setShowDevPwd] = useState(false); // 🚀 新增：控制密碼顯示與否的狀態
+      const [isVerifyingPwd, setIsVerifyingPwd] = useState(false); 
 
       // 🚀 補回遺失的字典視窗狀態
       const [meaningModal, setMeaningModal] = useState({ isOpen: false, data: null, isLoading: false, content: '' });
@@ -1121,20 +1125,34 @@
                     開發者驗證
                   </h3>
                   <p className="text-slate-500 font-bold mb-4 text-sm">請輸入開發者專用通行碼：</p>
-                  <input 
-                    type="password" 
-                    value={devPassword}
-                    onChange={(e) => setDevPassword(e.target.value)}
-                    placeholder="請輸入密碼"
-                    className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl px-5 py-3 text-slate-800 font-black text-xl transition-colors mb-6 shadow-inner text-center tracking-widest"
-                    autoFocus
-                    disabled={isVerifyingPwd}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !isVerifyingPwd) {
-                        handleDevLogin();
-                      }
-                    }}
-                  />
+                  
+                  {/* 🚀 更新：加入密碼顯示切換按鈕 */}
+                  <div className="relative w-full mb-6">
+                    <input 
+                      type={showDevPwd ? "text" : "password"} 
+                      value={devPassword}
+                      onChange={(e) => setDevPassword(e.target.value)}
+                      placeholder="請輸入密碼"
+                      className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl pl-5 pr-12 py-3 text-slate-800 font-black text-xl transition-colors shadow-inner text-center tracking-widest"
+                      autoFocus
+                      disabled={isVerifyingPwd}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !isVerifyingPwd) {
+                          handleDevLogin();
+                        }
+                      }}
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowDevPwd(!showDevPwd)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-sky-500 active:scale-90 transition-all p-1"
+                      tabIndex="-1"
+                      title={showDevPwd ? "隱藏密碼" : "顯示密碼"}
+                    >
+                      {showDevPwd ? <EyeOff size={22} /> : <Eye size={22} />}
+                    </button>
+                  </div>
+
                   <div className="flex gap-3">
                     <button onClick={() => setShowDevModal(false)} disabled={isVerifyingPwd} className="flex-1 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm active:translate-y-[2px] active:shadow-none disabled:opacity-50">取消</button>
                     <button onClick={handleDevLogin} disabled={isVerifyingPwd} className="flex-[2] py-3 rounded-xl font-black text-white bg-slate-800 hover:bg-slate-700 transition-colors border-2 border-slate-900 shadow-sm active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 disabled:opacity-80">
