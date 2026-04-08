@@ -140,7 +140,7 @@
     // 🚀 新增：共用的全域版本宣告元件
     const VersionBadge = () => (
       <div className="fixed bottom-[80px] md:bottom-4 right-4 md:right-6 text-[10px] md:text-xs font-black text-slate-600 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white shadow-sm pointer-events-none z-40 tracking-wider">
-        大榮老師製作 © 2026 | Version 4.4.7 (v4.4.7)
+        大榮老師製作 © 2026 | Version 4.4.10 (v4.4.10)
       </div>
     );
 
@@ -258,8 +258,9 @@
       
       const [showDevModal, setShowDevModal] = useState(false);
       const [devPassword, setDevPassword] = useState('');
+      const [isVerifyingPwd, setIsVerifyingPwd] = useState(false); // 🚀 新增驗證狀態
 
-      // 🚀 簡化後的本地字典狀態
+      // 🚀 補回遺失的字典視窗狀態
       const [meaningModal, setMeaningModal] = useState({ isOpen: false, data: null, isLoading: false, content: '' });
 
       // 🚀 預先計算個人錯題資料與範圍，供練功區「錯題加強」模式使用
@@ -338,6 +339,53 @@
           );
         }
       }, [gameState]);
+
+      // 🚀 更新：嚴格的後端密碼驗證邏輯 (廢除前端備用清單)
+      const handleDevLogin = async () => {
+        const pwd = devPassword.trim();
+        if (!pwd) { setAlertMsg('請輸入密碼！'); return; }
+        
+        setIsVerifyingPwd(true);
+
+        try {
+          const cleanApiUrl = (apiUrl || '').trim();
+          if (cleanApiUrl) {
+            const res = await fetch(cleanApiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({ action: 'verifyPassword', password: pwd })
+            });
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+              safeStorage.set('USER_EMAIL', data.email);
+              safeStorage.set('USER_NAME', data.name);
+              safeStorage.set('USER_ROLE', data.role);
+              setUserEmail(data.email);
+              setUserName(data.name);
+              setUserRole(data.role);
+              setShowDevModal(false);
+              setGameState('menu');
+              setIsVerifyingPwd(false);
+              return; 
+            } else if (data.status === 'expired') {
+              setAlertMsg(data.msg); 
+              setIsVerifyingPwd(false);
+              return; 
+            } else if (data.status === 'not_found') {
+              // 🚀 嚴格攔截：只要後端說找不到，直接阻擋進入
+              setAlertMsg('無效的臨時密碼，請確認後再試！');
+              setIsVerifyingPwd(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('連線後端驗證失敗', e);
+          setAlertMsg('網路連線異常，無法驗證密碼，請稍後再試！');
+          setIsVerifyingPwd(false);
+          return;
+        }
+      };
 
       useEffect(() => {
         if (gameState === 'result' && !score.synced) {
@@ -988,10 +1036,11 @@
                   </div>
                   <div className="overflow-hidden flex-1 flex items-center">
                     <div className="flex flex-col flex-1 min-w-0">
-                      <p className="text-xs font-black text-slate-700 truncate">{userName}</p>
+                      <p className="text-xs font-black text-slate-700 truncate">
+                        {userName} <span className="text-[10px] text-indigo-500 font-black shrink-0 ml-1">({userRole || '學生'})</span>
+                      </p>
                       <p className="text-[10px] font-bold text-slate-400 truncate" title={userEmail}>{userEmail}</p>
                     </div>
-                    <span className="text-[10px] text-indigo-500 font-black shrink-0 ml-1">({userRole || '學生'})</span>
                   </div>
                 </div>
                 <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors shrink-0" title="登出">
@@ -1079,45 +1128,19 @@
                     placeholder="請輸入密碼"
                     className="w-full bg-slate-50 border-4 border-slate-200 focus:border-sky-400 outline-none rounded-2xl px-5 py-3 text-slate-800 font-black text-xl transition-colors mb-6 shadow-inner text-center tracking-widest"
                     autoFocus
+                    disabled={isVerifyingPwd}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        if (['0944', '0312', '1005', '0302'].includes(devPassword)) {
-                          const testEmail = 'test@cnc.km.edu.tw';
-                          const testName = '預覽測試員';
-                          const testRole = '管理員';
-                          safeStorage.set('USER_EMAIL', testEmail);
-                          safeStorage.set('USER_NAME', testName);
-                          safeStorage.set('USER_ROLE', testRole);
-                          setUserEmail(testEmail);
-                          setUserName(testName);
-                          setUserRole(testRole);
-                          setShowDevModal(false);
-                          setGameState('menu');
-                        } else {
-                          setAlertMsg('開發者密碼錯誤，請重新輸入！');
-                        }
+                      if (e.key === 'Enter' && !isVerifyingPwd) {
+                        handleDevLogin();
                       }
                     }}
                   />
                   <div className="flex gap-3">
-                    <button onClick={() => setShowDevModal(false)} className="flex-1 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm active:translate-y-[2px] active:shadow-none">取消</button>
-                    <button onClick={() => {
-                      if (['0944', '0312', '1005', '0302'].includes(devPassword)) {
-                        const testEmail = 'test@cnc.km.edu.tw';
-                        const testName = '預覽測試員';
-                        const testRole = '管理員';
-                        safeStorage.set('USER_EMAIL', testEmail);
-                        safeStorage.set('USER_NAME', testName);
-                        safeStorage.set('USER_ROLE', testRole);
-                        setUserEmail(testEmail);
-                        setUserName(testName);
-                        setUserRole(testRole);
-                        setShowDevModal(false);
-                        setGameState('menu');
-                      } else {
-                        setAlertMsg('開發者密碼錯誤，請重新輸入！');
-                      }
-                    }} className="flex-[2] py-3 rounded-xl font-black text-white bg-slate-800 hover:bg-slate-700 transition-colors border-2 border-slate-900 shadow-sm active:translate-y-[2px] active:shadow-none">確認進入</button>
+                    <button onClick={() => setShowDevModal(false)} disabled={isVerifyingPwd} className="flex-1 py-3 rounded-xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors border-2 border-slate-200 shadow-sm active:translate-y-[2px] active:shadow-none disabled:opacity-50">取消</button>
+                    <button onClick={handleDevLogin} disabled={isVerifyingPwd} className="flex-[2] py-3 rounded-xl font-black text-white bg-slate-800 hover:bg-slate-700 transition-colors border-2 border-slate-900 shadow-sm active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 disabled:opacity-80">
+                      {isVerifyingPwd ? <RefreshCw className="animate-spin" size={18} /> : null}
+                      {isVerifyingPwd ? '驗證中...' : '確認進入'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1575,7 +1598,7 @@
                             
                             {!isReported && (
                                <button 
-                                  onClick={() => setMeaningModal({ isOpen: true, data: q })} 
+                                  onClick={() => setMeaningModal({ isOpen: true, data: q, isLoading: false, content: '' })} 
                                   className="absolute -top-3 -right-3 text-3xl md:text-4xl drop-shadow-sm hover:-translate-y-1 hover:drop-shadow-md active:translate-y-[2px] z-10 transition-transform cursor-pointer"
                                   title="查閱詞義與造句"
                                >
@@ -1729,7 +1752,7 @@
                           <div className="flex items-end gap-2 ml-1 md:ml-2 shrink-0 relative z-10">
                             {!isMistakeReported && bankQ && (
                                <button 
-                                  onClick={() => setMeaningModal({ isOpen: true, data: bankQ })} 
+                                  onClick={() => setMeaningModal({ isOpen: true, data: bankQ, isLoading: false, content: '' })} 
                                   className="text-3xl md:text-4xl drop-shadow-sm hover:-translate-y-1 hover:drop-shadow-md active:translate-y-[2px] transition-transform mb-1 cursor-pointer"
                                   title="查閱詞義與造句"
                                >
@@ -1984,7 +2007,7 @@
                    )}
                  </div>
 
-                 <button onClick={() => setMeaningModal({ isOpen: false, data: null })} className="w-full shrink-0 py-4 rounded-2xl font-black text-white bg-indigo-500 hover:bg-indigo-400 transition-colors border-2 border-indigo-700 shadow-[0_4px_0_0_#4338ca] active:translate-y-[4px] active:shadow-none text-lg">
+                 <button onClick={() => setMeaningModal({ isOpen: false, data: null, isLoading: false, content: '' })} className="w-full shrink-0 py-4 rounded-2xl font-black text-white bg-indigo-500 hover:bg-indigo-400 transition-colors border-2 border-indigo-700 shadow-[0_4px_0_0_#4338ca] active:translate-y-[4px] active:shadow-none text-lg">
                    我學會了！
                  </button>
               </div>
